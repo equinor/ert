@@ -11,8 +11,8 @@ import probabilit.distributions
 import probabilit.modeling
 from scipy import stats
 
-from fmudesign.exceptions import FmudesignError
-from fmudesign.utils import excel_sheet_names
+from .exceptions import ParameterDesignError
+from .utils import excel_sheet_names
 
 
 def validate_params(distname: str, parameters: list[str]) -> list[float]:
@@ -24,7 +24,7 @@ def validate_params(distname: str, parameters: list[str]) -> list[float]:
     >>> validate_params('normal', ['inf'])
     Traceback (most recent call last):
         ...
-    fmudesign.exceptions.FmudesignError: dist_param1 in distribution normal is not finite: inf
+    ert.parameter_design.exceptions.ParameterDesignError: dist_param1 in distribution normal is not finite: inf
     """  # ruff: ignore[line-too-long]
     new_parameters: list[float] = []
 
@@ -32,13 +32,13 @@ def validate_params(distname: str, parameters: list[str]) -> list[float]:
         try:
             new_parameters.append(float(parameter))
         except (ValueError, TypeError) as e:
-            raise FmudesignError(
+            raise ParameterDesignError(
                 f"dist_param{i + 1} in distribution {distname} not "
                 f"convertible to number: {parameter}"
             ) from e
 
         if not np.isfinite(new_parameters[i]):
-            raise FmudesignError(
+            raise ParameterDesignError(
                 f"dist_param{i + 1} in distribution {distname} "
                 f"is not finite: {parameter}"
             )
@@ -85,7 +85,7 @@ def quantiles_to_values(
         probabilities /= np.sum(probabilities)
 
     if not np.all(probabilities >= 0):
-        raise FmudesignError(
+        raise ParameterDesignError(
             f"Probabilities must be finite non-negative numbers, was '{probabilities}'"
         )
 
@@ -123,7 +123,7 @@ class DiscreteViaUniform(probabilit.Distribution):
 
 def _require(condition: bool, message: str) -> None:
     if not condition:
-        raise FmudesignError(message)
+        raise ParameterDesignError(message)
 
 
 def to_probabilit(
@@ -156,7 +156,7 @@ def to_probabilit(
         values = [v.strip() for v in values_str.split(",")]
         probabilities = [float(v.strip()) for v in probabilities_str.split(",")]
         if len(values) != len(probabilities):
-            raise FmudesignError(
+            raise ParameterDesignError(
                 "Length mismatch for discrete distribution, "
                 f"dist_param1 has length {len(values)}, "
                 f"but dist_param2 has length {len(probabilities)}. "
@@ -226,7 +226,7 @@ def to_probabilit(
             )
 
         case [_, parameters] if distname.startswith("norm"):
-            raise FmudesignError(
+            raise ParameterDesignError(
                 f"Normal must have 2 or 4 parameters, got: "
                 f"{len(parameters)} ({parameters})"
             )
@@ -257,7 +257,7 @@ def to_probabilit(
             )
 
         case [_, parameters] if distname.startswith("logn"):
-            raise FmudesignError(
+            raise ParameterDesignError(
                 f"Lognormal must have 2 or 4 parameters, got: "
                 f"{len(parameters)} ({parameters})"
             )
@@ -282,7 +282,7 @@ def to_probabilit(
             return probabilit.distributions.Uniform(minimum=minimum, maximum=maximum)
 
         case [_, parameters] if distname.startswith("unif"):
-            raise FmudesignError(
+            raise ParameterDesignError(
                 f"Uniform must have 2 parameters, got: {len(parameters)} ({parameters})"
             )
 
@@ -309,7 +309,7 @@ def to_probabilit(
             )
 
         case [_, parameters] if distname.startswith("triang"):
-            raise FmudesignError(
+            raise ParameterDesignError(
                 f"Triangular must have 3 parameters, got: "
                 f"{len(parameters)} ({parameters})"
             )
@@ -335,7 +335,7 @@ def to_probabilit(
             return probabilit.Distribution("beta", a=a, b=b, loc=loc, scale=scale)
 
         case [_, parameters] if distname.startswith("beta"):
-            raise FmudesignError(
+            raise ParameterDesignError(
                 f"Beta must have 2 or 4 parameters, got: "
                 f"{len(parameters)} ({parameters})"
             )
@@ -377,7 +377,7 @@ def to_probabilit(
             )
 
         case [_, parameters] if distname.startswith("pert"):
-            raise FmudesignError(
+            raise ParameterDesignError(
                 f"PERT must have 3 or 4 parameters, got: "
                 f"{len(parameters)} ({parameters})"
             )
@@ -392,13 +392,13 @@ def to_probabilit(
             return probabilit.Distribution("loguniform", low, high)
 
         case [_, parameters] if distname.startswith("logunif"):
-            raise FmudesignError(
+            raise ParameterDesignError(
                 f"Loguniform must have 2 parameters, got: "
                 f"{len(parameters)} ({parameters})"
             )
 
         case [distname, parameters]:
-            raise FmudesignError(
+            raise ParameterDesignError(
                 f"Invalid combination of {distname=} and {parameters=}."
             )
 
@@ -419,7 +419,7 @@ def read_correlations(excel_filename: str, corr_sheet: str) -> pd.DataFrame:
             as column and index
     """
     if not str(excel_filename).endswith(".xlsx"):
-        raise FmudesignError(
+        raise ParameterDesignError(
             "Correlation matrix filename should be on Excel format and end with .xlsx"
         )
 
@@ -434,7 +434,7 @@ def read_correlations(excel_filename: str, corr_sheet: str) -> pd.DataFrame:
             engine="openpyxl",
         )
     except ValueError as err:
-        raise FmudesignError(
+        raise ParameterDesignError(
             f"Correlation sheet {corr_sheet!r} could not be read from "
             f"{excel_filename!r}: {err}\n"
             f"Sheets in workbook: {excel_sheet_names(excel_filename)}"
@@ -452,7 +452,7 @@ def read_correlations(excel_filename: str, corr_sheet: str) -> pd.DataFrame:
     )
 
     if list(correlations.index) != list(correlations.columns):
-        raise FmudesignError(
+        raise ParameterDesignError(
             "Mismatch between column and index in correlation "
             f"matrix sheet: {corr_sheet!r}\n"
             f"Column: {correlations.columns.tolist()}\n"
@@ -464,7 +464,7 @@ def read_correlations(excel_filename: str, corr_sheet: str) -> pd.DataFrame:
     try:
         arr = correlations.to_numpy(dtype=float, copy=True)
     except (ValueError, TypeError) as err:
-        raise FmudesignError(
+        raise ParameterDesignError(
             f"All elements in matrix in corr sheet {corr_sheet} must be numbers "
             f"or blank, got: {err}"
         ) from err
@@ -473,19 +473,19 @@ def read_correlations(excel_filename: str, corr_sheet: str) -> pd.DataFrame:
     lower_entries = arr[lower_idx]
 
     if not np.all(np.isnan(arr[upper_idx])):
-        raise FmudesignError(
+        raise ParameterDesignError(
             "All upper-triangular elements in matrix in "
             f"corr sheet {corr_sheet} must be blank."
         )
 
     if not np.all(np.isfinite(lower_entries)):
-        raise FmudesignError(
+        raise ParameterDesignError(
             "All lower-triangular elements in matrix in "
             f"corr sheet {corr_sheet} must be specified."
         )
 
     if np.any((lower_entries < -1) | (lower_entries > 1)):
-        raise FmudesignError(
+        raise ParameterDesignError(
             "All lower-triangular elements in matrix in "
             f"corr sheet {corr_sheet} must be between -1 and 1."
         )

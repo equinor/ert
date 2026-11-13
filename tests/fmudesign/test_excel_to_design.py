@@ -1,4 +1,3 @@
-from datetime import date
 from pathlib import Path
 
 import numpy as np
@@ -7,18 +6,12 @@ import pandas as pd
 import pytest
 from ruamel.yaml import YAML
 
-from fmudesign import (
-    DesignConfig,
-    FmudesignError,
-    config_to_yaml,
-    excel_to_config,
-)
+from ert.parameter_design import DesignConfig, DesignMatrix, ParameterDesignError
+from fmudesign import config_to_yaml, excel_to_config
 from fmudesign._excel_to_design import (
     _assert_no_merged_cells,
 )
-from fmudesign.design_input import _read_dependencies
-from fmudesign.utils import _has_value, map_dependencies
-from tests.fmudesign._configurations import full_mc_configuration
+from tests.ert.unit_tests.parameter_design._configurations import full_mc_configuration
 
 MOCK_GENERAL_INPUT = pd.DataFrame(
     data=[
@@ -115,7 +108,7 @@ def test_that_duplicate_sensitivity_names_raise_value_error(use_tmpdir):
     )
 
     with pytest.raises(
-        FmudesignError, match="Two sensitivities cannot share the same sensname"
+        ParameterDesignError, match="Two sensitivities cannot share the same sensname"
     ):
         excel_to_config(input_path)
 
@@ -167,7 +160,7 @@ def test_that_excel_to_design_rejects_duplicate_default_names_after_trimming(
         ),
     )
 
-    with pytest.raises(FmudesignError, match="duplicate parameter names"):
+    with pytest.raises(ParameterDesignError, match="duplicate parameter names"):
         excel_to_config(input_path)
 
 
@@ -183,7 +176,9 @@ def test_that_mixed_sensitivity_types_raise_value_error(use_tmpdir):
         "designinput.xlsx", design_input=mock_erroneous_designinput
     )
 
-    with pytest.raises(FmudesignError, match="contains more than one sensitivity type"):
+    with pytest.raises(
+        ParameterDesignError, match="contains more than one sensitivity type"
+    ):
         excel_to_config(input_path)
 
 
@@ -203,20 +198,13 @@ def test_that_invalid_sensitivity_type_error_lists_valid_types(
     input_path = _write_config_workbook("designinput.xlsx", design_input=design_input)
 
     with pytest.raises(
-        FmudesignError,
+        ParameterDesignError,
         match=(
             rf"Sensitivity 'Sens_1' in the design input sheet {problem}\. "
             r"Valid types are: seed, scenario, dist, ref, background, extern\."
         ),
     ):
         excel_to_config(input_path)
-
-
-@pytest.mark.parametrize(
-    ("value", "expected"), [(1, True), (np.nan, False), (None, True)]
-)
-def test_that_has_value_treats_only_nan_as_missing(value, expected):
-    assert _has_value(value) is expected
 
 
 def test_that_excel_to_design_parses_background_sheet(use_tmpdir):
@@ -342,7 +330,7 @@ def test_that_missing_distribution_fields_report_the_field_and_source(
     else:
         _write_background_workbook(input_path, distribution_rows, None, sheet)
 
-    with pytest.raises(FmudesignError, match=error) as exc_info:
+    with pytest.raises(ParameterDesignError, match=error) as exc_info:
         excel_to_config(input_path)
 
     message = str(exc_info.value).lower()
@@ -391,7 +379,7 @@ def test_that_invalid_background_correlation_sheet_raises_value_error(
         "backgroundsheet",
     )
 
-    with pytest.raises(FmudesignError, match=error):
+    with pytest.raises(ParameterDesignError, match=error):
         excel_to_config(input_path)
 
 
@@ -401,7 +389,7 @@ def test_that_missing_correlation_sheet_raises_fmudesign_error(use_tmpdir):
     )
 
     with pytest.raises(
-        FmudesignError,
+        ParameterDesignError,
         match=(
             r"Correlation sheet 'bgcorr' could not be read from 'designinput.xlsx'"
             r".*\nSheets in workbook: \['general_input', 'designinput', "
@@ -422,7 +410,7 @@ def test_that_non_numeric_correlation_entry_raises_fmudesign_error(use_tmpdir):
     )
 
     with pytest.raises(
-        FmudesignError,
+        ParameterDesignError,
         match=(
             r"All elements in matrix in corr sheet bgcorr must be numbers or "
             r"blank, got: .*'0,5'"
@@ -436,7 +424,7 @@ def test_that_missing_background_sheet_error_lists_available_sheets(use_tmpdir):
         "designinput.xlsx", BACKGROUND_WITH_CORR, None, "typo_sheet"
     )
 
-    with pytest.raises(FmudesignError, match="Sheets in workbook") as exc_info:
+    with pytest.raises(ParameterDesignError, match="Sheets in workbook") as exc_info:
         excel_to_config(input_path)
 
     message = str(exc_info.value)
@@ -477,7 +465,7 @@ def test_that_missing_background_csv_file_raises_value_error(use_tmpdir):
     )
 
     with pytest.raises(
-        FmudesignError,
+        ParameterDesignError,
         match=r"Sheet 'missing_background.csv' with background parameters, "
         "specified in the general input sheet, "
         "was not found in 'designinput.xlsx'.",
@@ -506,7 +494,7 @@ def test_that_assert_no_merged_cells_rejects_merged_cells(tmp_path):
     workbook.save(input_path)
     workbook.close()
 
-    with pytest.raises(FmudesignError, match="Merged cells"):
+    with pytest.raises(ParameterDesignError, match="Merged cells"):
         _assert_no_merged_cells(input_path)
 
 
@@ -531,234 +519,6 @@ def test_that_excel_to_design_preserves_seed_strategy(use_tmpdir):
     )
     dict_design = excel_to_config(input_path)
     assert dict_design.seed_strategy == "independent"
-
-
-def _write_dependency_workbook(path, rows):
-    workbook = openpyxl.Workbook()
-    sheet = workbook.create_sheet("dependencies")
-    for row in rows:
-        sheet.append(row)
-    workbook.save(path)
-    workbook.close()
-    return path
-
-
-def test_that_dependency_columns_map_by_parameter_name_and_exact_source_value(tmp_path):
-    input_path = _write_dependency_workbook(
-        tmp_path / "dependencies.xlsx",
-        [
-            ["MULTIPLIER", "SOURCE", "LABEL"],
-            [1, " high ", " sand "],
-            [2.5, 2, "mixed"],
-            [-3, "low", "shale"],
-        ],
-    )
-    dependencies = _read_dependencies(
-        filename=str(input_path), sheetname="dependencies", from_parameter="SOURCE"
-    )
-
-    result = map_dependencies(
-        pd.DataFrame({"SOURCE": ["low", 2, " high "]}),
-        dependencies={"SOURCE": dependencies},
-    )
-
-    assert result.to_dict(orient="list") == {
-        "SOURCE": ["low", 2, " high "],
-        "MULTIPLIER": [-3, 2.5, 1],
-        "LABEL": ["shale", "mixed", " sand "],
-    }
-
-
-def test_that_numeric_dependency_keys_and_targets_preserve_precision(tmp_path):
-    input_path = _write_dependency_workbook(
-        tmp_path / "dependencies.xlsx",
-        [
-            ["SOURCE", "TARGET"],
-            [1.9999999999, 1e-10],
-            [2, 0.123456789012345],
-            ["other", -1e-10],
-        ],
-    )
-    dependencies = _read_dependencies(
-        filename=str(input_path), sheetname="dependencies", from_parameter="SOURCE"
-    )
-
-    result = map_dependencies(
-        pd.DataFrame({"SOURCE": [2, "other", 1.9999999999]}),
-        dependencies={"SOURCE": dependencies},
-    )
-
-    assert result.to_dict(orient="list") == {
-        "SOURCE": [2, "other", 1.9999999999],
-        "TARGET": [0.123456789012345, -1e-10, 1e-10],
-    }
-
-
-def test_that_native_excel_dates_and_text_timestamps_map_to_distinct_values(tmp_path):
-    input_path = _write_dependency_workbook(
-        tmp_path / "dependencies.xlsx",
-        [
-            ["SOURCE", "TARGET"],
-            [date(2018, 11, 2), "native-date"],
-            ["2018-11-02 00:00:00", "text-timestamp"],
-        ],
-    )
-    dependencies = _read_dependencies(
-        filename=str(input_path), sheetname="dependencies", from_parameter="SOURCE"
-    )
-
-    result = map_dependencies(
-        pd.DataFrame({"SOURCE": ["2018-11-02 00:00:00", "2018-11-02"]}),
-        dependencies={"SOURCE": dependencies},
-    )
-
-    assert result.to_dict(orient="list") == {
-        "SOURCE": ["2018-11-02 00:00:00", "2018-11-02"],
-        "TARGET": ["text-timestamp", "native-date"],
-    }
-
-
-def test_that_excel_booleans_match_title_case_dependency_categories(tmp_path):
-    input_path = _write_dependency_workbook(
-        tmp_path / "dependencies.xlsx",
-        [
-            ["SOURCE", "TARGET"],
-            [True, False],
-            ["true", "false"],
-            ["TRUE", "FALSE"],
-        ],
-    )
-    dependencies = _read_dependencies(
-        filename=str(input_path), sheetname="dependencies", from_parameter="SOURCE"
-    )
-
-    result = map_dependencies(
-        pd.DataFrame({"SOURCE": ["True", "true", "TRUE"]}),
-        dependencies={"SOURCE": dependencies},
-    )
-
-    assert result.to_dict(orient="list") == {
-        "SOURCE": ["True", "true", "TRUE"],
-        "TARGET": ["False", "false", "FALSE"],
-    }
-
-
-def test_that_unnamed_dependency_columns_and_blank_rows_are_ignored(tmp_path):
-    input_path = _write_dependency_workbook(
-        tmp_path / "dependencies.xlsx",
-        [
-            ["SOURCE", None, "TARGET", "", " \t "],
-            ["high", "note", "upper", "note", "note"],
-            [None, None, None, None, None],
-            [None, "note", None, "note", "note"],
-            [" \t", "note", "\n ", "note", "note"],
-            ["low", "note", "lower", "note", "note"],
-        ],
-    )
-
-    assert _read_dependencies(
-        filename=str(input_path), sheetname="dependencies", from_parameter="SOURCE"
-    ) == {
-        "from_values": ["high", "low"],
-        "to_params": {"TARGET": ["upper", "lower"]},
-    }
-
-
-@pytest.mark.parametrize(
-    ("row", "missing_parameter"),
-    [
-        pytest.param([None, 0], "SOURCE", id="missing-source"),
-        pytest.param([" \t", 0], "SOURCE", id="whitespace-source"),
-        pytest.param(["middle", None], "TARGET", id="missing-target"),
-        pytest.param(["middle", ""], "TARGET", id="empty-target"),
-        pytest.param(["middle", " \t"], "TARGET", id="whitespace-target"),
-        pytest.param(["middle", "#N/A"], "TARGET", id="excel-error"),
-    ],
-)
-def test_that_incomplete_dependency_rows_raise_a_configuration_error(
-    tmp_path, row, missing_parameter
-):
-    input_path = _write_dependency_workbook(
-        tmp_path / "dependencies.xlsx",
-        [["SOURCE", "TARGET"], ["high", 20], [None, None], row],
-    )
-
-    with pytest.raises(
-        FmudesignError,
-        match=f"Missing dependency value for parameter '{missing_parameter}' "
-        "in sheet 'dependencies', row 4",
-    ):
-        _read_dependencies(
-            filename=str(input_path), sheetname="dependencies", from_parameter="SOURCE"
-        )
-
-
-def test_that_dependency_headers_without_rows_copy_source_values(tmp_path):
-    input_path = _write_dependency_workbook(
-        tmp_path / "dependencies.xlsx", [["SOURCE", None, "COPY", ""]]
-    )
-    dependencies = _read_dependencies(
-        filename=str(input_path), sheetname="dependencies", from_parameter="SOURCE"
-    )
-
-    result = map_dependencies(
-        pd.DataFrame({"SOURCE": ["C1", "C2"]}),
-        dependencies={"SOURCE": dependencies},
-    )
-
-    assert result.to_dict(orient="list") == {
-        "SOURCE": ["C1", "C2"],
-        "COPY": ["C1", "C2"],
-    }
-
-
-@pytest.mark.parametrize("duplicate_parameter", ["SOURCE", "TARGET"])
-def test_that_duplicate_dependency_parameter_names_raise_value_error(
-    tmp_path, duplicate_parameter
-):
-    input_path = _write_dependency_workbook(
-        tmp_path / "dependencies.xlsx",
-        [["SOURCE", "TARGET", duplicate_parameter]],
-    )
-
-    with pytest.raises(
-        FmudesignError,
-        match="Duplicate parameter names in dependency sheet 'dependencies'",
-    ):
-        _read_dependencies(
-            filename=str(input_path), sheetname="dependencies", from_parameter="SOURCE"
-        )
-
-
-def test_that_missing_dependency_worksheet_raises_value_error(tmp_path):
-    input_path = _write_dependency_workbook(
-        tmp_path / "dependencies.xlsx", [["SOURCE", "TARGET"]]
-    )
-
-    with pytest.raises(FmudesignError, match="Worksheet 'missing' not found"):
-        _read_dependencies(
-            filename=str(input_path), sheetname="missing", from_parameter="SOURCE"
-        )
-
-
-@pytest.mark.parametrize(
-    "rows", [[], [["OTHER"], [1]]], ids=["empty-sheet", "missing-source"]
-)
-def test_that_dependency_sheet_without_source_parameter_raises_value_error(
-    tmp_path, rows
-):
-    input_path = _write_dependency_workbook(tmp_path / "dependencies.xlsx", rows)
-
-    with pytest.raises(
-        FmudesignError,
-        match=r"Parameter SOURCE.*sheet specifying the dependencies dependencies.*"
-        r"does not contain the input parameter",
-    ):
-        _read_dependencies(
-            filename=str(input_path),
-            sheetname="dependencies",
-            from_parameter="SOURCE",
-        )
 
 
 def test_that_config_to_yaml_does_not_dump_python_specific_content(use_tmpdir):
@@ -788,7 +548,7 @@ def test_that_empty_rms_seeds_file_raises_value_error(use_tmpdir):
     design_file = "foo.xlsx"
     _write_config_workbook(path=design_file, general_input=general_input)
 
-    with pytest.raises(FmudesignError, match="at least one seed"):
+    with pytest.raises(ParameterDesignError, match="at least one seed"):
         excel_to_config(design_file)
 
 
@@ -804,3 +564,202 @@ def test_that_empty_parameter_name_with_decimals_is_dropped_in_config(use_tmpdir
     _write_config_workbook(wb_path, design_input=design_input)
     config = excel_to_config(wb_path)
     assert config.decimals == {"foo": 3}
+
+
+@pytest.mark.slow
+@pytest.mark.parametrize("correlations", [True, False])
+def test_that_generated_distributions_match_configured_statistics(
+    use_tmpdir, correlations
+):
+    NUM_SAMPLES = 10**5
+
+    def gl(paramname, distname, p1, p2, p3="", p4=""):
+        """GL = Generate Line. Generates a line in the input sheet."""
+        return [
+            "",
+            pd.NA,
+            "",
+            paramname,
+            "",
+            pd.NA,
+            "",
+            pd.NA,
+            distname,
+            p1,
+            p2,
+            p3,
+            p4,
+            pd.NA,
+            "corr1" if correlations else "",
+            "",
+        ]
+
+    # General input sheet
+    general_input = pd.DataFrame(
+        data=[
+            ["designtype", "onebyone"],
+            ["repeats", 1],
+            ["rms_seeds", "default"],
+            ["background", "None"],
+            ["distribution_seed", 42],
+        ]
+    )
+
+    # Design input sheet
+    design_input = pd.DataFrame(
+        data=[
+            # Normal has params (mean, std, low=-inf, high=inf)
+            gl("NORMAL", "normal", 0, 2),
+            gl("TRUNCNORM", "normal", 0, 1, -1, 2),
+            # Lognormal has params (mean, sigma)
+            gl("LOGNORMAL", "logn", 1.5, 0.5),
+            gl("TRUNCLOGNORMAL", "logn", 1.5, 0.5, 5, 15),
+            # Uniform has params (low, high)
+            gl("UNIFORM", "unif", -5, 0),
+            # Triangular has params (low, mode, high)
+            gl("TRIANG", "triang", -5, 0, 5),
+            # Beta has params (alpha, beta, low=0, high=1)
+            gl("BETA", "beta", 5, 2),
+            gl("SCALEDBETA", "beta", 5, 2, -2, 3),
+            # Pert has has params (low, mode, high, scale=4)
+            gl("DEFAULTPERT", "pert", -5, 0, 5),
+            gl("SCALEPERT", "pert", -5, 0, 5, 1),
+            # Loguniform has params (low, high)
+            gl("LOGUNIFORM", "logunif", 1, 5),
+            # P10/P90 versions
+            gl("NORMALP10P90", "normal_p10_p90", -2, 3),
+            gl("UNIFORMP10P90", "uniform_p10_p90", -2, 3),
+            gl("TRIANGULARP10P90", "triangular_p10_p90", -2, 2, 3),
+            gl("PERTP10P90", "pert_p10_p90", -2, 2, 3),
+        ],
+        columns=[
+            "sensname",
+            "numreal",
+            "type",
+            "param_name",
+            "senscase1",
+            "value1",
+            "senscase2",
+            "value2",
+            "dist_name",
+            "dist_param1",
+            "dist_param2",
+            "dist_param3",
+            "dist_param4",
+            "decimals",
+            "corr_sheet",
+            "extern_file",
+        ],
+    )
+    design_input.iloc[0, :3] = ["distr_test", (NUM_SAMPLES), "dist"]
+
+    # Default values sheet
+    defaultvalues = pd.DataFrame(
+        {
+            "param_name": list(design_input["param_name"]),
+            "default_value": [0.5] * (len(design_input)),
+        }
+    )
+
+    # Correlation sheet
+    num_vars = len(design_input["param_name"])
+    corr_values = np.zeros(shape=(num_vars, num_vars)) + 0.2
+    np.fill_diagonal(corr_values, val=1.0)
+    upper_idx = np.triu_indices_from(corr_values, k=1)
+    # Set upper triangle to blank on the numpy array before creating the DataFrame,
+    # since DataFrame.to_numpy() returns a copy in pandas 3 (CoW).
+    str_values = corr_values.astype(str)
+    str_values[upper_idx] = ""
+    corr_sheet = pd.DataFrame(
+        str_values,
+        columns=list(design_input["param_name"]),
+        index=list(design_input["param_name"]),
+    )
+    # Create a file to do the save => load roundtrip and test that too
+    input_path = "designinput.xlsx"
+    with pd.ExcelWriter(input_path, engine="openpyxl") as writer:
+        general_input.to_excel(
+            writer, sheet_name="general_input", index=False, header=None
+        )
+        design_input.to_excel(writer, sheet_name="designinput", index=False)
+        defaultvalues.to_excel(writer, sheet_name="defaultvalues", index=False)
+        corr_sheet.to_excel(writer, sheet_name="corr1")
+
+    # Read the file and draw samples
+    input_dict = excel_to_config(input_path)
+    design = DesignMatrix(input_dict)
+    assert len(design.designvalues) == NUM_SAMPLES
+    df = design.designvalues
+
+    # Test statistical properties and boundaries of all variables.
+    # There were either derived using analytical properties, or empirically
+    # by drawing 10 million samples.
+    # Tolerance must be high enough to not pick up on rng differences, but low
+    # enough to pick up meaningful changes.
+    atol = 0.005
+
+    assert np.isclose(df["NORMAL"].mean(), 0.0, atol=atol)
+    assert np.isclose(df["NORMAL"].std(), 2.0, atol=atol)
+
+    assert np.isclose(df["TRUNCNORM"].mean(), 0.229637, atol=atol)
+    assert np.isclose(df["TRUNCNORM"].std(), 0.720945, atol=atol)
+    assert df["TRUNCNORM"].min() >= -1
+    assert df["TRUNCNORM"].max() <= 2
+
+    assert np.isclose(df["LOGNORMAL"].mean(), 5.078418, atol=atol)
+    assert np.isclose(df["LOGNORMAL"].std(), 2.706487, atol=atol)
+
+    assert df["TRUNCLOGNORMAL"].min() >= 5
+    assert df["TRUNCLOGNORMAL"].max() <= 15
+
+    assert df["UNIFORM"].min() >= -5
+    assert df["UNIFORM"].max() <= 0
+    assert np.isclose(df["UNIFORM"].mean(), -2.5, atol=atol)
+    assert np.isclose(df["UNIFORM"].std(), 1.443375, atol=atol)
+
+    assert df["TRIANG"].min() >= -5
+    assert df["TRIANG"].max() <= 5
+    assert np.isclose(df["TRIANG"].mean(), 0, atol=atol)
+    assert np.isclose(df["TRIANG"].std(), 2.041241, atol=atol)
+
+    assert df["BETA"].min() >= 0
+    assert df["BETA"].max() <= 1
+    assert np.isclose(df["BETA"].mean(), 0.714286, atol=atol)
+    assert np.isclose(df["BETA"].std(), 0.159719, atol=atol)
+
+    assert df["SCALEDBETA"].min() >= -2
+    assert df["SCALEDBETA"].max() <= 3
+    assert np.isclose(df["SCALEDBETA"].mean(), 1.571429, atol=atol)
+    assert np.isclose(df["SCALEDBETA"].std(), 0.798596, atol=atol)
+
+    assert df["DEFAULTPERT"].min() >= -5
+    assert df["DEFAULTPERT"].max() <= 5
+    assert np.isclose(df["DEFAULTPERT"].mean(), 0, atol=atol)
+    assert np.isclose(df["DEFAULTPERT"].std(), 1.889822, atol=atol)
+
+    assert df["SCALEPERT"].min() >= -5
+    assert df["SCALEPERT"].max() <= 5
+    assert np.isclose(df["SCALEPERT"].mean(), 0, atol=atol)
+    assert np.isclose(df["SCALEPERT"].std(), 2.5, atol=atol)
+
+    assert np.isclose(df["LOGUNIFORM"].mean(), 2.485339, atol=atol)
+    assert np.isclose(df["LOGUNIFORM"].std(), 1.130975, atol=atol)
+
+    # The P10/P90 distributions are all defined to have P10=-2 and P90=3,
+    # so we test them by checking that the observed percentiles match
+    assert np.isclose(df["NORMALP10P90"].quantile(0.1), -2, atol=atol)
+    assert np.isclose(df["NORMALP10P90"].quantile(0.9), 3, atol=atol)
+
+    assert np.isclose(df["UNIFORMP10P90"].quantile(0.1), -2, atol=atol)
+    assert np.isclose(df["UNIFORMP10P90"].quantile(0.9), 3, atol=atol)
+
+    assert np.isclose(df["TRIANGULARP10P90"].quantile(0.1), -2, atol=atol)
+    assert np.isclose(df["TRIANGULARP10P90"].quantile(0.9), 3, atol=atol)
+
+    assert np.isclose(df["PERTP10P90"].quantile(0.1), -2, atol=atol)
+    assert np.isclose(df["PERTP10P90"].quantile(0.9), 3, atol=atol)
+
+    # Check that correlations are close
+    if correlations:
+        obs_corr = df[design_input["param_name"]].corr().to_numpy()
+        assert np.sqrt(np.mean((obs_corr - corr_values) ** 2)) < 0.02

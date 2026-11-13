@@ -5,35 +5,9 @@ import subprocess
 import pandas as pd
 import pytest
 
-from fmudesign import DesignMatrix
-from tests.fmudesign._configurations import minimal_configuration
-
-
-def assert_valid_designmatrix(design_values):
-    assert design_values.columns[:3].tolist() == ["REAL", "SENSNAME", "SENSCASE"]
-    assert design_values["REAL"].tolist() == list(range(len(design_values)))
-    assert not design_values.isna().any().any()
-
-
-def test_that_design_matrix_generates_seed_sensitivity_for_each_repeat():
-    config = minimal_configuration()
-    repeats = 10
-    config.repeats = repeats
-    config.rms_seeds = "default"
-    config.sensitivities = {
-        "rms_seed": {
-            "seedname": "RMS_SEED",
-            "senstype": "seed",
-            "parameters": None,
-            "dependencies": {},
-        }
-    }
-
-    design = DesignMatrix(config)
-
-    assert_valid_designmatrix(design.designvalues)
-    assert len(design.designvalues) == repeats
-    assert isinstance(design.defaultvalues, dict)
+from tests.ert.unit_tests.parameter_design.test_designmatrix import (
+    assert_valid_designmatrix,
+)
 
 
 @pytest.mark.slow

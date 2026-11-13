@@ -1,7 +1,6 @@
 from typing import Any
 
-from fmudesign.exceptions import FmudesignError
-
+from .exceptions import ParameterDesignError
 from .read_correlations import parse_sensitivity_correlations
 from .read_distributions import parse_distribution_parameters
 from .utils import excel_sheet_names, find_sheet, parse_decimals, read_excel_sheet
@@ -21,8 +20,8 @@ def read_background(inp_filename: str, bck_sheet: str) -> dict[str, Any]:
     sheet_names = excel_sheet_names(inp_filename)
     try:
         bck_sheet = find_sheet(bck_sheet, names=sheet_names)
-    except FmudesignError as err:
-        raise FmudesignError(
+    except ParameterDesignError as err:
+        raise ParameterDesignError(
             f"Sheet {bck_sheet!r} with background parameters, specified in the "
             f"general input sheet, was not found in {inp_filename!r}.\n"
             f"Sheets in workbook: {sheet_names}\n"

@@ -7,9 +7,10 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from fmudesign import DesignMatrix, excel_to_config
+from ert.parameter_design import DesignMatrix
+from ert.parameter_design.utils import map_dependencies
+from fmudesign import excel_to_config
 from fmudesign.fmudesignrunner import EXAMPLES
-from fmudesign.utils import map_dependencies
 
 EXAMPLE_FILES = [example.filename for example in EXAMPLES]
 

@@ -1,2 +1,2 @@
-class FmudesignError(ValueError):
+class ParameterDesignError(ValueError):
     """Raised for user misconfiguration."""

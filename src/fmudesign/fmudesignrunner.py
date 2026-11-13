@@ -33,13 +33,13 @@ from opentelemetry.trace import Status, StatusCode
 from packaging.version import Version
 from pydantic import ValidationError
 
+from ert.parameter_design import DesignMatrix, ParameterDesignError
+from ert.parameter_design.create_design import normalize_xlsx_filename
 from ert.plugins import setup_site_logging
 from ert.shared import __version__ as ert_version
 from ert.trace import trace, tracer
-from fmudesign.exceptions import FmudesignError
 
 from ._excel_to_design import excel_to_config
-from .create_design import DesignMatrix, _normalize_xlsx_filename
 
 logger = logging.getLogger(__name__)
 
@@ -264,11 +264,11 @@ def subcommand_run(args: Namespace, parser: ArgumentParser) -> None:
 
     # Check existence of config file
     if not Path(args.config).is_file():
-        raise FmudesignError(f"Input file {args.config} does not exist")
+        raise ParameterDesignError(f"Input file {args.config} does not exist")
 
-    destination = _normalize_xlsx_filename(args.destination)
+    destination = normalize_xlsx_filename(args.destination)
     if Path(args.config).resolve() == Path(destination).resolve():
-        raise FmudesignError(
+        raise ParameterDesignError(
             f'Identical name "{args.config}" have been provided for the input'
             "file and the output file"
         )
@@ -304,7 +304,7 @@ def subcommand_init(args: Namespace, parser: ArgumentParser) -> None:
     filename = args.file.strip()
     examples_by_filename = {example.filename: example for example in EXAMPLES}
     if filename not in examples_by_filename:
-        raise FmudesignError(
+        raise ParameterDesignError(
             f"Error on {filename!r}. Not found among: {set(examples_by_filename)}"
         )
 
@@ -318,7 +318,7 @@ def subcommand_init(args: Namespace, parser: ArgumentParser) -> None:
             f"Error on {destination!r}. Already exists."
             for destination in existing_destinations
         )
-        raise FmudesignError(err)
+        raise ParameterDesignError(err)
 
     with as_file(EXAMPLES_DIR / filename) as source_path:
         shutil.copy(source_path, filename)
@@ -360,6 +360,7 @@ def main() -> None:
     setup_site_logging(root_logger)
 
     logging.getLogger("fmudesign").setLevel(logging.INFO)
+    logging.getLogger("ert.parameter_design").setLevel(logging.INFO)
     logger.info(f"Running fmudesign with args: {given_args}")
 
     err_guide_msg = (
@@ -372,7 +373,7 @@ def main() -> None:
     )
     try:
         args.func(args)
-    except (FmudesignError, ValidationError) as e:
+    except (ParameterDesignError, ValidationError) as e:
         message = (
             _format_validation_error(e) if isinstance(e, ValidationError) else str(e)
         )

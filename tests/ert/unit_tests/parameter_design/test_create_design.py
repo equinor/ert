@@ -10,16 +10,20 @@ import pandas as pd
 import pytest
 from scipy import stats
 
-from ert.shared import __version__ as ert_version
-from fmudesign import DesignConfig, DesignMatrix, FmudesignError, excel_to_config
-from fmudesign import design_distributions as design_dist
-from fmudesign.create_design import (
+from ert.parameter_design import (
+    DesignConfig,
+    DesignMatrix,
+    ParameterDesignError,
+    SeedStrategy,
+)
+from ert.parameter_design import design_distributions as design_dist
+from ert.parameter_design.create_design import (
     ExternSensitivity,
     MonteCarloSensitivity,
     _derive_rng,
 )
-from fmudesign.quality_report import print_corrmat
-from fmudesign.seed_strategy import SeedStrategy
+from ert.parameter_design.quality_report import print_corrmat
+from ert.shared import __version__ as ert_version
 
 from ._configurations import (
     background_configuration,
@@ -27,205 +31,6 @@ from ._configurations import (
     minimal_configuration,
     onebyone_configuration,
 )
-
-
-@pytest.mark.slow
-@pytest.mark.parametrize("correlations", [True, False])
-def test_that_generated_distributions_match_configured_statistics(
-    use_tmpdir, correlations
-):
-    NUM_SAMPLES = 10**5
-
-    def gl(paramname, distname, p1, p2, p3="", p4=""):
-        """GL = Generate Line. Generates a line in the input sheet."""
-        return [
-            "",
-            pd.NA,
-            "",
-            paramname,
-            "",
-            pd.NA,
-            "",
-            pd.NA,
-            distname,
-            p1,
-            p2,
-            p3,
-            p4,
-            pd.NA,
-            "corr1" if correlations else "",
-            "",
-        ]
-
-    # General input sheet
-    general_input = pd.DataFrame(
-        data=[
-            ["designtype", "onebyone"],
-            ["repeats", 1],
-            ["rms_seeds", "default"],
-            ["background", "None"],
-            ["distribution_seed", 42],
-        ]
-    )
-
-    # Design input sheet
-    design_input = pd.DataFrame(
-        data=[
-            # Normal has params (mean, std, low=-inf, high=inf)
-            gl("NORMAL", "normal", 0, 2),
-            gl("TRUNCNORM", "normal", 0, 1, -1, 2),
-            # Lognormal has params (mean, sigma)
-            gl("LOGNORMAL", "logn", 1.5, 0.5),
-            gl("TRUNCLOGNORMAL", "logn", 1.5, 0.5, 5, 15),
-            # Uniform has params (low, high)
-            gl("UNIFORM", "unif", -5, 0),
-            # Triangular has params (low, mode, high)
-            gl("TRIANG", "triang", -5, 0, 5),
-            # Beta has params (alpha, beta, low=0, high=1)
-            gl("BETA", "beta", 5, 2),
-            gl("SCALEDBETA", "beta", 5, 2, -2, 3),
-            # Pert has has params (low, mode, high, scale=4)
-            gl("DEFAULTPERT", "pert", -5, 0, 5),
-            gl("SCALEPERT", "pert", -5, 0, 5, 1),
-            # Loguniform has params (low, high)
-            gl("LOGUNIFORM", "logunif", 1, 5),
-            # P10/P90 versions
-            gl("NORMALP10P90", "normal_p10_p90", -2, 3),
-            gl("UNIFORMP10P90", "uniform_p10_p90", -2, 3),
-            gl("TRIANGULARP10P90", "triangular_p10_p90", -2, 2, 3),
-            gl("PERTP10P90", "pert_p10_p90", -2, 2, 3),
-        ],
-        columns=[
-            "sensname",
-            "numreal",
-            "type",
-            "param_name",
-            "senscase1",
-            "value1",
-            "senscase2",
-            "value2",
-            "dist_name",
-            "dist_param1",
-            "dist_param2",
-            "dist_param3",
-            "dist_param4",
-            "decimals",
-            "corr_sheet",
-            "extern_file",
-        ],
-    )
-    design_input.iloc[0, :3] = ["distr_test", (NUM_SAMPLES), "dist"]
-
-    # Default values sheet
-    defaultvalues = pd.DataFrame(
-        {
-            "param_name": list(design_input["param_name"]),
-            "default_value": [0.5] * (len(design_input)),
-        }
-    )
-
-    # Correlation sheet
-    num_vars = len(design_input["param_name"])
-    corr_values = np.zeros(shape=(num_vars, num_vars)) + 0.2
-    np.fill_diagonal(corr_values, val=1.0)
-    upper_idx = np.triu_indices_from(corr_values, k=1)
-    # Set upper triangle to blank on the numpy array before creating the DataFrame,
-    # since DataFrame.to_numpy() returns a copy in pandas 3 (CoW).
-    str_values = corr_values.astype(str)
-    str_values[upper_idx] = ""
-    corr_sheet = pd.DataFrame(
-        str_values,
-        columns=list(design_input["param_name"]),
-        index=list(design_input["param_name"]),
-    )
-    # Create a file to do the save => load roundtrip and test that too
-    input_path = "designinput.xlsx"
-    with pd.ExcelWriter(input_path, engine="openpyxl") as writer:
-        general_input.to_excel(
-            writer, sheet_name="general_input", index=False, header=None
-        )
-        design_input.to_excel(writer, sheet_name="designinput", index=False)
-        defaultvalues.to_excel(writer, sheet_name="defaultvalues", index=False)
-        corr_sheet.to_excel(writer, sheet_name="corr1")
-
-    # Read the file and draw samples
-    input_dict = excel_to_config(input_path)
-    design = DesignMatrix(input_dict)
-    assert len(design.designvalues) == NUM_SAMPLES
-    df = design.designvalues
-
-    # Test statistical properties and boundaries of all variables.
-    # There were either derived using analytical properties, or empirically
-    # by drawing 10 million samples.
-    # Tolerance must be high enough to not pick up on rng differences, but low
-    # enough to pick up meaningful changes.
-    atol = 0.005
-
-    assert np.isclose(df["NORMAL"].mean(), 0.0, atol=atol)
-    assert np.isclose(df["NORMAL"].std(), 2.0, atol=atol)
-
-    assert np.isclose(df["TRUNCNORM"].mean(), 0.229637, atol=atol)
-    assert np.isclose(df["TRUNCNORM"].std(), 0.720945, atol=atol)
-    assert df["TRUNCNORM"].min() >= -1
-    assert df["TRUNCNORM"].max() <= 2
-
-    assert np.isclose(df["LOGNORMAL"].mean(), 5.078418, atol=atol)
-    assert np.isclose(df["LOGNORMAL"].std(), 2.706487, atol=atol)
-
-    assert df["TRUNCLOGNORMAL"].min() >= 5
-    assert df["TRUNCLOGNORMAL"].max() <= 15
-
-    assert df["UNIFORM"].min() >= -5
-    assert df["UNIFORM"].max() <= 0
-    assert np.isclose(df["UNIFORM"].mean(), -2.5, atol=atol)
-    assert np.isclose(df["UNIFORM"].std(), 1.443375, atol=atol)
-
-    assert df["TRIANG"].min() >= -5
-    assert df["TRIANG"].max() <= 5
-    assert np.isclose(df["TRIANG"].mean(), 0, atol=atol)
-    assert np.isclose(df["TRIANG"].std(), 2.041241, atol=atol)
-
-    assert df["BETA"].min() >= 0
-    assert df["BETA"].max() <= 1
-    assert np.isclose(df["BETA"].mean(), 0.714286, atol=atol)
-    assert np.isclose(df["BETA"].std(), 0.159719, atol=atol)
-
-    assert df["SCALEDBETA"].min() >= -2
-    assert df["SCALEDBETA"].max() <= 3
-    assert np.isclose(df["SCALEDBETA"].mean(), 1.571429, atol=atol)
-    assert np.isclose(df["SCALEDBETA"].std(), 0.798596, atol=atol)
-
-    assert df["DEFAULTPERT"].min() >= -5
-    assert df["DEFAULTPERT"].max() <= 5
-    assert np.isclose(df["DEFAULTPERT"].mean(), 0, atol=atol)
-    assert np.isclose(df["DEFAULTPERT"].std(), 1.889822, atol=atol)
-
-    assert df["SCALEPERT"].min() >= -5
-    assert df["SCALEPERT"].max() <= 5
-    assert np.isclose(df["SCALEPERT"].mean(), 0, atol=atol)
-    assert np.isclose(df["SCALEPERT"].std(), 2.5, atol=atol)
-
-    assert np.isclose(df["LOGUNIFORM"].mean(), 2.485339, atol=atol)
-    assert np.isclose(df["LOGUNIFORM"].std(), 1.130975, atol=atol)
-
-    # The P10/P90 distributions are all defined to have P10=-2 and P90=3,
-    # so we test them by checking that the observed percentiles match
-    assert np.isclose(df["NORMALP10P90"].quantile(0.1), -2, atol=atol)
-    assert np.isclose(df["NORMALP10P90"].quantile(0.9), 3, atol=atol)
-
-    assert np.isclose(df["UNIFORMP10P90"].quantile(0.1), -2, atol=atol)
-    assert np.isclose(df["UNIFORMP10P90"].quantile(0.9), 3, atol=atol)
-
-    assert np.isclose(df["TRIANGULARP10P90"].quantile(0.1), -2, atol=atol)
-    assert np.isclose(df["TRIANGULARP10P90"].quantile(0.9), 3, atol=atol)
-
-    assert np.isclose(df["PERTP10P90"].quantile(0.1), -2, atol=atol)
-    assert np.isclose(df["PERTP10P90"].quantile(0.9), 3, atol=atol)
-
-    # Check that correlations are close
-    if correlations:
-        obs_corr = df[design_input["param_name"]].corr().to_numpy()
-        assert np.sqrt(np.mean((obs_corr - corr_values) ** 2)) < 0.02
 
 
 @pytest.mark.parametrize("output_filename", ["designmatrix.xlsx", "designmatrix"])
@@ -645,7 +450,7 @@ def test_that_correlation_sheet_without_header_or_index_raises_fmudesign_error(
         [[1.0, np.nan], [0.5, 1.0]], index=["A", "B"], columns=["A", "B"]
     ).to_excel(filepath, sheet_name="corr1", **{omitted: False})
 
-    with pytest.raises(FmudesignError, match="Mismatch between column and index"):
+    with pytest.raises(ParameterDesignError, match="Mismatch between column and index"):
         design_dist.read_correlations(str(filepath), corr_sheet="corr1")
 
 
@@ -723,7 +528,7 @@ def test_that_summary_log_reports_usage_of_design_features(tmp_path, caplog):
         },
     }
 
-    caplog.set_level(logging.INFO, logger="fmudesign")
+    caplog.set_level(logging.INFO, logger="ert.parameter_design")
     DesignMatrix(config=config)
 
     [summary] = [m for m in caplog.messages if m.startswith("Fmudesign summary")]
@@ -798,7 +603,7 @@ def test_that_decimals_are_rejected_for_parameter_with_any_non_numeric_value():
     }
 
     with pytest.raises(
-        FmudesignError,
+        ParameterDesignError,
         match=r"Cannot round parameter 'A' to 1 decimals .*'foo'.*'decimals'",
     ):
         DesignMatrix(config=config)
@@ -1243,7 +1048,7 @@ def test_that_overlapping_correlation_groups_raise_value_error(tmp_path, strateg
         "W": ("normal", ["0", "1"], "corr2"),
     }
     with pytest.raises(
-        FmudesignError,
+        ParameterDesignError,
         match=(
             "Parameter 'Z' is part of several correlation groups: 'corr1' and 'corr2'"
         ),
@@ -1265,7 +1070,7 @@ def test_that_only_iman_conover_requires_more_realizations_than_correlated_param
     params = {name: ("normal", ["0", "1"], "corr1") for name in names}
     corrdict = {"inputfile": str(path), "sheetnames": ["corr1"]}
     with pytest.raises(
-        FmudesignError,
+        ParameterDesignError,
         match=(
             r"Correlation group 'corr1' in sensitivity 'foo' has 3 parameters, "
             r"but only 3 realizations.*at least 4 realizations"
@@ -1286,7 +1091,7 @@ def test_that_correlation_groups_require_at_least_two_realizations(
     params = {name: ("normal", ["0", "1"], "corr1") for name in names}
     corrdict = {"inputfile": str(path), "sheetnames": ["corr1"]}
     with pytest.raises(
-        FmudesignError,
+        ParameterDesignError,
         match=(
             r"Correlation group 'corr1' in sensitivity 'foo' needs at least 2 "
             r"realizations .* got 1\."
@@ -1302,7 +1107,7 @@ def test_that_correlation_groups_require_at_least_two_realizations(
 
 def test_that_unknown_seed_strategy_raises_value_error():
     """The low-level API must reject typos instead of silently using 'joint'."""
-    with pytest.raises(FmudesignError, match="seed_strategy"):
+    with pytest.raises(ParameterDesignError, match="seed_strategy"):
         _sample_mc({"A": ("normal", ["0", "1"], None)}, strategy="bogus")
 
 
@@ -1332,7 +1137,7 @@ def test_that_invalid_distribution_parameters_raise_fmudesign_error_naming_param
     dist_name, dist_params, requirement
 ):
     with pytest.raises(
-        FmudesignError,
+        ParameterDesignError,
         match=rf"Parameter 'A' in sensitivity 'foo': .* must have {requirement}, ",
     ):
         _sample_mc({"A": (dist_name, dist_params, None)}, size=5)
@@ -1340,7 +1145,7 @@ def test_that_invalid_distribution_parameters_raise_fmudesign_error_naming_param
 
 def test_that_invalid_distribution_parameter_errors_label_each_value():
     with pytest.raises(
-        FmudesignError,
+        ParameterDesignError,
         match=r", got: mean=0\.0, stddev=1\.0, min=2\.0, max=1\.0$",
     ):
         _sample_mc({"A": ("normal", ["0", "1", "2", "1"], None)}, size=5)
@@ -1365,14 +1170,14 @@ def test_that_sampling_errors_raise_fmudesign_error_naming_the_sampled_unit(
     }
     corrdict = {"inputfile": str(path), "sheetnames": ["corr1"]}
     with pytest.raises(
-        FmudesignError,
+        ParameterDesignError,
         match=rf"Sampling {sampled_unit} failed: Sampling gave non-finite values",
     ):
         _sample_mc(params, corrdict=corrdict, strategy=strategy, size=5)
 
 
 def test_that_independent_sampling_without_base_seed_raises_value_error():
-    with pytest.raises(FmudesignError, match="base_seed"):
+    with pytest.raises(ParameterDesignError, match="base_seed"):
         _sample_mc({"A": ("normal", ["0", "1"], None)}, base=None)
 
 
@@ -1430,7 +1235,7 @@ def test_that_initializing_dm_without_background_populates_background_to_none():
 def test_that_missing_background_keys_in_background_dict_raises_key_error():
     config = minimal_configuration()
     config.background = {}
-    with pytest.raises(FmudesignError, match="'extern' or 'parameters'"):
+    with pytest.raises(ParameterDesignError, match="'extern' or 'parameters'"):
         DesignMatrix(config=config)
 
 
@@ -1439,7 +1244,7 @@ def test_that_extern_sensitivity_reports_duplicate_parameter_names_with_counts(
 ):
     sens = ExternSensitivity(sensname="extern", verbosity=0)
     with pytest.raises(
-        FmudesignError,
+        ParameterDesignError,
         match=r"(?s)duplicate names.*\{'PARAM1': 2, 'PARAM3': 3\}",
     ):
         sens.generate(
@@ -1452,7 +1257,7 @@ def test_that_extern_sensitivity_reports_duplicate_parameter_names_with_counts(
 
 @pytest.mark.parametrize("probabilities", [[1.5, -0.5], [np.nan, 0.5], [np.inf, 1.0]])
 def test_that_non_finite_or_negative_probabilities_raise_fmudesign_error(probabilities):
-    with pytest.raises(FmudesignError, match="must be finite non-negative"):
+    with pytest.raises(ParameterDesignError, match="must be finite non-negative"):
         design_dist.quantiles_to_values(
             quantiles=np.array([0.1, 0.9]),
             values=np.array(["a", "b"]),
