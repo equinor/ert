@@ -50,6 +50,7 @@ from ert.config.rft_config import RFTConfig
 from ert.gui.detect_mode import is_dark_mode
 from ert.runpaths import Runpaths
 from ert.storage import Ensemble
+from ert.storage.match import MatchConfig, RFTMatchStrategy
 from ert.trace import trace, tracer
 
 if TYPE_CHECKING:
@@ -1456,20 +1457,20 @@ class RftQcWidget(QWidget):
 
     @staticmethod
     def _get_responses(
-        ensemble: Ensemble,
+        strategy: RFTMatchStrategy,
         realization: int,
         observations: pl.DataFrame,
-        approximate_missing_values: bool,
     ) -> pl.DataFrame:
-        responses = ensemble.load_responses("rft", (realization,))
-        if approximate_missing_values:
+        responses = strategy.extract_responses((realization,), observations)
+
+        if strategy.response_cls.approximate_missing_values:
             responses_including_approximations = (
                 RFTConfig.approximate_missing_rft_responses(
                     responses.lazy(), observations
                 ).collect()
             )
             approximated = responses_including_approximations.join(
-                responses, on=responses.columns, how="anti"
+                responses, on=responses.columns, how="anti", nulls_equal=True
             )
             responses = pl.concat(
                 [
@@ -1492,12 +1493,15 @@ class RftQcWidget(QWidget):
         return responses
 
     @staticmethod
-    def _get_observations(ensemble: Ensemble, realization: int) -> pl.DataFrame:
-        observations = ensemble.experiment.observations.get("rft")
+    def _get_observations(strategy: RFTMatchStrategy, realization: int) -> pl.DataFrame:
+        observations = strategy.ensemble.experiment.observations.get("rft")
         if observations is None or observations.is_empty():
             # No observation file in this experiment.
             return pl.DataFrame(schema=RftQcWidget._required_obs_subschema())
-        observations = ensemble.add_rft_metadata_and_qc(observations, realization)
+        observations = strategy.prepare_observations(observations)
+        observations = strategy.enrich_observations_with_realization_metadata(
+            observations, realization
+        )
         observations = observations.with_columns(
             pl.col("response_key").str.split(":").list.last().alias("property")
         )
@@ -1508,29 +1512,29 @@ class RftQcWidget(QWidget):
     ) -> None:
         self._clear_load_status()
         errors: list[str] = []
+        match_config = MatchConfig()
+        match_config.qc_observations = True
+        match_config.rft.approximate_values = False
+        strategy = RFTMatchStrategy(
+            ensemble,
+            rft_config if rft_config is not None else RFTConfig(),
+            match_config,
+        )
         try:
-            self._observations = self._get_observations(ensemble, realization)
+            self._observations = self._get_observations(strategy, realization)
         except Exception as err:
             self._observations = pl.DataFrame(schema=self._required_obs_subschema())
             errors.append(f"Could not load observations: {err}")
         try:
-            approximate_missing_values = (
-                rft_config.approximate_missing_values
-                if rft_config is not None
-                else False
-            )
             self._responses = self._get_responses(
-                ensemble,
-                realization,
-                observations=self._observations,
-                approximate_missing_values=approximate_missing_values,
+                strategy, realization, observations=self._observations
             )
         except Exception as err:
             self._responses = pl.DataFrame(schema=self._required_response_subschema())
             errors.append(f"Could not load responses: {err}")
         try:
             self._observations = RftQcWidget._attach_status(
-                self._observations, self._responses
+                strategy, self._observations, self._responses
             )
             RftQcWidget._validate_required_columns(
                 self._observations,
@@ -1570,16 +1574,13 @@ class RftQcWidget(QWidget):
 
     @staticmethod
     def _attach_status(
-        observations: pl.DataFrame, responses: pl.DataFrame
+        strategy: RFTMatchStrategy, observations: pl.DataFrame, responses: pl.DataFrame
     ) -> pl.DataFrame:
         if "status" in observations.columns:
             # The status column is already present, so no need to recompute it.
             return observations
-        joined = observations.join(
-            responses.select("response_key", "well_connection_cell", "values"),
-            on=["response_key", "well_connection_cell"],
-            how="left",
-        )
+        responses = responses.select("response_key", "well_connection_cell", "values")
+        joined = strategy.match(observations, responses)
         return joined.with_columns(
             pl.when(pl.col("well_connection_cell").is_null())
             .then(pl.lit(_PointStatus.NOT_IN_GRID.value))
