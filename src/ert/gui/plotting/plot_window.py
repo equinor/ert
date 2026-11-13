@@ -635,6 +635,7 @@ class PlotWindow(QMainWindow):
 
             if (
                 plot_widget.name == MAPS
+                and self._map_options.misfit_map_checkbox_state
                 and ensemble_to_data_map
                 and not observations.empty
             ):

@@ -1461,10 +1461,9 @@ def test_that_seismic_y_label_is_created(key, expected_y_label):
     assert label == expected_y_label
 
 
-@pytest.mark.slow
-def test_that_misfit_map_color_range_is_derived_from_earliest_ensemble(
+def _plot_window_with_seismic_prior_and_posterior(
     qtbot: QtBot, mock_plot_api: MagicMock
-):
+) -> tuple[PlotWindow, EnsembleObject, EnsembleObject]:
 
     first_ensemble = EnsembleObject(
         "prior", "prior-id", False, "experiment", "2026-01-01T00:00:00"
@@ -1512,7 +1511,16 @@ def test_that_misfit_map_color_range_is_derived_from_earliest_ensemble(
 
     plot_window = PlotWindow(config_file="", ens_path=Path(), parent=None)
     qtbot.addWidget(plot_window)
+    return plot_window, first_ensemble, later_ensemble
 
+
+@pytest.mark.slow
+def test_that_misfit_map_color_range_is_derived_from_earliest_ensemble(
+    qtbot: QtBot, mock_plot_api: MagicMock
+):
+    plot_window, _, _ = _plot_window_with_seismic_prior_and_posterior(
+        qtbot, mock_plot_api
+    )
     maps_widget = plot_window._widget_by_name(MAPS)
     plot_window._central_tab.setCurrentWidget(maps_widget)
 
@@ -1533,6 +1541,32 @@ def test_that_misfit_map_color_range_is_derived_from_earliest_ensemble(
 
         plot_artist = misfit_axes.collections[0]
         assert (plot_artist.norm.vmin, plot_artist.norm.vmax) == expected_v_range
+
+
+def test_that_unchecking_misfit_map_skips_loading_ensemble_for_color_range(
+    qtbot: QtBot, mock_plot_api: MagicMock
+):
+    plot_window, first_ensemble, later_ensemble = (
+        _plot_window_with_seismic_prior_and_posterior(qtbot, mock_plot_api)
+    )
+
+    maps_widget = plot_window._widget_by_name(MAPS)
+    plot_window._central_tab.setCurrentWidget(maps_widget)
+
+    misfit_checkbox = plot_window._map_options.get_widget().findChild(
+        QCheckBox, "misfit_map_checkbox"
+    )
+    assert plot_window._ensemble_selection_widget.get_selected_ensembles() == [
+        later_ensemble
+    ]
+    mock_plot_api.data_for_response.reset_mock()
+    misfit_checkbox.setChecked(False)
+
+    assert MISFIT_MAP_TITLE not in [a.get_title() for a in maps_widget._figure.axes]
+    assert all(
+        c.kwargs.get("ensemble_id") != first_ensemble.id
+        for c in mock_plot_api.data_for_response.call_args_list
+    )
 
 
 def _plot_window_with_observed_seismic_and_gen_data_keys(
