@@ -261,3 +261,55 @@ Minimal example to override how Ert chooses the IP address:
     @ert.plugin(name="my_plugin")
     def get_ip_address():
         return "127.0.0.1"
+
+Status event listener
+~~~~~~~~~~~~~~~~~~~~~
+A plugin can listen to the status events emitted while an experiment runs,
+such as progress updates and snapshot updates.
+
+The listener is called for experiments started from the Ert GUI and for
+Everest optimizations. Experiments started from the Ert command line do not
+call the listener yet.
+
+.. autofunction:: ert.plugins.hook_specifications.event_listener.on_status_event
+
+Minimal example of logging the type of each event:
+
+.. code-block:: python
+
+   import logging
+
+   import ert
+
+   logger = logging.getLogger(__name__)
+
+   @ert.plugin(name="event_logger")
+   def on_status_event(experiment_run_id, event):
+       logger.info(f"Experiment run {experiment_run_id} emitted {event.event_type}")
+
+End events and reruns
+^^^^^^^^^^^^^^^^^^^^^
+Every run ends with an ``EndEvent``, also when the run fails or is cancelled.
+Its ``failed`` attribute tells whether the run failed, and ``msg`` gives the
+reason.
+
+An ``EndEvent`` does not mean that no more events will arrive for that
+``experiment_run_id``. When the user reruns failed realizations from the Ert
+GUI, the rerun reuses the ``experiment_run_id`` and emits a new sequence of
+events, ending with another ``EndEvent``. This can also happen after an
+``EndEvent`` where ``failed`` is ``False``, since a run can finish with some
+failed realizations. A listener should therefore keep any state it needs
+for a rerun after an ``EndEvent``, and treat the latest ``EndEvent`` as the
+outcome of the experiment run.
+
+Since Ert does not wait for the listener, a run can be shown as finished,
+and a rerun started, before the listener has received the ``EndEvent`` of
+that run.
+
+Shutdown
+^^^^^^^^
+When the Ert server is shut down, for example when the Ert GUI is closed or
+an Everest optimization has finished, Ert waits up to 30 seconds for the
+remaining events to be passed to the listener before it stops the server.
+Events that have not been passed to the listener by then are lost, and a
+warning with the number of undelivered events is logged.

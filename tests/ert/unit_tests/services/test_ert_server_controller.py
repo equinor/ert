@@ -1,8 +1,10 @@
+import logging
 import signal
 import threading
 import time
 from pathlib import Path
 from textwrap import dedent
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -13,6 +15,7 @@ from ert.services.ert_server_controller import (
     ServerBootFail,
     _delete_connection_files_then_call_previous_handler,
     create_ert_server_controller,
+    poll_until_status_events_drained,
 )
 
 
@@ -343,3 +346,68 @@ def test_that_signal_handler_deletes_connection_files_and_calls_previous_handler
 
     assert not connection_file.exists()
     assert signals_received == [99]
+
+
+def test_that_waiting_for_status_events_stops_polling_once_none_are_pending():
+    client = MagicMock()
+    client.pending_status_events.side_effect = [2, 1, 0]
+
+    poll_until_status_events_drained(client, timeout=5, poll_interval=0)
+
+    assert client.pending_status_events.call_count == 3
+
+
+def test_that_waiting_for_status_events_logs_the_pending_count_after_timeout(
+    caplog: pytest.LogCaptureFixture,
+):
+    client = MagicMock()
+    client.pending_status_events.return_value = 2
+
+    with caplog.at_level(logging.WARNING):
+        poll_until_status_events_drained(client, timeout=0, poll_interval=0)
+
+    assert "2 status events not passed to the status event listener" in caplog.text
+
+
+@pytest.mark.script(
+    """\
+os.write(fd, b'{"authtoken": "token", "urls": ["https://127.0.0.1:1"], "cert": false}')
+os.close(fd)
+time.sleep(10)
+"""
+)
+def test_that_shutdown_terminates_server_when_pending_status_events_are_unreachable(
+    server, caplog: pytest.LogCaptureFixture
+):
+    server.fetch_connection_info()
+
+    with caplog.at_level(logging.WARNING):
+        assert server.shutdown() == -signal.SIGTERM
+
+    assert "Could not wait for status events" in caplog.text
+
+
+@pytest.mark.script(
+    """\
+os.write(fd, b'{"authtoken": "token", "urls": ["https://127.0.0.1:1"], "cert": false}')
+os.close(fd)
+time.sleep(10)
+"""
+)
+def test_that_shutdown_terminates_server_when_pending_status_events_request_fails(
+    server, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+):
+    server.fetch_connection_info()
+    monkeypatch.setattr(server, "fetch_url", lambda: "https://127.0.0.1:1")
+
+    def fail_request(*_: object, **__: object) -> None:
+        raise RuntimeError("request failed")
+
+    monkeypatch.setattr(
+        ert_server_controller, "poll_until_status_events_drained", fail_request
+    )
+
+    with caplog.at_level(logging.WARNING):
+        assert server.shutdown() == -signal.SIGTERM
+
+    assert "RuntimeError: request failed" in caplog.text

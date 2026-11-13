@@ -30,6 +30,10 @@ from ert.run_models import StatusEvents
 from ert.run_models.model_factory import create_model
 from ert.run_models.run_model import RunModel
 from ert.server.common import ErtRunnerEndpoints
+from ert.server.status_event_forwarder import (
+    StatusEventNotifier,
+    create_status_event_forwarder,
+)
 from everest.everserver.server import ExperimentState, ExperimentStatus
 
 from .experiment_runs import (
@@ -37,6 +41,7 @@ from .experiment_runs import (
     _experiments,
     _with_runtime_plugins,
     authenticated,
+    get_status_event_notifier,
 )
 
 router = APIRouter(prefix="/experiment_runs", tags=["experiment_runs"])
@@ -142,7 +147,12 @@ def _exclusive_runpath_access(
     "/" + ErtRunnerEndpoints.REGISTER,
     dependencies=[*authenticated, Depends(_with_runtime_plugins)],
 )
-async def register(request: StartErtExperimentRequest) -> JSONResponse:
+async def register(
+    request: StartErtExperimentRequest,
+    notify_status_event: Annotated[
+        StatusEventNotifier | None, Depends(get_status_event_notifier)
+    ],
+) -> JSONResponse:
     config_id = str(uuid.uuid4())
     status_queue: SimpleQueue[StatusEvents] = SimpleQueue()
     try:
@@ -161,6 +171,9 @@ async def register(request: StartErtExperimentRequest) -> JSONResponse:
         config_path=request.config.config_path,
         run_path=request.config.runpath_config.runpath_format_string,
         storage_path=request.config.ens_path,
+        status_event_forwarder=create_status_event_forwarder(
+            notify_status_event, config_id
+        ),
     )
     _experiments[config_id] = experiment_state
 
@@ -324,17 +337,11 @@ async def run_ert(
     model = run.run_model
     cancellation_requested = False
 
-    def publish(event: StatusEvents) -> None:
-        run.events.append(event)
-        if isinstance(event, EndEvent):
-            run.finalized.set()
-        for subscriber in run.subscribers.values():
-            subscriber.notify()
-
     try:  # ruff: ignore[too-many-statements-in-try-clause]
         if run.status.status == ExperimentState.stopped:
             model._storage.close()
-            publish(EndEvent(failed=True, msg="Experiment cancelled before start."))
+            run.publish(EndEvent(failed=True, msg="Experiment cancelled before start."))
+            run.finalized.set()
             return
 
         run.status = ExperimentStatus(
@@ -380,7 +387,7 @@ async def run_ert(
                 await simulation_future
                 terminal_event = event
                 break
-            publish(event)
+            run.publish(event)
 
     except Exception as error:
         logging.getLogger(__name__).exception("Experiment failed")
@@ -395,4 +402,5 @@ async def run_ert(
                 else ExperimentState.completed
             ),
         )
-    publish(terminal_event)
+    run.publish(terminal_event)
+    run.finalized.set()

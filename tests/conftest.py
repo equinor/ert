@@ -114,6 +114,14 @@ def remove_root_log_handlers_added_by_test():
             existing_logger.removeHandler(handler)
 
 
+@pytest.fixture
+def reset_server_plugin_manager():
+    yield
+    from ert.server.endpoints import experiment_runs  # ruff: ignore[import-outside-top-level]
+
+    experiment_runs._create_plugin_manager.cache_clear()
+
+
 @pytest.hookimpl(wrapper=True)
 def pytest_runtest_protocol(item, nextitem):
     if not item.get_closest_marker("requires_window_manager"):
