@@ -112,8 +112,71 @@ def test_merging_ignores_identical_design_matrices(tmp_path, monkeypatch, caplog
             ],
         }
     )
-    assert "Duplicate DESIGN_MATRIX entries DesignMatrix(filename=" in caplog.text
+    assert "Duplicate DESIGN_MATRIX entries" in caplog.text
     assert "only reading once." in caplog.text
+
+
+def test_that_a_repeated_design_matrix_that_is_not_listed_first_is_read_once(
+    tmp_path, caplog
+):
+    caplog.set_level(logging.WARNING)
+    for name, parameter in [("first", "a"), ("second", "b")]:
+        pd.DataFrame({"REAL": [0, 1], parameter: [1, 2]}).to_excel(
+            tmp_path / f"{name}.xlsx", index=False, sheet_name="DesignSheet"
+        )
+
+    analysis_config = AnalysisConfig.from_dict(
+        {
+            ConfigKeys.DESIGN_MATRIX: [
+                [str(tmp_path / f"{name}.xlsx"), {}]
+                for name in ["first", "second", "second"]
+            ]
+        }
+    )
+
+    design_matrix = analysis_config.design_matrix
+    assert design_matrix is not None
+    assert design_matrix.design_matrix_df.columns == ["realization", "a", "b"]
+    assert "Duplicate DESIGN_MATRIX entries" in caplog.text
+
+
+def test_that_same_named_design_matrix_files_in_different_directories_conflict(
+    tmp_path,
+):
+    for directory, values in [("a", [1, 2]), ("b", [3, 4])]:
+        (tmp_path / directory).mkdir()
+        pd.DataFrame({"REAL": [0, 1], "x": values}).to_excel(
+            tmp_path / directory / "design.xlsx", index=False, sheet_name="DesignSheet"
+        )
+    with pytest.raises(ConfigValidationError, match="same name"):
+        AnalysisConfig.from_dict(
+            {
+                ConfigKeys.DESIGN_MATRIX: [
+                    [str(tmp_path / "a" / "design.xlsx"), {}],
+                    [str(tmp_path / "b" / "design.xlsx"), {}],
+                ]
+            }
+        )
+
+
+def test_that_design_matrix_merge_errors_name_all_previously_merged_files(tmp_path):
+    for name, parameter in [("first", "a"), ("second", "b"), ("third", "b")]:
+        pd.DataFrame({"REAL": [0, 1], parameter: [1, 2]}).to_excel(
+            tmp_path / f"{name}.xlsx", index=False, sheet_name="DesignSheet"
+        )
+    with pytest.raises(
+        ConfigValidationError,
+        match=r"'first\.xlsx \(DesignSheet\), second\.xlsx \(DesignSheet\)' and "
+        r"'third\.xlsx \(DesignSheet\)'",
+    ):
+        AnalysisConfig.from_dict(
+            {
+                ConfigKeys.DESIGN_MATRIX: [
+                    [str(tmp_path / f"{name}.xlsx"), {}]
+                    for name in ["first", "second", "third"]
+                ]
+            }
+        )
 
 
 @pytest.mark.filterwarnings(
