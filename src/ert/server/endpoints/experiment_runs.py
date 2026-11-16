@@ -42,6 +42,11 @@ from ert.plugins import ErtPluginManager, ErtRuntimePlugins, get_site_plugins
 from ert.run_models import StatusEvents
 from ert.run_models.everest_run_model import EverestExitCode, EverestRunModel
 from ert.server.common import EverEndpoints
+from ert.server.status_event_forwarder import (
+    StatusEventForwarder,
+    StatusEventNotifier,
+    create_status_event_forwarder,
+)
 from everest.config import EverestConfig
 from everest.everserver.server import (
     ExperimentState,
@@ -70,11 +75,14 @@ class ExperimentRunnerState:
     run_path: str | os.PathLike[str] | None = None
     storage_path: str | os.PathLike[str] | None = None
     start_time_unix: int | None = None
+    status_event_forwarder: StatusEventForwarder | None = None
 
     def publish(self, event: StatusEvents) -> None:
         self.events.append(event)
         for subscriber in self.subscribers.values():
             subscriber.notify()
+        if self.status_event_forwarder is not None:
+            self.status_event_forwarder.forward(event)
 
     def reset_for_rerun(self) -> None:
         self.events.clear()
@@ -191,6 +199,14 @@ async def get_plugin_manager() -> ErtPluginManager:
     return _create_plugin_manager()
 
 
+async def get_status_event_notifier(
+    plugin_manager: Annotated[ErtPluginManager, Depends(get_plugin_manager)],
+) -> StatusEventNotifier | None:
+    if not plugin_manager.has_status_event_listener:
+        return None
+    return plugin_manager.notify_status_event
+
+
 async def _with_runtime_plugins(
     plugin_manager: Annotated[ErtPluginManager, Depends(get_plugin_manager)],
 ) -> AsyncIterator[ErtRuntimePlugins]:
@@ -252,9 +268,16 @@ async def start_experiment(
     config: EverestConfig,
     background_tasks: BackgroundTasks,
     site_plugins: Annotated[ErtRuntimePlugins, Depends(_with_runtime_plugins)],
+    notify_status_event: Annotated[
+        StatusEventNotifier | None, Depends(get_status_event_notifier)
+    ],
 ) -> JSONResponse:
     experiment_id = str(uuid.uuid4())
-    experiment_state = ExperimentRunnerState()
+    experiment_state = ExperimentRunnerState(
+        status_event_forwarder=create_status_event_forwarder(
+            notify_status_event, experiment_id
+        )
+    )
     _experiments[experiment_id] = experiment_state
     try:
         background_tasks.add_task(run_everest, config, experiment_id, site_plugins)

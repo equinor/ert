@@ -1,7 +1,9 @@
 import asyncio
 import copy
+import json
 import logging
 import threading
+import uuid
 import warnings
 from base64 import b64encode
 from dataclasses import dataclass
@@ -14,6 +16,7 @@ from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 import pytest
 import yaml
+from fastapi import BackgroundTasks
 from fastapi.encoders import jsonable_encoder
 from fastapi.testclient import TestClient
 from starlette.websockets import WebSocketDisconnect
@@ -24,7 +27,7 @@ from ert.ensemble_evaluator import EndEvent
 from ert.ensemble_evaluator.event import FullSnapshotEvent, SnapshotUpdateEvent
 from ert.ensemble_evaluator.snapshot import EnsembleSnapshot
 from ert.plugins import ErtPluginManager, get_site_plugins
-from ert.run_models.event import StatusEvents
+from ert.run_models.event import RunModelStatusEvent, StatusEvents
 from ert.run_models.everest_run_model import EverestExitCode
 from ert.scheduler.event import FinishedEvent
 from ert.server.app import app
@@ -33,9 +36,12 @@ from ert.server.endpoints.experiment_runs import (
     Subscriber,
     _experiments,
     _failed_realizations_messages,
+    _get_event,
     run_everest,
+    start_experiment,
     websocket_endpoint,
 )
+from ert.server.status_event_forwarder import StatusEventForwarder
 from ert.services import ErtClient, ErtServerController
 from ert.storage import ExperimentState, ExperimentStatus
 from everest.bin.everest_script import start_server
@@ -47,6 +53,7 @@ from everest.strings import (
     OPT_FAILURE_REALIZATIONS,
 )
 from everest.util._utils import get_everest_experiment
+from tests.ert.utils import wait_until_all_status_events_are_delivered
 from tests.everest.utils import MIN_CONFIG, everest_config_with_defaults
 
 pytestmark = pytest.mark.usefixtures("reset_server_plugin_manager")
@@ -675,6 +682,137 @@ def test_that_start_experiment_mutes_config_warnings(authorized_client, monkeypa
 
     assert response.status_code == 200
     assert not any(issubclass(w.category, ConfigWarning) for w in caught_warnings)
+
+
+async def test_that_started_everest_experiment_passes_status_events_and_id_to_notifier(
+    monkeypatch,
+):
+    received_events = []
+
+    def notify_status_event(*, experiment_run_id, event):
+        received_events.append((experiment_run_id, event))
+
+    events = [
+        RunModelStatusEvent(iteration=0, run_id=uuid.uuid4(), msg="running"),
+        EndEvent(failed=False, msg="done"),
+    ]
+
+    def create_run_model(*, status_queue, **_):
+        run_model = MagicMock()
+        run_model.queue_config.queue_system = QueueSystem.LOCAL
+        run_model.exit_code = EverestExitCode.COMPLETED
+        run_model.start_simulations_thread.side_effect = lambda _: [
+            status_queue.put(event) for event in events
+        ]
+        return run_model
+
+    registry: dict[str, ExperimentRunnerState] = {}
+    monkeypatch.setattr("ert.server.endpoints.experiment_runs._experiments", registry)
+    background_tasks = BackgroundTasks()
+    with (
+        patch(
+            "ert.server.endpoints.experiment_runs.EverestRunModel.create",
+            side_effect=create_run_model,
+        ),
+        patch("ert.server.endpoints.experiment_runs.EvaluatorServerConfig"),
+    ):
+        response = await start_experiment(
+            MagicMock(),
+            background_tasks,
+            get_site_plugins(ErtPluginManager(plugins=[])),
+            notify_status_event,
+        )
+        await background_tasks()
+
+    experiment_id = json.loads(bytes(response.body))["experiment_id"]
+    await wait_until_all_status_events_are_delivered(
+        registry[experiment_id].status_event_forwarder
+    )
+    assert received_events == [(experiment_id, event) for event in events]
+
+
+async def test_that_everest_experiment_started_without_notifier_has_no_forwarder(
+    monkeypatch,
+):
+    registry: dict[str, ExperimentRunnerState] = {}
+    monkeypatch.setattr("ert.server.endpoints.experiment_runs._experiments", registry)
+
+    response = await start_experiment(
+        MagicMock(),
+        BackgroundTasks(),
+        get_site_plugins(ErtPluginManager(plugins=[])),
+        None,
+    )
+
+    experiment_id = json.loads(bytes(response.body))["experiment_id"]
+    assert registry[experiment_id].status_event_forwarder is None
+
+
+async def test_that_stopped_run_everest_delivers_its_end_event_to_listener(
+    monkeypatch, everest_run_state, site_plugins
+):
+    received_events = []
+
+    def listener(*, event):
+        received_events.append(event)
+
+    forwarder = StatusEventForwarder(listener)
+    everest_run_state.status_event_forwarder = forwarder
+
+    cancelled = threading.Event()
+    model = Mock()
+    model._experiment = None
+    model.queue_config = SimpleNamespace(queue_system=QueueSystem.LOCAL)
+    model.cancel.side_effect = cancelled.set
+
+    def simulate(_evaluator_config):
+        everest_run_state.status = ExperimentStatus(
+            status=ExperimentState.stopped, message="Server stopped by user"
+        )
+        cancelled.wait(timeout=5)
+
+    model.start_simulations_thread.side_effect = simulate
+    monkeypatch.setattr(
+        "ert.server.endpoints.experiment_runs.EverestRunModel.create",
+        Mock(return_value=model),
+    )
+
+    await run_everest(Mock(), "experiment_id", site_plugins)
+
+    assert everest_run_state.finalized.is_set()
+    await wait_until_all_status_events_are_delivered(forwarder)
+    assert received_events == [EndEvent(failed=True, msg="Optimization aborted")]
+
+
+async def test_that_slow_status_event_listener_does_not_delay_websocket_subscribers(
+    everest_run_state,
+):
+    listener_started = threading.Event()
+    listener_may_return = threading.Event()
+
+    def listener(*, event):
+        listener_started.set()
+        listener_may_return.wait(timeout=5)
+
+    forwarder = StatusEventForwarder(listener)
+    everest_run_state.status_event_forwarder = forwarder
+    event = EndEvent(failed=False, msg="done")
+
+    try:
+        everest_run_state.publish(event)
+        assert await asyncio.to_thread(listener_started.wait, 5)
+
+        assert (
+            await asyncio.wait_for(
+                _get_event(subscriber_id="websocket", run=everest_run_state),
+                timeout=1,
+            )
+            == event
+        )
+        assert forwarder.pending == 1
+    finally:
+        listener_may_return.set()
+    await wait_until_all_status_events_are_delivered(forwarder)
 
 
 async def test_websocket_no_events_on_connect(setup_client):
