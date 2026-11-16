@@ -798,6 +798,7 @@ class LocalStorage(BaseMode):
         )
         return instance
 
+    @require_write
     def save_dataframe_to_blob(
         self,
         *,
