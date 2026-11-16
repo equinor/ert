@@ -13,6 +13,7 @@ class BlobType(StrEnum):
     SCALING_FACTORS = "scaling_factors"
     RHO_MATRIX = "rho_matrix"
     EVEREST_BATCH_DATA = "everest_batch_data"
+    SCALARS = "scalars"
 
 
 class UpdateStatus(StrEnum):
@@ -65,6 +66,10 @@ class EverestBatchData(BaseModel):
     dataframe_name: str
 
 
+class ScalarsData(BaseModel):
+    blob_type: Literal[BlobType.SCALARS] = BlobType.SCALARS
+
+
 BlobInfo = (
     MatrixStorageData
     | ObservationReportData
@@ -72,6 +77,7 @@ BlobInfo = (
     | ScalingFactorsData
     | RhoStorageData
     | EverestBatchData
+    | ScalarsData
 )
 
 
@@ -88,6 +94,7 @@ class BlobStorageData(BaseModel):
         | UpdateDataTableData
         | ScalingFactorsData
         | RhoStorageData
-        | EverestBatchData,
+        | EverestBatchData
+        | ScalarsData,
         Discriminator("blob_type"),
     ]

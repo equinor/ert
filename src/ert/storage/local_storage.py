@@ -34,7 +34,7 @@ logger = logging.getLogger(__name__)
 
 
 _BLOB_URI_PATTERN = re.compile(r"^[0-9a-f]{8}\.blob$")
-_LOCAL_STORAGE_VERSION = 42
+_LOCAL_STORAGE_VERSION = 43
 
 
 def open_storage(
@@ -655,6 +655,7 @@ class LocalStorage(BaseMode):
             to40,
             to41,
             to42,
+            to43,
         )
 
         try:  # ruff: ignore[too-many-statements-in-try-clause]
@@ -726,6 +727,7 @@ class LocalStorage(BaseMode):
                     39: to40,
                     40: to41,
                     41: to42,
+                    42: to43,
                 }
                 for from_version in range(version, _LOCAL_STORAGE_VERSION):
                     migrations[from_version].migrate(self.path)
@@ -773,10 +775,14 @@ class LocalStorage(BaseMode):
         blob_info: BlobInfo,
         file_type: str,
         blob_dir: Path,
+        uri: str | None = None,
     ) -> BlobStorageData:
-        """Create a blob record and persist its data and JSON sidecar."""
-        blob_id = uuid4().hex[:8]
-        uri = f"{blob_id}.blob"
+        """Create a blob record and persist its data and JSON sidecar.
+
+        If *uri* is given, an existing blob with that uri is overwritten.
+        """
+        if uri is None:
+            uri = f"{uuid4().hex[:8]}.blob"
         instance = BlobStorageData(
             uri=uri,
             file_size=len(data),
@@ -786,6 +792,34 @@ class LocalStorage(BaseMode):
         )
         blob_dir.mkdir(parents=True, exist_ok=True)
         self._write_transaction(blob_dir / uri, data)
+        self._write_transaction(
+            blob_dir / f"{uri}.json",
+            instance.model_dump_json(indent=2).encode("utf-8"),
+        )
+        return instance
+
+    @require_write
+    def save_dataframe_to_blob(
+        self,
+        *,
+        name: str,
+        dataframe: pl.DataFrame,
+        blob_info: BlobInfo,
+        blob_dir: Path,
+        uri: str | None = None,
+    ) -> BlobStorageData:
+        if uri is None:
+            uri = f"{uuid4().hex[:8]}.blob"
+        blob_dir.mkdir(parents=True, exist_ok=True)
+        blob_filename = blob_dir / uri
+        self._to_parquet_transaction(blob_filename, dataframe)
+        instance = BlobStorageData(
+            uri=uri,
+            file_size=blob_filename.stat().st_size,
+            file_type="application/parquet",
+            name=name,
+            blob_info=blob_info,
+        )
         self._write_transaction(
             blob_dir / f"{uri}.json",
             instance.model_dump_json(indent=2).encode("utf-8"),

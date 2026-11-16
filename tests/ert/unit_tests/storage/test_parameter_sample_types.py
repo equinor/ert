@@ -461,7 +461,7 @@ async def test_gen_kw(storage, tmpdir, config_str, expected, extra_files, expect
         (
             [False, False],
             pytest.raises(
-                KeyError, match="No SCALAR dataset in storage for ensemble default"
+                KeyError, match="No scalar dataset in storage for ensemble default"
             ),
         ),
         (
