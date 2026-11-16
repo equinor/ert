@@ -327,17 +327,11 @@ async def run_ert(
     model = run.run_model
     cancellation_requested = False
 
-    def publish(event: StatusEvents) -> None:
-        run.events.append(event)
-        if isinstance(event, EndEvent):
-            run.finalized.set()
-        for subscriber in run.subscribers.values():
-            subscriber.notify()
-
     try:  # ruff: ignore[too-many-statements-in-try-clause]
         if run.status.status == ExperimentState.stopped:
             model._storage.close()
-            publish(EndEvent(failed=True, msg="Experiment cancelled before start."))
+            run.publish(EndEvent(failed=True, msg="Experiment cancelled before start."))
+            run.finalized.set()
             return
 
         run.status = ExperimentStatus(
@@ -383,7 +377,7 @@ async def run_ert(
                 await simulation_future
                 terminal_event = event
                 break
-            publish(event)
+            run.publish(event)
 
     except Exception as error:
         logging.getLogger(__name__).exception("Experiment failed")
@@ -398,4 +392,5 @@ async def run_ert(
                 else ExperimentState.completed
             ),
         )
-    publish(terminal_event)
+    run.publish(terminal_event)
+    run.finalized.set()

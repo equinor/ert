@@ -71,6 +71,11 @@ class ExperimentRunnerState:
     storage_path: str | os.PathLike[str] | None = None
     start_time_unix: int | None = None
 
+    def publish(self, event: StatusEvents) -> None:
+        self.events.append(event)
+        for subscriber in self.subscribers.values():
+            subscriber.notify()
+
     def reset_for_rerun(self) -> None:
         self.events.clear()
         self.finalized.clear()
@@ -311,9 +316,7 @@ async def websocket_endpoint(websocket: WebSocket, experiment_id: str) -> None:
     run.active_streams += 1
     try:  # ruff: ignore[too-many-statements-in-try-clause]
         while True:
-            event = await _get_event(
-                subscriber_id=subscriber_id, experiment_id=experiment_id
-            )
+            event = await _get_event(subscriber_id=subscriber_id, run=run)
             payload = json.dumps(
                 jsonable_encoder(event), separators=(",", ":"), ensure_ascii=False
             )
@@ -338,13 +341,12 @@ async def websocket_endpoint(websocket: WebSocket, experiment_id: str) -> None:
         )
 
 
-async def _get_event(subscriber_id: str, experiment_id: str) -> StatusEvents:
+async def _get_event(subscriber_id: str, run: ExperimentRunnerState) -> StatusEvents:
     """
     The function waits until there is an event available for the subscriber
     and returns the event. If the subscriber is up to date it will
     wait until we wake up the subscriber using notify
     """
-    run = _experiments[experiment_id]
     if subscriber_id not in run.subscribers:
         run.subscribers[subscriber_id] = Subscriber()
     subscriber = run.subscribers[subscriber_id]
@@ -397,9 +399,7 @@ async def run_everest(
                 await asyncio.sleep(0.01)
                 continue
 
-            run.events.append(item)
-            for sub in run.subscribers.values():
-                sub.notify()
+            run.publish(item)
 
             if isinstance(item, EndEvent):
                 break
@@ -428,9 +428,7 @@ async def run_everest(
                 run_model._experiment.status = run.status
         finally:
             if not any(isinstance(event, EndEvent) for event in run.events):
-                run.events.append(EndEvent(failed=True, msg=end_message))
-                for sub in run.subscribers.values():
-                    sub.notify()
+                run.publish(EndEvent(failed=True, msg=end_message))
             run.finalized.set()
 
         logging.getLogger(__name__).info(
