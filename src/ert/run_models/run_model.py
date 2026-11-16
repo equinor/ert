@@ -56,7 +56,11 @@ from ert.ensemble_evaluator import (
     Realization,
     WarningEvent,
 )
-from ert.ensemble_evaluator.evaluator import ParallelismViolation, UserCancelled
+from ert.ensemble_evaluator.evaluator import (
+    MemoryViolation,
+    ParallelismViolation,
+    UserCancelled,
+)
 from ert.ensemble_evaluator.snapshot import EnsembleSnapshot
 from ert.ensemble_evaluator.state import (
     REALIZATION_STATE_FAILED,
@@ -187,6 +191,7 @@ class RunModel(RunModelConfig, ABC):
     _total_iterations: int = PrivateAttr(default=1)
     _start_iteration: int = PrivateAttr(default=0)
     _max_parallelism_violation: ParallelismViolation = ParallelismViolation()
+    _max_memory_violation: MemoryViolation = MemoryViolation()
     _workflow_runner: WorkflowRunner | None = PrivateAttr(default=None)
     _workflow_run_id: uuid.UUID = PrivateAttr(default_factory=uuid.uuid4)
     _pending_workflow_events: list[WorkflowEvent] = PrivateAttr(default_factory=list)
@@ -299,12 +304,20 @@ class RunModel(RunModelConfig, ABC):
         usr_queue_system = queue_config.queue_options.name
         queue_system = usr_queue_system or site_queue_system
 
+        selected_site_queue_options_dict = (
+            site_queue_options_dict if site_queue_system == usr_queue_system else {}
+        )
         queue_options = KnownQueueOptionsAdapter.validate_python(
             {"name": queue_system}
-            | (site_queue_options_dict if site_queue_system == usr_queue_system else {})
+            | selected_site_queue_options_dict
             | usr_queue_options_dict
         )
 
+        if (
+            "realization_memory" in selected_site_queue_options_dict
+            and "realization_memory" not in usr_queue_options_dict
+        ):
+            queue_config.realization_memory_is_site_default = True
         queue_config.queue_system = queue_options.name
         queue_config.queue_options = queue_options
         return queue_config
@@ -527,6 +540,16 @@ class RunModel(RunModelConfig, ABC):
             return self._iter_snapshot[current_iter]
         return EnsembleSnapshot()
 
+    def resource_overspending_warnings(self) -> list[str]:
+        return [
+            violation.message
+            for violation in (
+                self._max_parallelism_violation,
+                self._max_memory_violation,
+            )
+            if violation.amount > 0
+        ]
+
     def get_memory_consumption(self) -> int:
         max_memory_consumption: int = 0
         if self._iter_snapshot.keys():
@@ -724,6 +747,9 @@ class RunModel(RunModelConfig, ABC):
 
         self._max_parallelism_violation = max(
             self._max_parallelism_violation, evaluator.max_parallelism_violation
+        )
+        self._max_memory_violation = max(
+            self._max_memory_violation, evaluator.max_memory_violation
         )
 
         if self._end_event.is_set():
@@ -1040,6 +1066,17 @@ class RunModel(RunModelConfig, ABC):
             )
             warnings.warn(
                 self._max_parallelism_violation.message,
+                PostExperimentWarning,
+                stacklevel=1,
+            )
+
+        if self._max_memory_violation.amount > 0:
+            logger.info(
+                "Warning displayed to user for REALIZATION_MEMORY misconfiguration:\n"
+                f"{self._max_memory_violation.message}"
+            )
+            warnings.warn(
+                self._max_memory_violation.message,
                 PostExperimentWarning,
                 stacklevel=1,
             )
