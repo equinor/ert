@@ -816,6 +816,7 @@ def test_that_density_tabs_show_log_scale_only_for_valid_gen_kw_values(
 
     plot_window = PlotWindow(config_file="", ens_path=Path(), parent=None)
     qtbot.addWidget(plot_window)
+    plot_window.resize(1200, 800)
     plot_window.show()
     general_options = plot_window._general_options.get_widget()
     _expand(general_options)
@@ -1499,12 +1500,12 @@ def _plot_window_with_seismic_prior_and_posterior(
     def _data_for_response(ensemble_id, **_):
         if ensemble_id == first_ensemble.id:
             return pd.DataFrame(
-                data={"0": [12.0], "5": [24.0], "8": [36.0]},
-                index=pd.Index([0], name="Realization"),
+                data={"0": [12.0, 12.0], "5": [24.0, 23.0], "8": [36.0, 36.0]},
+                index=pd.Index([0, 1], name="Realization"),
             )
         return pd.DataFrame(
-            data={"0": [11.0], "5": [22.0], "8": [33.0]},
-            index=pd.Index([0], name="Realization"),
+            data={"0": [11.0, 12.0], "5": [22.0, 21.0], "8": [33.0, 32.0]},
+            index=pd.Index([0, 1], name="Realization"),
         )
 
     mock_plot_api.data_for_response.side_effect = _data_for_response
