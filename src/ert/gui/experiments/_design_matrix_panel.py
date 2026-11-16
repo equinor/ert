@@ -114,16 +114,14 @@ class DesignMatrixPanel(QDialog):
                 layout.setSpacing(2)
                 layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
 
+                ensemble_size = design_matrix.get_ensemble_size(config_num_realization)
+                active_count = design_matrix.get_active_realization_count(ensemble_size)
+                active_verb = "is" if active_count == 1 else "are"
                 warning_icon.setToolTip(
-                    "Number of realizations was set to "
-                    + str(
-                        min(
-                            config_num_realization,
-                            len(design_matrix.active_realizations),
-                        )
-                    )
-                    + " due to different number of realizations in the design matrix "
-                    "and NUM_REALIZATIONS in config"
+                    f"Ensemble size was set to {ensemble_size} realizations, "
+                    f"of which {active_count} {active_verb} active, because "
+                    "the DESIGN_MATRIX realization span differs from "
+                    "NUM_REALIZATIONS in the configuration."
                 )
                 warning_icon.show()
 

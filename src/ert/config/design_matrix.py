@@ -215,6 +215,12 @@ class DesignMatrix:
         self.categorical_parameters |= dm_other.categorical_parameters - common_keys
         self.updatable_parameters.update(dm_other.updatable_parameters)
 
+    def get_ensemble_size(self, num_realizations: int) -> int:
+        return min(num_realizations, len(self.active_realizations))
+
+    def get_active_realization_count(self, ensemble_size: int) -> int:
+        return sum(self.active_realizations[:ensemble_size])
+
     def merge_with_existing_parameters(
         self, existing_parameters: list[ParameterConfig]
     ) -> list[ParameterConfig]:
