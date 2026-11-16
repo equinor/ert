@@ -109,14 +109,24 @@ def _filter_params(filter_on: dict[str, Any] | None) -> dict[str, Any] | None:
     return None if filter_on is None else {"filter_on": json.dumps(filter_on)}
 
 
-def _checked(response: httpx.Response) -> httpx.Response:
+def _response_detail(response: httpx.Response) -> str:
+    try:
+        detail = response.json().get("detail")
+    except (ValueError, AttributeError):
+        detail = None
+    if detail is None:
+        return response.text or "<no response body>"
+    return str(detail)
+
+
+def _check_response(response: httpx.Response) -> httpx.Response:
     if response.status_code == httpx.codes.UNAUTHORIZED:
         raise httpx.RequestError(message=f"{response.text}")
     if response.status_code != httpx.codes.OK:
-        raise httpx.RequestError(
-            f" Please report this error and try restarting the application."
-            f"{response.text} from url: {response.url}."
-        )
+        detail = _response_detail(response)
+        if not response.is_client_error:
+            detail = f"Unexpected server response {response.status_code}: {detail}"
+        raise httpx.RequestError(detail)
     return response
 
 
@@ -393,7 +403,7 @@ class ErtClient:
             auth=self._auth,
             json=config,
         )
-        return str(_checked(response).json()["experiment_id"])
+        return str(_check_response(response).json()["experiment_id"])
 
     def register_ert_experiment(self, config: ErtConfig, args: Any) -> str:
         """Registers an ERT configuration, returns its config ID."""
@@ -406,10 +416,10 @@ class ErtClient:
                 "args": to_jsonable_python(args),
             },
         )
-        return str(_checked(response).json()["config_id"])
+        return str(_check_response(response).json()["config_id"])
 
     def discard_registration(self, config_id: str) -> None:
-        _checked(
+        _check_response(
             self._request(
                 "DELETE",
                 f"{_EXPERIMENT_RUNS}/{ErtRunnerEndpoints.REGISTER}",
@@ -431,7 +441,7 @@ class ErtClient:
             auth=self._auth,
             params=params,
         )
-        _checked(response)
+        _check_response(response)
 
     def stop_server(self, retries: int = 5) -> bool:
         """Stops the experiment server, returns True if successful."""
@@ -459,7 +469,7 @@ class ErtClient:
         )
         if response.status_code == httpx.codes.NOT_FOUND:
             return False
-        _checked(response)
+        _check_response(response)
         return True
 
     def runpath_delete(self, config_id: str) -> bool:
@@ -485,7 +495,7 @@ class ErtClient:
             auth=self._auth,
             params={"config_id": config_id},
         )
-        return _checked(response).json()
+        return _check_response(response).json()
 
     def get_failed_realizations(self, config_id: str) -> list[bool]:
         response = self._request(
@@ -494,7 +504,7 @@ class ErtClient:
             auth=self._auth,
             params={"config_id": config_id},
         )
-        return _checked(response).json()["failed_realizations"]
+        return _check_response(response).json()["failed_realizations"]
 
     # <-------------- WebSocket -------------->
 
@@ -695,12 +705,12 @@ class ErtClient:
         return ("username", token)
 
     def _experiment_runs_get(self, path: str) -> httpx.Response:
-        return _checked(
+        return _check_response(
             self._request("GET", f"{_EXPERIMENT_RUNS}/{path}", auth=self._auth)
         )
 
     def _get(self, url: str, **kwargs: Any) -> httpx.Response:
-        return _checked(self._request("GET", url, **kwargs))
+        return _check_response(self._request("GET", url, **kwargs))
 
     def _request(self, method: Methods, url: str, **kwargs: Any) -> httpx.Response:
         kwargs.setdefault("timeout", self._timeout)

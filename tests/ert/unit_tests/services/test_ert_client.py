@@ -116,6 +116,56 @@ def test_that_registration_serializes_parameter_configs_in_arguments():
 
 
 @pytest.mark.parametrize(
+    ("response", "expected_message"),
+    [
+        pytest.param(
+            httpx.Response(409, json={"detail": "Storage is locked"}),
+            "Storage is locked",
+            id="client_error_detail",
+        ),
+        pytest.param(
+            httpx.Response(500, text="Internal Server Error"),
+            "Unexpected server response 500: Internal Server Error",
+            id="server_error",
+        ),
+        pytest.param(
+            httpx.Response(502, text="Bad gateway, see details"),
+            "Unexpected server response 502: Bad gateway, see details",
+            id="non_json_body",
+        ),
+        pytest.param(
+            httpx.Response(400, json={"error": "no detail"}),
+            '{"error":"no detail"}',
+            id="json_without_detail",
+        ),
+        pytest.param(
+            httpx.Response(422, json=["a"]),
+            '["a"]',
+            id="json_not_an_object",
+        ),
+        pytest.param(
+            httpx.Response(404),
+            "<no response body>",
+            id="empty_body",
+        ),
+    ],
+)
+def test_that_failed_registration_raises_request_error_with_server_detail(
+    response: httpx.Response, expected_message: str
+):
+    transport = MagicMock(spec=SharedClient)
+    transport.conn_info.auth_token = "token"
+    transport.request.return_value = response
+    config = MagicMock(spec=ErtConfig)
+    config.model_dump.return_value = {}
+
+    with pytest.raises(httpx.RequestError) as error:
+        ErtClient(transport).register_ert_experiment(config, {"mode": "test_run"})
+
+    assert str(error.value) == expected_message
+
+
+@pytest.mark.parametrize(
     ("method_name", "http_method", "endpoint", "payload", "expected", "timeout"),
     [
         (

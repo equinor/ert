@@ -16,7 +16,7 @@ from ert.config.gen_kw_config import GenKwConfig
 from ert.config.parsing.config_errors import ConfigValidationError
 from ert.ensemble_evaluator import EndEvent, EvaluatorServerConfig
 from ert.plugins import ErtRuntimePlugins
-from ert.run_models import SingleTestRun
+from ert.run_models import ErtRunError, SingleTestRun
 from ert.run_models.run_model import RunModel
 from ert.server.endpoints import ert_runner
 from ert.server.endpoints.experiment_runs import (
@@ -25,7 +25,12 @@ from ert.server.endpoints.experiment_runs import (
     _get_experiment,
     verify_auth,
 )
-from ert.storage import LocalStorage, open_storage
+from ert.storage import (
+    ErtStorageException,
+    ErtStoragePermissionError,
+    LocalStorage,
+    open_storage,
+)
 from everest.everserver.server import ExperimentState, ExperimentStatus
 
 
@@ -216,6 +221,134 @@ async def test_that_config_validation_error_on_registration_gives_http_422(
     assert error.value.status_code == 422
     assert "Ensemble size must be positive" in error.value.detail
     assert not registry
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("error", "status_code"),
+    [
+        pytest.param(ErtRunError("Prior ensemble missing"), 422, id="run_error"),
+        pytest.param(
+            ErtStoragePermissionError("Permission denied"), 403, id="permission"
+        ),
+        pytest.param(ErtStorageException("Storage locked"), 409, id="storage"),
+    ],
+)
+async def test_that_known_registration_errors_give_http_client_error_with_detail(
+    monkeypatch: pytest.MonkeyPatch, error: Exception, status_code: int
+):
+    registry: dict[str, ert_runner.ErtExperimentRunnerState] = {}
+    monkeypatch.setattr(ert_runner, "_experiments", registry)
+    monkeypatch.setattr(ert_runner, "create_model", Mock(side_effect=error))
+    request = ert_runner.StartErtExperimentRequest.model_construct(
+        config=Mock(spec=ErtConfig),
+        args=ert_runner.RunArgs(
+            mode="ensemble_experiment", experiment_name="registration-test"
+        ),
+    )
+
+    with pytest.raises(ert_runner.HTTPException) as http_error:
+        await ert_runner.register(request)
+
+    assert http_error.value.status_code == status_code
+    assert http_error.value.detail == str(error)
+    assert not registry
+
+
+@pytest.mark.asyncio
+async def test_that_storage_error_on_registration_is_logged_with_traceback(
+    monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+):
+    monkeypatch.setattr(ert_runner, "_experiments", {})
+    try:
+        raise KeyError("missing index entry")
+    except KeyError as cause:
+        storage_error = ErtStorageException("Failed to open storage")
+        storage_error.__cause__ = cause
+    monkeypatch.setattr(ert_runner, "create_model", Mock(side_effect=storage_error))
+    request = ert_runner.StartErtExperimentRequest.model_construct(
+        config=Mock(spec=ErtConfig),
+        args=ert_runner.RunArgs(
+            mode="ensemble_experiment", experiment_name="registration-test"
+        ),
+    )
+
+    with pytest.raises(ert_runner.HTTPException):
+        await ert_runner.register(request)
+
+    (record,) = [
+        record
+        for record in caplog.records
+        if record.message.startswith("Failed to register experiment")
+    ]
+    assert record.levelname == "WARNING"
+    assert record.exc_info is not None
+    assert record.exc_info[1] is storage_error
+    assert "KeyError: 'missing index entry'" in caplog.text
+
+
+@pytest.mark.asyncio
+async def test_that_registering_with_locked_storage_gives_http_409(
+    minimum_case: ErtConfig, monkeypatch: pytest.MonkeyPatch
+):
+    monkeypatch.setattr(LocalStorage, "LOCK_TIMEOUT", 0)
+    request = ert_runner.StartErtExperimentRequest(
+        config=minimum_case,
+        args=ert_runner.RunArgs(mode="test_run", experiment_name="registration-test"),
+    )
+
+    with (
+        open_storage(minimum_case.ens_path, mode="w"),
+        pytest.raises(ert_runner.HTTPException) as error,
+    ):
+        await ert_runner.register(request)
+
+    assert error.value.status_code == 409
+    assert "Not able to acquire lock" in error.value.detail
+
+
+@pytest.mark.asyncio
+@pytest.mark.usefixtures("use_tmpdir")
+async def test_that_manual_update_with_missing_prior_ensemble_gives_http_422():
+    Path("config.ert").write_text("NUM_REALIZATIONS 2", encoding="utf-8")
+    missing_ensemble_id = str(uuid4())
+    request = ert_runner.StartErtExperimentRequest(
+        config=ErtConfig.from_file("config.ert"),
+        args=ert_runner.RunArgs(
+            mode="manual_update",
+            experiment_name="registration-test",
+            target_ensemble="posterior",
+            ensemble_id=missing_ensemble_id,
+        ),
+    )
+
+    with pytest.raises(ert_runner.HTTPException) as error:
+        await ert_runner.register(request)
+
+    assert error.value.status_code == 422
+    assert (
+        f"Prior ensemble with ID: {missing_ensemble_id} does not exist"
+        in error.value.detail
+    )
+
+
+@pytest.mark.asyncio
+async def test_that_evaluate_ensemble_with_missing_ensemble_gives_http_422(
+    minimum_case: ErtConfig,
+):
+    missing_ensemble_id = str(uuid4())
+    request = ert_runner.StartErtExperimentRequest(
+        config=minimum_case,
+        args=ert_runner.RunArgs(
+            mode="evaluate_ensemble", ensemble_id=missing_ensemble_id
+        ),
+    )
+
+    with pytest.raises(ert_runner.HTTPException) as error:
+        await ert_runner.register(request)
+
+    assert error.value.status_code == 422
+    assert f"No ensemble: {missing_ensemble_id}" in error.value.detail
 
 
 @pytest.mark.asyncio
