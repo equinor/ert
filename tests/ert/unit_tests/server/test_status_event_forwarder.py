@@ -2,11 +2,15 @@ import asyncio
 import logging
 import threading
 import uuid
+from base64 import b64encode
 
 import pytest
+from fastapi.testclient import TestClient
 
 from ert.ensemble_evaluator import EndEvent
 from ert.run_models.event import RunModelStatusEvent, StatusEvents
+from ert.server.app import app
+from ert.server.endpoints.experiment_runs import ExperimentRunnerState
 from ert.server.status_event_forwarder import StatusEventForwarder
 from tests.ert.utils import wait_until_all_status_events_are_delivered
 
@@ -77,3 +81,44 @@ async def test_that_blocked_listener_gets_pending_events_serially_in_order():
     assert forwarder.pending == 0
     assert received_events == events
     assert max_concurrent_calls == 1
+
+
+async def test_that_pending_status_events_are_summed_over_experiments_with_a_forwarder(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    listener_may_return = threading.Event()
+
+    def listener(*, event: StatusEvents) -> None:
+        listener_may_return.wait(timeout=5)
+
+    forwarders = [StatusEventForwarder(listener), StatusEventForwarder(listener)]
+    monkeypatch.setattr(
+        "ert.server.endpoints.experiment_runs._experiments",
+        {
+            "experiment": ExperimentRunnerState(status_event_forwarder=forwarders[0]),
+            "other_experiment": ExperimentRunnerState(
+                status_event_forwarder=forwarders[1]
+            ),
+            "experiment_without_forwarder": ExperimentRunnerState(),
+        },
+    )
+    monkeypatch.setenv("ERT_STORAGE_TOKEN", "password")
+    auth_headers = {
+        "Authorization": f"Basic {b64encode(b'username:password').decode()}"
+    }
+
+    try:
+        for event in make_events(2):
+            forwarders[0].forward(event)
+        forwarders[1].forward(EndEvent(failed=False, msg="done"))
+
+        response = TestClient(app).get(
+            "/experiment_runs/pending_status_events", headers=auth_headers
+        )
+    finally:
+        listener_may_return.set()
+    for forwarder in forwarders:
+        await wait_until_all_status_events_are_delivered(forwarder)
+
+    assert response.status_code == 200
+    assert response.json() == {"pending_status_events": 3}

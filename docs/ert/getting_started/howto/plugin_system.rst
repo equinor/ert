@@ -305,3 +305,11 @@ outcome of the experiment run.
 Since Ert does not wait for the listener, a run can be shown as finished,
 and a rerun started, before the listener has received the ``EndEvent`` of
 that run.
+
+Shutdown
+^^^^^^^^
+When the Ert server is shut down, for example when the Ert GUI is closed or
+an Everest optimization has finished, Ert waits up to 30 seconds for the
+remaining events to be passed to the listener before it stops the server.
+Events that have not been passed to the listener by then are lost, and a
+warning with the number of undelivered events is logged.
