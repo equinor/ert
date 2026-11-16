@@ -177,6 +177,7 @@ class LocalEnsemble(BaseMode):
             (path / "index.json").read_text(encoding="utf-8")
         )
         self._error_log_name = "error.json"
+        self._scalar_blob_uri_cached: str | None = None
 
         @cache
         def create_realization_dir(realization: int) -> Path:
@@ -547,8 +548,11 @@ class LocalEnsemble(BaseMode):
 
     @property
     def _scalar_blob_uri(self) -> str | None:
+        if self._scalar_blob_uri_cached is not None:
+            return self._scalar_blob_uri_cached
         for blob in self.load_blob_metadata(BlobType.SCALARS):
-            return blob.uri
+            self._scalar_blob_uri_cached = blob.uri
+            return self._scalar_blob_uri_cached
         return None
 
     def _load_scalars_lazy(self) -> pl.LazyFrame:
@@ -560,13 +564,10 @@ class LocalEnsemble(BaseMode):
 
     @require_write
     def _save_scalars(self, dataframe: pl.DataFrame) -> None:
-        buf = io.BytesIO()
-        dataframe.write_parquet(buf)
-        self._storage.save_blob(
+        self._storage.save_dataframe_to_blob(
             name="scalar",
-            data=buf.getvalue(),
+            dataframe=dataframe,
             blob_info=ScalarsData(),
-            file_type="application/parquet",
             blob_dir=self._path / BLOB_DATA_DIR,
             uri=self._scalar_blob_uri,
         )

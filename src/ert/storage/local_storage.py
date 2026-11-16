@@ -798,6 +798,33 @@ class LocalStorage(BaseMode):
         )
         return instance
 
+    def save_dataframe_to_blob(
+        self,
+        *,
+        name: str,
+        dataframe: pl.DataFrame,
+        blob_info: BlobInfo,
+        blob_dir: Path,
+        uri: str | None = None,
+    ) -> BlobStorageData:
+        if uri is None:
+            uri = f"{uuid4().hex[:8]}.blob"
+        blob_dir.mkdir(parents=True, exist_ok=True)
+        blob_filename = blob_dir / uri
+        self._to_parquet_transaction(blob_filename, dataframe)
+        instance = BlobStorageData(
+            uri=uri,
+            file_size=blob_filename.stat().st_size,
+            file_type="application/parquet",
+            name=name,
+            blob_info=blob_info,
+        )
+        self._write_transaction(
+            blob_dir / f"{uri}.json",
+            instance.model_dump_json(indent=2).encode("utf-8"),
+        )
+        return instance
+
     def load_blob_metadata(
         self,
         blob_dir: Path,
