@@ -9,7 +9,8 @@ class OutputConstraintConfig(BaseModel, extra="forbid"):
     name: str = Field(
         description=dedent(
             """
-        The unique name of the output constraint.
+        The unique name of the output constraint. It must not be the same as
+        the name of an objective function or a control.
         """
         )
     )

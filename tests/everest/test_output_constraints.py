@@ -1,3 +1,5 @@
+import re
+
 import numpy as np
 import pytest
 
@@ -115,6 +117,38 @@ def test_that_duplicate_output_constraint_names_raise_error():
                 {"target": 0.3, "name": "a"},
                 {"target": 0.3, "name": "a"},
             ],
+        )
+
+
+@pytest.mark.parametrize(
+    ("clashing_name", "expected_kind"),
+    [
+        ("my_objective", "an objective function"),
+        ("my_control", "a control"),
+        ("my_control.nested", "a control"),
+    ],
+)
+def test_that_output_constraint_name_cannot_equal_objective_or_control_name(
+    clashing_name, expected_kind
+):
+    with pytest.raises(
+        ValueError,
+        match=re.escape(
+            f"Output constraint name '{clashing_name}' is already used "
+            f"as {expected_kind} name"
+        ),
+    ):
+        everest_config_with_defaults(
+            controls=[
+                {
+                    "name": "my_control",
+                    "min": 0,
+                    "max": 0.1,
+                    "perturbation_magnitude": 0.01,
+                    "variables": [{"name": "nested", "initial_guess": 0.1}],
+                }
+            ],
+            output_constraints=[{"name": clashing_name, "upper_bound": 1.0}],
         )
 
 
