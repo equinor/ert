@@ -32,6 +32,7 @@ from ert.gui.ertwidgets import CopyButton, showWaitCursorWhileWaiting, wait_curs
 from ert.gui.plotting.ert_plots.misfits import wide_pandas_to_long_polars_with_misfits
 from ert.gui.plotting.utils.plot_maps import (
     CROSS_ENSEMBLE_STATISTICS,
+    CROSSPLOT,
     DISTRIBUTION,
     ENSEMBLE,
     ERT_PLOT_MAP,
@@ -75,6 +76,7 @@ from .widgets.plot_controls import (
     StatisticsOptions,
 )
 from .widgets.plot_ensemble_selection_widget import EnsembleSelectionWidget
+from .widgets.plot_realization_selection_widget import RealizationSelectionWidget
 from .widgets.plot_widget import Plotter, PlotWidget
 
 EVEREST_UPPER_BATCH_LIMIT = 20
@@ -276,6 +278,9 @@ class PlotWindow(QMainWindow):
             self._ensemble_selection_widget.ensembleSelectionChanged.connect(
                 self.keySelected
             )
+            self._ensemble_selection_widget.ensembleSelectionChanged.connect(
+                self._update_realization_choices
+            )
 
             self._everest_parameters = [
                 kd.parameter.name
@@ -301,6 +306,17 @@ class PlotWindow(QMainWindow):
                 expanded=True,
             )
 
+            self._realization_selection_widget = RealizationSelectionWidget([])
+            self._realization_selection_widget.realizationSelectionChanged.connect(
+                self.update_plot
+            )
+            self._realization_group = CollapsibleSection(
+                "Select realization",
+                create_group_layout([self._realization_selection_widget]),
+                expanded=True,
+            )
+            self._update_realization_choices()
+
             self._everest_controls_plot_options = EverestControlsPlotOptions(
                 self.update_plot
             )
@@ -321,6 +337,7 @@ class PlotWindow(QMainWindow):
                     self._general_options.get_widget(),
                     self._everest_controls_plot_options.get_widget(),
                     self._everest_controls_group,
+                    self._realization_group,
                     self._boxplot_options.get_widget(),
                     self._statistics_options.get_widget(),
                     self._distribution_options.get_widget(),
@@ -332,6 +349,7 @@ class PlotWindow(QMainWindow):
 
             self._everest_controls_group.setVisible(False)
             self._everest_controls_plot_options.get_widget().setVisible(False)
+            self._realization_group.setVisible(False)
             self._boxplot_options.get_widget().setVisible(False)
             self._statistics_options.get_widget().setVisible(False)
             self._distribution_options.get_widget().setVisible(False)
@@ -369,6 +387,20 @@ class PlotWindow(QMainWindow):
 
             if self.getSelectedKey() is None:
                 self._show_no_data_message()
+
+    def _update_realization_choices(self) -> None:
+        selected_ensembles = self._ensemble_selection_widget.get_selected_ensembles()
+        max_realizations = max(
+            (
+                ensemble.size
+                for ensemble in selected_ensembles
+                if ensemble.size is not None
+            ),
+            default=0,
+        )
+        self._realization_selection_widget.set_realizations(
+            [str(i) for i in range(max_realizations)]
+        )
 
     def _show_no_data_message(self) -> None:
         current_widget = self._central_tab.currentWidget()
@@ -444,12 +476,14 @@ class PlotWindow(QMainWindow):
             plot_widget.name in {MISFITS, CROSS_ENSEMBLE_STATISTICS}
         )
         self._statistics_options.get_widget().setVisible(plot_widget.name == STATISTICS)
+
         self._general_options.get_widget().setVisible(
             plot_widget.name not in {STD_DEV, FIELD_UPDATE_PLOT}
         )
         self._distribution_options.get_widget().setVisible(
             plot_widget.name == DISTRIBUTION
         )
+        self._realization_group.setVisible(plot_widget.name == CROSSPLOT)
 
         is_gradient_plot = plot_widget.name == EVEREST_GRADIENTS_PLOT
         is_controls_plot = plot_widget.name == EVEREST_CONTROLS_PLOT
@@ -557,6 +591,15 @@ class PlotWindow(QMainWindow):
                         handle_exception(result)
                     elif result is not None:
                         ensemble_to_data_map[ensemble] = result
+
+            if plot_widget.name == CROSSPLOT:
+                selected_realization = (
+                    self._realization_selection_widget.get_selected_realization()
+                )
+                if selected_realization is not None:
+                    for ensemble, data in list(ensemble_to_data_map.items()):
+                        mask = data.index.astype(str) == selected_realization
+                        ensemble_to_data_map[ensemble] = data.loc[mask]
 
             log_scale_valid_values = True
             if key_def.parameter is not None and key_def.parameter.type == "gen_kw":
@@ -681,11 +724,12 @@ class PlotWindow(QMainWindow):
                 history_data_available=history_data_available,
                 has_observations=key_def.observations,
                 show_observations=key_def.observations
-                and selected_tab not in {MISFITS, MISFIT_MAP, OBSERVATIONS_MAP},
+                and selected_tab
+                not in {MISFITS, MISFIT_MAP, OBSERVATIONS_MAP, CROSSPLOT},
                 show_color_palette=key_def.observations
                 and selected_tab not in {MISFIT_MAP, OBSERVATIONS_MAP},
                 log_scale_available=log_scale_valid_values
-                and selected_tab in {HISTOGRAM, DISTRIBUTION, GAUSSIAN_KDE},
+                and selected_tab in {HISTOGRAM, DISTRIBUTION, GAUSSIAN_KDE, CROSSPLOT},
             )
             self._boxplot_options.update_plot_context(plot_context)
             self._everest_controls_plot_options.update_plot_context(plot_context)
@@ -868,11 +912,12 @@ class PlotWindow(QMainWindow):
             and (
                 (
                     is_observed_seismic
-                    and widget.name in {MISFITS, MISFIT_MAP, OBSERVATIONS_MAP}
+                    and widget.name
+                    in {MISFITS, MISFIT_MAP, OBSERVATIONS_MAP, CROSSPLOT}
                 )
                 or (
                     not is_observed_seismic
-                    and widget.name not in {MISFIT_MAP, OBSERVATIONS_MAP}
+                    and widget.name not in {MISFIT_MAP, OBSERVATIONS_MAP, CROSSPLOT}
                 )
             )
             and widget.name != WATERFALL

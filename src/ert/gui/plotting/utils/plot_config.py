@@ -3,12 +3,16 @@ from __future__ import annotations
 import itertools
 from typing import Any
 
+import numpy as np
+
 from .plot_color_palettes import TABLEAU_10_COLOR_CYCLE
 from .plot_style import PlotStyle
 from .statistics_style import (
     BAND_AREA_STYLE,
     STATISTICS,
 )
+
+_MIN_MARKER_SIZE = 2.0
 
 
 class PlotConfig:
@@ -155,10 +159,16 @@ class PlotConfig:
         style.color, style.alpha = self.current_color()
         return style
 
-    def distribution_style(self) -> PlotStyle:
+    def distribution_style(self, n_points: int | None = None) -> PlotStyle:
         style = PlotStyle("Distribution style")
         style.copy_style_from(self._distribution_style)
         style.color, style.alpha = self.current_color()
+        if n_points:
+            style.size = float(
+                np.clip(
+                    style.size * (50 / n_points) ** 0.5, _MIN_MARKER_SIZE, style.size
+                )
+            )
         return style
 
     def distributionLineStyle(self) -> PlotStyle:

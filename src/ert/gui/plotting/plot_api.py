@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from collections.abc import Sequence
 from dataclasses import dataclass
 from functools import cached_property, lru_cache
 from itertools import combinations as combi
@@ -38,6 +39,7 @@ class EnsembleObject:
     started_at: str
     has_func_eval: bool = False
     has_gradient: bool = False
+    size: int | None = None
 
 
 class PlotApiKeyDefinition(NamedTuple):
@@ -112,6 +114,7 @@ class PlotApi:
                             has_gradient=bool(
                                 response_json["userdata"].get("has_gradient", False)
                             ),
+                            size=int(response_json["size"]),
                         )
                     )
         except IndexError as exc:
@@ -256,11 +259,7 @@ class PlotApi:
             key_def is not None
             and key_def.metadata.get("data_origin") == "everest_batch_objectives"
         ):
-            if not {"batch_id", "accepted"}.issubset(df.columns):
-                raise httpx.RequestError(
-                    "Everest response data must contain "
-                    "'batch_id' and 'accepted' columns"
-                )
+            assert {"batch_id", "accepted"}.issubset(df.columns)
 
             float_columns_names = (
                 {"batch_id", "accepted", "constraint_violation_type"}
@@ -293,7 +292,10 @@ class PlotApi:
             try:
                 df.columns = [int(s) for s in df.columns]
             except ValueError:
-                df.columns = [float(s) for s in df.columns]
+                try:
+                    df.columns = [float(s) for s in df.columns]
+                except ValueError:
+                    df.columns = [str(s) for s in df.columns]
 
         try:
             return df.astype(float)
@@ -437,18 +439,19 @@ class PlotApi:
                     f"ensemble_name={ensemble.name}, e={e}"
                 ) from e
 
-            key_index: list[int | float | pd.Timestamp]
+            key_index: Sequence[int | float | pd.Timestamp | str]
             for obs in observations:
                 try:
                     int(obs["x_axis"][0])
                     key_index = [int(v) for v in obs["x_axis"]]
                 except ValueError:
                     try:
-                        float(obs["x_axis"][0])
-                        key_index = [float(v) for v in obs["x_axis"]]
-                    except ValueError:
                         key_index = [pd.Timestamp(v) for v in obs["x_axis"]]
-
+                    except ValueError:
+                        try:
+                            key_index = [pd.Timestamp(v) for v in obs["x_axis"]]
+                        except ValueError:
+                            key_index = [str(v) for v in obs["x_axis"]]
                 observations_dfs.append(
                     pd.DataFrame(
                         {
