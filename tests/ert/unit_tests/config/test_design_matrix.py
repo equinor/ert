@@ -48,14 +48,22 @@ def test_that_merged_design_matrices_can_be_restored_without_the_source_files(
         tmp_path / "second.xlsx",
         pl.DataFrame({"REAL": [0, 1], "b": [4.0, 5.0]}),
     )
-    analysis_config = AnalysisConfig.from_dict(
-        {
-            "DESIGN_MATRIX": [
-                [str(tmp_path / "first.xlsx"), {"UPDATE": "FALSE"}],
-                [str(tmp_path / "second.xlsx"), {"UPDATE": "TRUE"}],
-            ]
-        }
-    )
+    with pytest.warns(
+        ConfigWarning,
+        match=(
+            "do not have the same active realizations. The merged design "
+            "matrix will only contain the realizations that are active "
+            "in all instances."
+        ),
+    ):
+        analysis_config = AnalysisConfig.from_dict(
+            {
+                "DESIGN_MATRIX": [
+                    [str(tmp_path / "first.xlsx"), {"UPDATE": "FALSE"}],
+                    [str(tmp_path / "second.xlsx"), {"UPDATE": "TRUE"}],
+                ]
+            }
+        )
     adapter = TypeAdapter(AnalysisConfig)
     serialized = adapter.dump_python(analysis_config, mode="json")
     (tmp_path / "first.xlsx").unlink()
