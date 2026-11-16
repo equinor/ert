@@ -46,14 +46,14 @@ def _join_observations_and_responses(
         joined = strategy.match(observations, responses)
 
     joined = ensure_qc_error_column(joined)
-    joined = _update_qc_error_on_mismatch(joined, strategy.response_cls, str(real))
+    joined = _update_qc_error_on_mismatch(joined, strategy.response_config, str(real))
     joined = _update_realization_column_on_error(joined, str(real))
-    joined = _add_index_column(joined, strategy.response_cls, str(real))
+    joined = _add_index_column(joined, strategy.response_config, str(real))
     return joined  # ruff: ignore[unnecessary-assign]
 
 
 def _update_qc_error_on_mismatch(
-    joined: pl.DataFrame, response_cls: ResponseConfig, real: str
+    joined: pl.DataFrame, response_config: ResponseConfig, real: str
 ) -> pl.DataFrame:
     no_matched_response_condition = pl.col(str(real)).is_null()
     no_matched_response_error = pl.concat_str(
@@ -62,7 +62,7 @@ def _update_qc_error_on_mismatch(
             pl.lit("response_key="),
             pl.col("response_key").cast(pl.String),
             pl.lit(", "),
-            response_cls.match_key_dict_expr(),
+            response_config.match_key_dict_expr(),
         ],
         separator="",
     )
@@ -75,12 +75,12 @@ def _update_qc_error_on_mismatch(
 
 
 def _add_index_column(
-    joined: pl.DataFrame, response_cls: ResponseConfig, real: str
+    joined: pl.DataFrame, response_config: ResponseConfig, real: str
 ) -> pl.DataFrame:
     # Avoid potential collision with "index" column (it could be a part
     # of the index_key)
     joined = joined.with_columns(
-        response_cls.index_column_expr().alias("__tmp_index_key__")
+        response_config.index_column_expr().alias("__tmp_index_key__")
     )
     if "index" in joined.columns:
         joined = joined.drop("index")

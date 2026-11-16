@@ -1014,7 +1014,7 @@ class LocalEnsemble(BaseMode):
         reals = np.sort(iens_active_index).tolist()
 
         dfs_per_response_type = []
-        for response_type, response_cls in response_config_dict.items():
+        for response_type, response_config in response_config_dict.items():
             if response_type not in observations_dict:
                 continue
 
@@ -1025,7 +1025,9 @@ class LocalEnsemble(BaseMode):
             match_config.filter_out_unmatchable_responses = True
             match_config.pivot_responses_on = "realization"
             match_config.breakthrough.fill_in_unreached_threshold = True
-            strategy = matching_strategy(self, response_cls, match_config=match_config)
+            strategy = matching_strategy(
+                self, response_config, match_config=match_config
+            )
 
             observations_for_type = strategy.prepare_observations(
                 observations_dict[response_type]

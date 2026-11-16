@@ -1463,7 +1463,7 @@ class RftQcWidget(QWidget):
     ) -> pl.DataFrame:
         responses = strategy.extract_responses((realization,), observations)
 
-        if strategy.response_cls.approximate_missing_values:
+        if strategy.response_config.approximate_missing_values:
             responses_including_approximations = (
                 RFTConfig.approximate_missing_rft_responses(
                     responses.lazy(), observations

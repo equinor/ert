@@ -75,23 +75,23 @@ class MatchConfig:
 
 class ReservoirDataMatchStrategy[ConcreteResponseConfig: ResponseConfig](ABC):
     ensemble: LocalEnsemble
-    response_cls: ConcreteResponseConfig
+    response_config: ConcreteResponseConfig
     match_config: MatchConfig
     match_keys: list[str]
 
     def __init__(
         self,
         ensemble: LocalEnsemble,
-        response_cls: ConcreteResponseConfig,
+        response_config: ConcreteResponseConfig,
         match_config: MatchConfig,
     ) -> None:
         self.ensemble = ensemble
-        self.response_cls = response_cls
+        self.response_config = response_config
         self.match_config = match_config
         if self.match_config.special_match_keys is not None:
             self.match_keys = self.match_config.special_match_keys
         else:
-            self.match_keys = ["response_key", *response_cls.match_key]
+            self.match_keys = ["response_key", *response_config.match_key]
 
     def prepare_observations(self, observations: pl.DataFrame) -> pl.DataFrame:
         observations = self.customize_observations(observations)
@@ -160,7 +160,7 @@ class ReservoirDataMatchStrategy[ConcreteResponseConfig: ResponseConfig](ABC):
         if self.match_config.response_key_to_filter_response_on is not None:
             response_id = self.match_config.response_key_to_filter_response_on
         else:
-            response_id = self.response_cls.type
+            response_id = self.response_config.type
         raw_responses = self.ensemble._load_responses_lazy(response_id, realizations)
 
         if self.match_config.convert_response_key_to_categorical:
@@ -255,13 +255,13 @@ class BreakthroughMatchStrategy(ReservoirDataMatchStrategy[BreakthroughConfig]):
     def __init__(
         self,
         ensemble: LocalEnsemble,
-        response_cls: BreakthroughConfig,
+        response_config: BreakthroughConfig,
         match_config: MatchConfig,
     ) -> None:
         self.ensemble_end_date = None
         if match_config.breakthrough.fill_in_unreached_threshold:
             self.ensemble_end_date = self._compute_ensemble_end_date(ensemble)
-        super().__init__(ensemble, response_cls, match_config=match_config)
+        super().__init__(ensemble, response_config, match_config=match_config)
 
     @staticmethod
     def _compute_ensemble_end_date(ensemble: LocalEnsemble) -> datetime | None:
@@ -293,7 +293,7 @@ class BreakthroughMatchStrategy(ReservoirDataMatchStrategy[BreakthroughConfig]):
                 lazy_responses = lazy_responses.with_columns(
                     pl.col("response_key").cast(pl.String)
                 )
-            lazy_responses = self.response_cls.fill_missing_values(
+            lazy_responses = self.response_config.fill_missing_values(
                 lazy_responses, self.ensemble_end_date
             )
             if self.match_config.convert_response_key_to_categorical:
@@ -330,7 +330,7 @@ class RFTMatchStrategy(ReservoirDataMatchStrategy[RFTConfig]):
     ) -> pl.LazyFrame:
         if (
             self.match_config.rft.approximate_values
-            and self.response_cls.approximate_missing_values
+            and self.response_config.approximate_missing_values
         ):
             lazy_responses = RFTConfig.approximate_missing_rft_responses(
                 lazy_responses, observations
@@ -367,7 +367,7 @@ MatchStrategyType = (
 
 def matching_strategy(
     ensemble: LocalEnsemble,
-    response_cls: ResponseConfig,
+    response_config: ResponseConfig,
     match_config: MatchConfig,
 ) -> MatchStrategyType:
     """Get strategy for reservoir data matching for provided ResponseConfig."""
@@ -378,5 +378,5 @@ def matching_strategy(
         "rft": RFTMatchStrategy,
         "seismic": SeismicMatchStrategy,
     }
-    strategy_cls = data_map[response_cls.type]
-    return strategy_cls(ensemble, response_cls, match_config)
+    strategy_cls = data_map[response_config.type]
+    return strategy_cls(ensemble, response_config, match_config)
