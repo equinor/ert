@@ -3,7 +3,6 @@ import logging
 import threading
 import warnings
 from base64 import b64encode
-from contextlib import nullcontext
 from dataclasses import dataclass
 from pathlib import Path
 from shutil import which
@@ -20,6 +19,7 @@ from starlette.websockets import WebSocketDisconnect
 
 from ert.config import ConfigWarning, QueueSystem
 from ert.ensemble_evaluator import EndEvent
+from ert.plugins import ErtPluginManager, get_site_plugins
 from ert.run_models.event import StatusEvents
 from ert.scheduler.event import FinishedEvent
 from ert.server.app import app
@@ -42,6 +42,8 @@ from everest.strings import (
 )
 from everest.util._utils import get_everest_experiment
 from tests.everest.utils import MIN_CONFIG, everest_config_with_defaults
+
+pytestmark = pytest.mark.usefixtures("reset_server_plugin_manager")
 
 
 @pytest.fixture
@@ -427,19 +429,19 @@ def test_that_draining_gives_up_after_the_timeout(caplog):
 def everest_run_state(monkeypatch):
     state = ExperimentRunnerState()
     monkeypatch.setitem(_experiments, "experiment_id", state)
-    monkeypatch.setattr("ert.server.endpoints.experiment_runs.get_site_plugins", Mock())
-    monkeypatch.setattr(
-        "ert.server.endpoints.experiment_runs.use_runtime_plugins",
-        lambda _: nullcontext(),
-    )
     monkeypatch.setattr(
         "ert.server.endpoints.experiment_runs.EvaluatorServerConfig", Mock()
     )
     return state
 
 
+@pytest.fixture(scope="module")
+def site_plugins():
+    return get_site_plugins(ErtPluginManager(plugins=[]))
+
+
 async def test_that_model_creation_failure_publishes_a_failed_end_event(
-    monkeypatch, everest_run_state
+    monkeypatch, everest_run_state, site_plugins
 ):
     monkeypatch.setattr(
         "ert.server.endpoints.experiment_runs.EverestRunModel.create",
@@ -448,7 +450,7 @@ async def test_that_model_creation_failure_publishes_a_failed_end_event(
     subscriber = Subscriber()
     everest_run_state.subscribers["subscriber"] = subscriber
 
-    await run_everest(Mock(), "experiment_id")
+    await run_everest(Mock(), "experiment_id", site_plugins)
 
     assert everest_run_state.events == [EndEvent(failed=True, msg="Invalid config")]
     assert everest_run_state.status.status == ExperimentState.failed
@@ -457,7 +459,7 @@ async def test_that_model_creation_failure_publishes_a_failed_end_event(
 
 
 async def test_that_cancelling_a_running_experiment_publishes_a_failed_end_event(
-    monkeypatch, everest_run_state
+    monkeypatch, everest_run_state, site_plugins
 ):
     cancelled = threading.Event()
     model = Mock()
@@ -479,7 +481,7 @@ async def test_that_cancelling_a_running_experiment_publishes_a_failed_end_event
     subscriber = Subscriber()
     everest_run_state.subscribers["subscriber"] = subscriber
 
-    await run_everest(Mock(), "experiment_id")
+    await run_everest(Mock(), "experiment_id", site_plugins)
 
     model.cancel.assert_called_once_with()
     assert everest_run_state.events == [

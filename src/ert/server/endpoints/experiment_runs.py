@@ -1,6 +1,7 @@
 import asyncio
 import dataclasses
 import datetime as dt
+import functools
 import json
 import logging
 import os
@@ -36,7 +37,7 @@ from ert.config import ConfigWarning, QueueSystem
 from ert.ensemble_evaluator import EndEvent, EvaluatorServerConfig
 from ert.ensemble_evaluator.event import FullSnapshotEvent, SnapshotUpdateEvent
 from ert.ensemble_evaluator.snapshot import EnsembleSnapshot
-from ert.plugins import get_site_plugins
+from ert.plugins import ErtPluginManager, ErtRuntimePlugins, get_site_plugins
 from ert.run_models import StatusEvents
 from ert.run_models.everest_run_model import EverestExitCode, EverestRunModel
 from ert.server.common import EverEndpoints
@@ -173,13 +174,27 @@ def verify_auth(
 authenticated = [Depends(verify_auth)]
 
 
-async def _with_runtime_plugins() -> AsyncIterator[None]:
+@functools.cache
+def _create_plugin_manager() -> ErtPluginManager:
+    return ErtPluginManager()
+
+
+async def get_plugin_manager() -> ErtPluginManager:
+    # Async so that FastAPI resolves it on the event loop thread instead of
+    # the threadpool, ensuring the plugin manager is never built concurrently.
+    return _create_plugin_manager()
+
+
+async def _with_runtime_plugins(
+    plugin_manager: Annotated[ErtPluginManager, Depends(get_plugin_manager)],
+) -> AsyncIterator[ErtRuntimePlugins]:
     stack = ExitStack()
     try:
         stack.enter_context(warnings.catch_warnings())
         warnings.filterwarnings("ignore", category=ConfigWarning)
-        stack.enter_context(use_runtime_plugins(get_site_plugins()))
-        yield
+        site_plugins = get_site_plugins(plugin_manager)
+        stack.enter_context(use_runtime_plugins(site_plugins))
+        yield site_plugins
     finally:
         stack.close()
 
@@ -225,17 +240,18 @@ def stop() -> Response:
 
 @router.post(
     "/" + EverEndpoints.START_EXPERIMENT,
-    dependencies=[*authenticated, Depends(_with_runtime_plugins)],
+    dependencies=authenticated,
 )
 async def start_experiment(
     config: EverestConfig,
     background_tasks: BackgroundTasks,
+    site_plugins: Annotated[ErtRuntimePlugins, Depends(_with_runtime_plugins)],
 ) -> JSONResponse:
     experiment_id = str(uuid.uuid4())
     experiment_state = ExperimentRunnerState()
     _experiments[experiment_id] = experiment_state
     try:
-        background_tasks.add_task(run_everest, config, experiment_id)
+        background_tasks.add_task(run_everest, config, experiment_id, site_plugins)
         experiment_state.config_path = config.config_path
         experiment_state.run_path = config.simulation_dir
         experiment_state.storage_path = config.output_dir
@@ -340,13 +356,16 @@ async def _get_event(subscriber_id: str, experiment_id: str) -> StatusEvents:
     return event
 
 
-async def run_everest(config: EverestConfig, experiment_id: str) -> None:
+async def run_everest(
+    config: EverestConfig,
+    experiment_id: str,
+    site_plugins: ErtRuntimePlugins,
+) -> None:
     run = _experiments[experiment_id]
     status_queue: SimpleQueue[StatusEvents] = SimpleQueue()
     run_model: EverestRunModel | None = None
     end_message = "Experiment ended without a terminal event"
     try:  # ruff: ignore[too-many-statements-in-try-clause]
-        site_plugins = get_site_plugins()
         with use_runtime_plugins(site_plugins):
             run_model = EverestRunModel.create(
                 everest_config=config,
