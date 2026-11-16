@@ -118,6 +118,24 @@ def test_that_duplicate_output_constraint_names_raise_error():
         )
 
 
+@pytest.mark.parametrize(
+    ("section", "expected_kind"),
+    [("objective_functions", "an objective function"), ("controls", "a control")],
+)
+def test_that_output_constraint_name_cannot_equal_objective_or_control_name(
+    min_config, section, expected_kind
+):
+    clashing_name = min_config[section][0]["name"]
+    with pytest.raises(
+        ValueError,
+        match=f"Output constraint name '{clashing_name}' is already used "
+        f"as {expected_kind} name",
+    ):
+        everest_config_with_defaults(
+            output_constraints=[{"name": clashing_name, "upper_bound": 1.0}],
+        )
+
+
 def test_that_target_or_bounds_are_provided():
     with pytest.raises(
         ValueError,

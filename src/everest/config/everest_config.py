@@ -908,6 +908,23 @@ to read summary data from forward model, do:
         )
         return output_constraints
 
+    @model_validator(mode="after")
+    def validate_output_constraint_names_do_not_clash(self) -> Self:
+        objective_names = {objective.name for objective in self.objective_functions}
+        control_names = {control.name for control in self.controls}
+        errors = [
+            f"Output constraint name '{constraint.name}' is already used as {kind} name"
+            for constraint in self.output_constraints
+            for kind, names in (
+                ("an objective function", objective_names),
+                ("a control", control_names),
+            )
+            if constraint.name in names
+        ]
+        if errors:
+            raise ValueError("\n".join(errors))
+        return self
+
     @field_validator("objective_functions")
     @no_type_check
     @classmethod
