@@ -249,6 +249,19 @@ def active_streams() -> JSONResponse:
     )
 
 
+@router.get("/" + EverEndpoints.PENDING_STATUS_EVENTS, dependencies=authenticated)
+def pending_status_events() -> JSONResponse:
+    return JSONResponse(
+        {
+            "pending_status_events": sum(
+                experiment.status_event_forwarder.pending
+                for experiment in _experiments.values()
+                if experiment.status_event_forwarder is not None
+            )
+        }
+    )
+
+
 @router.post("/" + EverEndpoints.STOP, dependencies=authenticated)
 def stop() -> Response:
     if not _experiments:

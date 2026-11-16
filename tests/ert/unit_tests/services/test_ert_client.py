@@ -187,6 +187,24 @@ def test_that_active_event_streams_reads_the_server_stream_count():
     )
 
 
+def test_that_pending_status_events_reads_the_server_pending_event_count():
+    transport = MagicMock(spec=SharedClient)
+    transport.conn_info.auth_token = "token"
+    transport.request.return_value = httpx.Response(
+        200, json={"pending_status_events": 3}
+    )
+    api = ErtClient(transport)
+
+    assert api.pending_status_events() == 3
+
+    transport.request.assert_called_once_with(
+        "GET",
+        "/experiment_runs/pending_status_events",
+        auth=api._auth,
+        timeout=DEFAULT_TIMEOUT,
+    )
+
+
 def test_that_rerun_requests_send_the_flag_and_accept_an_empty_response():
     transport = MagicMock(spec=SharedClient)
     transport.conn_info.auth_token = "token"
