@@ -1,8 +1,9 @@
 from __future__ import annotations
 
-import json
 import logging
 from pathlib import Path
+
+from .migration_utils import ensemble_dirs, read_json, resolve_blob_path
 
 logger = logging.getLogger(__name__)
 
@@ -12,29 +13,14 @@ info = (
 )
 
 
-def _resolve_blob_path(blob_dir: Path, uri: str) -> Path | None:
-    resolved_blob_dir = blob_dir.resolve()
-    blob_path = (resolved_blob_dir / uri).resolve()
-    try:
-        blob_path.relative_to(resolved_blob_dir)
-    except ValueError:
-        logger.warning("Skipping EnIF K blob outside blob directory: %s", uri)
-        return None
-    return blob_path
-
-
 def _remove_enif_kalman_blobs(path: Path) -> None:
-    ensembles_dir = path / "ensembles"
-    if not ensembles_dir.exists():
-        return
-
-    for ens_dir in ensembles_dir.iterdir():
+    for ens_dir in ensemble_dirs(path):
         blob_dir = ens_dir / "blobs"
         if not blob_dir.is_dir():
             continue
 
         for json_path in blob_dir.glob("*.json"):
-            blob_data = json.loads(json_path.read_text(encoding="utf-8"))
+            blob_data = read_json(json_path)
             blob_info = blob_data.get("blob_info", {})
             if (
                 blob_data.get("name") == "K"
@@ -48,8 +34,11 @@ def _remove_enif_kalman_blobs(path: Path) -> None:
                     )
                     continue
 
-                blob_path = _resolve_blob_path(blob_dir, uri)
+                blob_path = resolve_blob_path(blob_dir, uri)
                 if blob_path is None:
+                    logger.warning(
+                        "Skipping EnIF K blob outside blob directory: %s", uri
+                    )
                     continue
 
                 blob_path.unlink(missing_ok=True)

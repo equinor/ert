@@ -1,8 +1,9 @@
 from __future__ import annotations
 
-import json
 import logging
 from pathlib import Path
+
+from .migration_utils import experiment_index_files, read_json, write_json
 
 logger = logging.getLogger(__name__)
 
@@ -52,19 +53,8 @@ _ALLOWED_EXPERIMENT_KEYS = frozenset(
 
 
 def _strip_unknown_fields(path: Path) -> None:
-    experiments_dir = path / "experiments"
-    if not experiments_dir.exists():
-        return
-
-    for exp_dir in experiments_dir.iterdir():
-        if not exp_dir.is_dir():
-            continue
-
-        index_file = exp_dir / "index.json"
-        if not index_file.exists():
-            continue
-
-        index_data = json.loads(index_file.read_text(encoding="utf-8"))
+    for index_file in experiment_index_files(path):
+        index_data = read_json(index_file)
         experiment_data = index_data.get("experiment", {})
 
         unknown_keys = [
@@ -78,7 +68,7 @@ def _strip_unknown_fields(path: Path) -> None:
                 index_file,
                 ", ".join(sorted(unknown_keys)),
             )
-            index_file.write_text(json.dumps(index_data, indent=2), encoding="utf-8")
+            write_json(index_file, index_data)
 
 
 def migrate(path: Path) -> None:

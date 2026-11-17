@@ -1,9 +1,10 @@
-import json
 import logging
 from pathlib import Path
 from typing import Any
 
 import polars as pl
+
+from .migration_utils import get_ensemble_index_data
 
 info = """Splits rft.parquet into 2 files. rft.parquet has response only data and
        rft_observation_location_metadata.parquet has location related data."""
@@ -223,10 +224,7 @@ def transform(
 def migrate(path: Path) -> None:
     for rft_response_path in path.glob("ensembles/*/*/rft.parquet"):
         ensemble_dir = rft_response_path.parent.parent
-        ensemble_index = json.loads(
-            (ensemble_dir / "index.json").read_text(encoding="utf-8")
-        )
-        experiment_id = ensemble_index["experiment_id"]
+        experiment_id = get_ensemble_index_data(ensemble_dir)["experiment_id"]
 
         rft_obs_path = path / "experiments" / experiment_id / "observations" / "rft"
         rft_obs_df = None

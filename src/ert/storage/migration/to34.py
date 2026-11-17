@@ -1,8 +1,9 @@
 from __future__ import annotations
 
-import json
 import logging
 from pathlib import Path
+
+from .migration_utils import ensemble_dirs, read_json, write_json
 
 logger = logging.getLogger(__name__)
 
@@ -10,21 +11,14 @@ info = "Add parameter_group_sizes field to matrix blob metadata"
 
 
 def _add_parameter_group_sizes(path: Path) -> None:
-    ensembles_dir = path / "ensembles"
-    if not ensembles_dir.exists():
-        return
-
-    for ens_dir in ensembles_dir.iterdir():
-        if not ens_dir.is_dir():
-            continue
-
+    for ens_dir in ensemble_dirs(path):
         blob_dir = ens_dir / "blobs"
         if not blob_dir.exists():
             continue
 
         for meta_file in blob_dir.glob("*.blob.json"):
             try:
-                meta = json.loads(meta_file.read_text(encoding="utf-8"))
+                meta = read_json(meta_file)
             except Exception:
                 continue
 
@@ -39,7 +33,7 @@ def _add_parameter_group_sizes(path: Path) -> None:
                 continue
 
             blob_info["parameter_group_sizes"] = {}
-            meta_file.write_text(json.dumps(meta, indent=2), encoding="utf-8")
+            write_json(meta_file, meta)
             logger.info("Added parameter_group_sizes to %s", meta_file)
 
 
