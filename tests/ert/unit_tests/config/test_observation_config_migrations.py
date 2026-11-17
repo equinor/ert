@@ -21,7 +21,7 @@ from ert.config._observations import SummaryObservation, make_observations
 from ert.config.observation_config_migrations import (
     remove_refcase_and_time_map_dependence_from_obs_config,
 )
-from ert.config.parsing import parse_observations
+from ert.config.parsing import ConfigWarning, parse_observations
 from ert.config.parsing.observations_parser import ObservationConfigError
 from ert.observation_converters.history_to_summary import convert_history_to_summary
 
@@ -1065,7 +1065,11 @@ def test_that_converted_summary_observation_keeps_error_of_original(
 
     convert_history_to_summary("config.ert")
 
-    [observation] = ErtConfig.from_file("config.ert").observation_declarations
+    with pytest.warns(
+        ConfigWarning,
+        match="Config contains a SUMMARY key but no forward model steps",
+    ):
+        [observation] = ErtConfig.from_file("config.ert").observation_declarations
     assert observation.error == pytest.approx(expected_error)
 
 
