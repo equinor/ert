@@ -1,5 +1,6 @@
 """Module for utility functions that do not belong elsewhere."""
 
+import math
 from collections import Counter
 from collections.abc import Callable, Hashable, Iterable
 from pathlib import Path
@@ -9,14 +10,84 @@ import numpy as np
 import pandas as pd
 import polars as pl
 from polars.exceptions import NoDataError
-from python_calamine import CalamineWorkbook
+from python_calamine import CalamineError, CalamineWorkbook
 
 from fmudesign.exceptions import FmudesignError
+
+DISALLOWED_CELL_VALUES = ["nan", "null", "none", ""]
 
 
 def excel_sheet_names(filename: Path | str) -> list[str]:
     with CalamineWorkbook.from_path(filename) as workbook:
         return workbook.sheet_names
+
+
+def convert_to_numeric(x: str) -> str | float | int:
+    try:
+        return int(x)
+    except ValueError:
+        try:
+            return float(x)
+
+        except ValueError:
+            return x
+
+
+def read_default_values(
+    filename: Path, sheet_name: str, *, has_header: bool
+) -> dict[str, str | float | int | bool]:
+    """
+    Construct a dict of keys and values to be used as defaults from the
+    first two columns in a spreadsheet.
+    """
+    try:
+        with CalamineWorkbook.from_path(filename) as workbook:
+            rows = workbook.get_sheet_by_name(sheet_name).to_python(
+                skip_empty_area=False
+            )
+    except CalamineError as err:
+        raise ValueError(
+            f"The default sheet '{sheet_name}' in '{filename}' could not be read: {err}"
+        ) from err
+
+    defaults: dict[str, str | float | int | bool] = {}
+    empty_cells: list[str] = []
+    duplicate_names: set[str] = set()
+    for row_number, row in enumerate(
+        rows[int(has_header) :], start=1 + int(has_header)
+    ):
+        if all(isinstance(cell, str) and not cell.strip() for cell in row):
+            continue
+        if len(row) < 2:
+            raise ValueError("Defaults sheet must have at least two columns")
+
+        name = str(row[0]).strip()
+        value = row[1]
+        if isinstance(value, float) and value.is_integer():
+            value = int(value)
+        elif not isinstance(value, (int, float)):
+            value = convert_to_numeric(str(value).strip())
+        empty_cells.extend(
+            f"Row {row_number}, column {column}"
+            for column, cell in enumerate((name, value))
+            if str(cell).lower() in DISALLOWED_CELL_VALUES
+            or (isinstance(cell, float) and not math.isfinite(cell))
+        )
+        if name in defaults:
+            duplicate_names.add(name)
+        defaults[name] = value
+
+    if empty_cells:
+        raise ValueError(
+            "Default sheet contains empty cells or cells with a "
+            f"disallowed value {empty_cells}"
+        )
+    if duplicate_names:
+        raise ValueError(
+            f"Default sheet '{sheet_name}' contains duplicate parameter names: "
+            f"{', '.join(sorted(duplicate_names))}"
+        )
+    return defaults
 
 
 def read_excel_sheet(filename: str, sheet_name: str | int = 0) -> pd.DataFrame:
