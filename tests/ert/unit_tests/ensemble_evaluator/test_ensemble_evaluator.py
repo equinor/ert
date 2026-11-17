@@ -665,9 +665,11 @@ async def test_signal_cancel_terminates_fm_dispatcher_with_scheduler_as_fallback
     caplog.set_level(logging.INFO)
     send_terminate_was_called = asyncio.Event()
 
-    async def empty_send_terminate_messages(*args, **kwargs):
+    async def empty_send_terminate_messages(self, *args, **kwargs):
         nonlocal send_terminate_was_called
         send_terminate_was_called.set()
+        for real_id in range(num_reals):
+            self._scheduler.mark_terminate_message_sent_to_job(real_id)
 
     num_reals = 1
     num_jobs = 1

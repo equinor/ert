@@ -86,7 +86,7 @@ class Job:
         self._end_time_monotonic: float | None = None
         self._remaining_file_verification_time = self.DEFAULT_FILE_VERIFICATION_TIMEOUT
         self._previous_file_verification_time = self._remaining_file_verification_time
-        self._started_killing_by_evaluator: bool = False
+        self._terminate_message_sent_by_evaluator: bool = False
         self._was_killed_by_evaluator = asyncio.Event()
         self._was_killed_by_scheduler = asyncio.Event()
 
@@ -191,18 +191,19 @@ class Job:
                         "could not be terminated. Please check manually."
                     )
             killed_by_evaluator = False
-            if self._started_killing_by_evaluator and was_submitted:
-                with suppress(asyncio.TimeoutError):
+            if self._terminate_message_sent_by_evaluator and was_submitted:
+                try:
                     killed_by_evaluator = await asyncio.wait_for(
                         self._was_killed_by_evaluator.wait(),
                         timeout=self.WAIT_PERIOD_FOR_TERM_MESSAGE_TO_CANCEL,
                     )
-            if not killed_by_evaluator:
-                if was_submitted:
+                except TimeoutError:
                     logger.warning(
                         f"Realization {self.iens} was not killed gracefully by "
                         "TERM message. Killing it with the driver"
                     )
+
+            if not killed_by_evaluator:
                 await self._scheduler.schedule_kill(self.iens)
                 try:
                     await asyncio.wait_for(
