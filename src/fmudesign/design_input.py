@@ -30,8 +30,9 @@ class DesignInput:
 
     @classmethod
     def from_dataframe(cls, input_filename: str, df: pd.DataFrame) -> Self:
-        # Strip strings in column 'sensname' while preserving NaN values
-        df = df.assign(sensname=lambda _df: _df["sensname"].str.strip())
+        # Strip 'sensname'; whitespace-only cells count as empty
+        sensname = df["sensname"].str.strip()
+        df = df.assign(sensname=sensname.mask(sensname.eq(""))).dropna(how="all")
         _check_designinput(df)
         df["sensname"] = df["sensname"].ffill()
 
@@ -122,6 +123,12 @@ class DesignInput:
 
 def _check_designinput(dsgn_input: pd.DataFrame) -> None:
     """Checks for valid input in designinput sheet"""
+    if dsgn_input["sensname"].head(1).isna().any():
+        raise FmudesignError(
+            "The first row of the designinput sheet has no sensname. "
+            "Each sensitivity must be named on its first row."
+        )
+
     # Filter out rows where sensname has no value
     valid_sensnames = dsgn_input["sensname"].dropna()
     duplicated_mask = valid_sensnames.duplicated()
