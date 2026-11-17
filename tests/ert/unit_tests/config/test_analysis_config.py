@@ -375,19 +375,12 @@ def test_that_inversion_keyword_is_deprecated(config, expected_truncation):
 
 @pytest.mark.parametrize(
     "config",
-    [
-        ("2"),
-        ("3"),
-        ("SUBSPACE_RE"),
-        ("SUBSPACE_EE_R"),
-        ("subspace_re"),
-        ("subspace_ee_r"),
-    ],
+    ["2", "3", "SUBSPACE_RE", "SUBSPACE_EE_R", "subspace_re", "subspace_ee_r"],
 )
 def test_that_invalid_inversion_value_gives_error(config):
-    with pytest.raises(
-        ConfigValidationError,
-        match="Invalid INVERSION value",
+    with (
+        pytest.warns(ConfigWarning, match="The INVERSION keyword is deprecated"),
+        pytest.raises(ConfigValidationError, match="Invalid INVERSION value"),
     ):
         AnalysisConfig.from_dict(
             {
