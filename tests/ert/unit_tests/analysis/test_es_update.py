@@ -123,101 +123,124 @@ def test_update_report(
     )
 
 
-@pytest.mark.slow
-@pytest.mark.snapshot_test
 @pytest.mark.parametrize(
     ("update_settings", "num_overspread", "num_collapsed", "num_nan", "num_active"),
     [
         (
             ObservationSettings(outlier_settings=OutlierSettings(alpha=0.1)),
-            9,
-            0,
+            3,
             0,
             1,
+            2,
         ),
         (
             ObservationSettings(outlier_settings=OutlierSettings(std_cutoff=0.1)),
-            0,
-            6,
-            0,
-            4,
+            1,
+            1,
+            1,
+            3,
         ),
         (
             ObservationSettings(
                 outlier_settings=OutlierSettings(alpha=0.7, std_cutoff=0.1)
             ),
             2,
-            6,
-            0,
+            1,
+            1,
             2,
         ),
     ],
 )
-@pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key but no forward")
 def test_update_report_with_different_observation_status_from_smoother_update(
     update_settings,
     num_overspread,
     num_collapsed,
     num_nan,
     num_active,
-    snake_oil_case_storage,
-    snake_oil_storage,
+    storage,
+    uniform_parameter,
 ):
-    ert_config = snake_oil_case_storage
-    experiment = snake_oil_storage.get_experiment_by_name("ensemble-experiment")
-    prior_ens = experiment.get_ensemble_by_name("default_0")
-
-    posterior_ens = snake_oil_storage.create_ensemble(
-        prior_ens.experiment_id,
-        ensemble_size=ert_config.runpath_config.num_realizations,
-        iteration=1,
-        name="new_ensemble",
-        prior_ensemble=prior_ens,
+    # Each observation has responses with mean 1.0 and the given std (NaN gives
+    # missing responses), and an observation value offset from that mean.
+    response_std_and_obs_offset = [
+        (0.05, 0.0),
+        (1.0, 0.5),
+        (1.0, 2.0),
+        (1.0, 0.0),
+        (1.0, 10.0),
+        (np.nan, 0.0),
+    ]
+    experiment = storage.create_experiment(
+        name="ensemble_smoother",
+        experiment_config={
+            "parameter_configuration": [uniform_parameter],
+            "response_configuration": [
+                GenDataConfig(keys=["RESPONSE"]).model_dump(mode="json")
+            ],
+            "observations": [
+                {
+                    "type": "general_observation",
+                    "name": "OBSERVATION",
+                    "data": "RESPONSE",
+                    "restart": 0,
+                    "index": index,
+                    "value": 1.0 + offset,
+                    "error": 1.0,
+                }
+                for index, (_, offset) in enumerate(response_std_and_obs_offset)
+            ],
+        },
     )
-    events = []
+    prior = storage.create_ensemble(experiment, ensemble_size=4, name="prior")
+    prior.save_parameters(
+        pl.DataFrame(
+            {"KEY_1": [0.1, 0.4, 0.6, 0.9], "realization": range(prior.ensemble_size)}
+        )
+    )
+    for iens, sign in enumerate([-1.0, -1.0, 1.0, 1.0]):
+        values = [1.0 + sign * std for std, _ in response_std_and_obs_offset]
+        prior.save_response(
+            "gen_data",
+            pl.DataFrame(
+                {
+                    "response_key": "RESPONSE",
+                    "report_step": pl.Series(np.zeros(len(values)), dtype=pl.UInt16),
+                    "index": pl.Series(range(len(values)), dtype=pl.UInt16),
+                    "values": pl.Series(values, dtype=pl.Float32),
+                }
+            ),
+            iens,
+        )
+    posterior = storage.create_ensemble(
+        experiment,
+        ensemble_size=prior.ensemble_size,
+        iteration=1,
+        name="posterior",
+        prior_ensemble=prior,
+    )
 
-    es_settings = ert_config.analysis_config.es_settings
     strategy_map = build_strategy_map(
-        parameters=ert_config.ensemble_config.parameters,
-        param_configs=prior_ens.experiment.parameter_configuration,
-        enkf_truncation=es_settings.enkf_truncation,
-        progress_callback=events.append,
-        correlation_threshold=ert_config.analysis_config.es_settings.correlation_threshold,
+        parameters=["KEY_1"],
+        param_configs=experiment.parameter_configuration,
+        enkf_truncation=ESSettings().enkf_truncation,
+        correlation_threshold=lambda _: 1.0,
     )
     ss = smoother_update(
-        prior_ens,
-        posterior_ens,
+        prior,
+        posterior,
         experiment.observation_keys,
         update_settings,
         rng=np.random.default_rng(42),
         strategy_map=strategy_map,
-        progress_callback=events.append,
     )
 
-    assert (
-        num_overspread
-        == ss.observations_and_responses.filter(
-            pl.col("status") == ObservationStatus.OUTLIER
-        ).height
+    status_counts = dict(
+        ss.observations_and_responses.group_by("status").len().iter_rows()
     )
-    assert (
-        num_collapsed
-        == ss.observations_and_responses.filter(
-            pl.col("status") == ObservationStatus.STD_CUTOFF
-        ).height
-    )
-    assert (
-        num_nan
-        == ss.observations_and_responses.filter(
-            pl.col("status") == ObservationStatus.MISSING_RESPONSE
-        ).height
-    )
-    assert (
-        num_active
-        == ss.observations_and_responses.filter(
-            pl.col("status") == ObservationStatus.ACTIVE
-        ).height
-    )
+    assert status_counts.get(ObservationStatus.OUTLIER, 0) == num_overspread
+    assert status_counts.get(ObservationStatus.STD_CUTOFF, 0) == num_collapsed
+    assert status_counts.get(ObservationStatus.MISSING_RESPONSE, 0) == num_nan
+    assert status_counts.get(ObservationStatus.ACTIVE, 0) == num_active
 
 
 @pytest.mark.slow
