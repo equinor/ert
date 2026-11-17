@@ -23,7 +23,9 @@ class DesignInput:
 
     @classmethod
     def from_xlsx(cls, input_filename: str, design_input_sheet: str) -> Self:
-        designinput = read_excel_sheet(input_filename, design_input_sheet)
+        designinput = read_excel_sheet(
+            input_filename, design_input_sheet, dtype={"sensname": str}
+        )
         return cls.from_dataframe(input_filename, designinput)
 
     @classmethod

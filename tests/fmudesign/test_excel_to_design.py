@@ -120,6 +120,20 @@ def test_that_duplicate_sensitivity_names_raise_value_error(use_tmpdir):
         excel_to_config(input_path)
 
 
+@pytest.mark.parametrize("first_name", ["faults", 1])
+def test_that_numeric_sensitivity_names_are_read_as_text(use_tmpdir, first_name):
+    design_input = pd.DataFrame(
+        data=[
+            ["sensname", "numreal", "type", "param_name"],
+            [first_name, "", "seed", ""],
+            [2, "", "seed", ""],
+        ]
+    )
+    input_path = _write_config_workbook("designinput.xlsx", design_input=design_input)
+
+    assert list(excel_to_config(input_path).sensitivities) == [str(first_name), "2"]
+
+
 def test_that_excel_to_design_strips_sensitivity_and_parameter_name_whitespace(
     use_tmpdir,
 ):
