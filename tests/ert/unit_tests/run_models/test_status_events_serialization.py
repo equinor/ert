@@ -142,32 +142,32 @@ METADATA = EnsembleSnapshotMetadata(
         ),
         pytest.param(EndEvent(failed=False, msg=""), id="EndEvent"),
         pytest.param(
-            RunModelStatusEvent(iteration=1, run_id=uuid.uuid1(), msg="Hello"),
+            RunModelStatusEvent(iteration=1, ensemble_id=uuid.uuid1(), msg="Hello"),
             id="RunModelStatusEvent",
         ),
         pytest.param(
             RunModelStatusEvent(
-                iteration=1, run_id=uuid.uuid1(), msg="Hello", detail=True
+                iteration=1, ensemble_id=uuid.uuid1(), msg="Hello", detail=True
             ),
             id="RunModelStatusEvent_detail",
         ),
         pytest.param(
             RunModelTimeEvent(
                 iteration=1,
-                run_id=uuid.uuid1(),
+                ensemble_id=uuid.uuid1(),
                 remaining_time=10.42,
                 elapsed_time=100.42,
             ),
             id="RunModelTimeEvent",
         ),
         pytest.param(
-            RunModelUpdateBeginEvent(iteration=2, run_id=uuid.uuid1()),
+            RunModelUpdateBeginEvent(iteration=2, ensemble_id=uuid.uuid1()),
             id="RunModelUpdateBeginEvent",
         ),
         pytest.param(
             RunModelDataEvent(
                 iteration=1,
-                run_id=uuid.uuid1(),
+                ensemble_id=uuid.uuid1(),
                 name="Micky",
                 data=DataSection(
                     header=["Some", "string", "elements"],
@@ -180,7 +180,7 @@ METADATA = EnsembleSnapshotMetadata(
         pytest.param(
             RunModelUpdateEndEvent(
                 iteration=3,
-                run_id=uuid.uuid1(),
+                ensemble_id=uuid.uuid1(),
                 data=DataSection(
                     header=["Some", "string", "elements"],
                     data=[["a", 1.1, "b"], ["c", 3.0]],
@@ -216,7 +216,7 @@ def test_status_event_serialization(event):
 def test_that_update_table_with_numpy_rows_can_be_sent_over_websocket():
     event = RunModelDataEvent(
         iteration=0,
-        run_id=uuid.uuid4(),
+        ensemble_id=uuid.uuid4(),
         name="Auto scale",
         data=DataSection(
             header=["observation", "scaling"],
