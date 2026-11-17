@@ -15,6 +15,7 @@ import itertools
 import logging
 from collections import Counter, defaultdict
 from datetime import datetime
+from importlib.metadata import version
 from pathlib import Path
 from textwrap import dedent
 from typing import TYPE_CHECKING, Any
@@ -24,7 +25,6 @@ import pandas as pd
 import probabilit.correlation
 import probabilit.modeling
 
-from ert.shared import __version__ as ert_version
 from fmudesign.exceptions import FmudesignError
 
 from .design_config import DesignConfig
@@ -456,7 +456,7 @@ class DesignMatrix:
                 {
                     "Description": ["Created using ert version:", "Created on:"],
                     "Value": [
-                        ert_version,
+                        version("ert"),
                         datetime.now()
                         .astimezone()
                         .isoformat(sep=" ", timespec="seconds"),

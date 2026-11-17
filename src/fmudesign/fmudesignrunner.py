@@ -26,6 +26,7 @@ import sys
 import traceback
 import warnings
 from argparse import ArgumentParser, Namespace, _SubParsersAction
+from importlib.metadata import version
 from importlib.resources import as_file, files
 from pathlib import Path
 
@@ -34,7 +35,6 @@ from packaging.version import Version
 from pydantic import ValidationError
 
 from ert.plugins import setup_site_logging
-from ert.shared import __version__ as ert_version
 from ert.trace import trace, tracer
 from fmudesign.exceptions import FmudesignError
 
@@ -140,7 +140,7 @@ getting help:
         "-v",
         "--version",
         action="version",
-        version=f"fmudesign {Version(ert_version)}",
+        version=f"fmudesign {version('ert')}",
     )
     parser.add_argument(
         "-h", "--help", action="help", help="Show this help message and exit"
@@ -394,7 +394,7 @@ def main() -> None:
     if args.func.func is not subcommand_init:
         print(
             "\n",
-            f"Thank you for using fmudesign {Version(ert_version).base_version}\n",
+            f"Thank you for using fmudesign {Version(version('ert')).base_version}\n",
             " - Documentation:           https://equinor.github.io/fmu-tools/fmudesign.html\n",
             " - Course docs:             https://fmu-docs.equinor.com/docs/fmu-coursedocs/fmu-howto/sensitivities/index.html\n",
             " - Issues/feature requests: https://github.com/equinor/ert/issues\n",
