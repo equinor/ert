@@ -34,6 +34,7 @@ from ert.server.status_event_forwarder import (
     StatusEventNotifier,
     create_status_event_forwarder,
 )
+from ert.storage import ErtStorageException
 from everest.everserver.server import ExperimentState, ExperimentStatus
 
 from .experiment_runs import (
@@ -164,6 +165,8 @@ async def register(
             status_code=422,
             detail=str(e),
         ) from e
+    except ErtStorageException as e:
+        raise HTTPException(status_code=409, detail=str(e)) from e
 
     experiment_state = ErtExperimentRunnerState(
         run_model=run_model,

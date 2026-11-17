@@ -7,7 +7,6 @@ assimilated.
 """
 
 import contextlib
-import logging
 from pathlib import Path
 
 import numpy as np
@@ -18,7 +17,7 @@ import resfo
 from ert.config import ErtConfig
 from ert.mode_definitions import ES_MDA_MODE
 from ert.storage import open_storage
-from tests.ert.ui_tests.cli.run_cli import run_cli
+from tests.ert.ui_tests.cli.run_cli import read_server_log, run_cli
 
 # The producers, in the row order of `truth_forecast.txt`
 PRODUCERS = ("PROD1", "PROD2", "PROD3", "PROD4")
@@ -169,7 +168,7 @@ def test_that_assimilating_the_waterflood_history_improves_the_forecast():
 @pytest.mark.timeout(1200)
 @pytest.mark.usefixtures("copy_waterflood")
 @pytest.mark.slow
-def test_that_distance_localization_survives_several_assimilations(caplog):
+def test_that_distance_localization_survives_several_assimilations():
     """Observations are deactivated between assimilations, and the taper follows.
 
     This used to crash at `K *= rho` in `_distance.py`, the cached taper still
@@ -180,7 +179,6 @@ def test_that_distance_localization_survives_several_assimilations(caplog):
     use a single assimilation.
     """
     config_file = write_config("mda-distance", "DISTANCE")
-    with caplog.at_level(logging.WARNING, logger="ert.analysis"):
-        run_cli(ES_MDA_MODE, "--disable-monitoring", config_file)
+    run_cli(ES_MDA_MODE, "--disable-monitoring", config_file)
 
-    assert any("Deactivating observations" in message for message in caplog.messages)
+    assert "Deactivating observations" in read_server_log()

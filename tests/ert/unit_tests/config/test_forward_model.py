@@ -774,7 +774,7 @@ def test_that_plugin_forward_model_validation_failure_propagates(tmp_path):
 
 @pytest.mark.slow
 def test_that_validate_pre_realization_run_is_called_when_runmodel_is_evaluated(
-    tmp_path, monkeypatch
+    tmp_path, monkeypatch, install_plugin
 ):
     monkeypatch.chdir(tmp_path)
     (tmp_path / "test.ert").write_text(
@@ -785,29 +785,33 @@ def test_that_validate_pre_realization_run_is_called_when_runmodel_is_evaluated(
             """
         )
     )
+    install_plugin(
+        "will_fail_validation_plugin",
+        """
+        import ert
 
-    class FM(ForwardModelStepPlugin):
-        def __init__(self) -> None:
-            super().__init__(
-                name="WILL_FAIL_VALIDATION",
-                command=["echo"],
-            )
 
-        def validate_pre_realization_run(
-            self, fm_step_json: ForwardModelStepJSON
-        ) -> ForwardModelStepJSON:
-            raise ForwardModelStepValidationError("No go")
+        class FM(ert.ForwardModelStepPlugin):
+            def __init__(self):
+                super().__init__(name="WILL_FAIL_VALIDATION", command=["echo"])
+
+            def validate_pre_realization_run(self, fm_step_json):
+                raise ert.ForwardModelStepValidationError("No go")
+
+
+        @ert.plugin(name="will_fail_validation_plugin")
+        def installable_forward_model_steps():
+            return [FM]
+        """,
+    )
 
     parser = ArgumentParser(prog="test_main")
     args = ert_parser(
         parser,
         [TEST_RUN_MODE, "--disable-monitoring", str(tmp_path / "test.ert")],
     )
-    runtime_plugins = ErtRuntimePlugins(
-        installed_forward_model_steps={"WILL_FAIL_VALIDATION": FM()}
-    )
     with pytest.raises(ErtCliError) as exc_info:
-        run_cli(args, runtime_plugins)
+        run_cli(args, get_site_plugins())
     assert (
         "Validation failed for forward model step WILL_FAIL_VALIDATION: No go"
         in str(exc_info.value)
@@ -816,7 +820,7 @@ def test_that_validate_pre_realization_run_is_called_when_runmodel_is_evaluated(
 
 @pytest.mark.slow
 def test_that_validate_pre_realization_run_is_not_called_when_user_defined_step_overwrites(  # ruff: ignore[line-too-long]
-    tmp_path, monkeypatch
+    tmp_path, monkeypatch, install_plugin
 ):
     """If a site plugin defines a forward model step that will fail validation, but
     the user has defined her own step that does not have any validation,
@@ -833,27 +837,35 @@ def test_that_validate_pre_realization_run_is_not_called_when_user_defined_step_
             """
         )
     )
+    install_plugin(
+        "popular_step_plugin",
+        """
+        import ert
 
-    class FM(ForwardModelStepPlugin):
-        def __init__(self) -> None:
-            super().__init__(
-                name="A_POPULAR_STEP_NAME",
-                command=["echo"],
-            )
 
-        def validate_pre_realization_run(
-            self, fm_step_json: ForwardModelStepJSON
-        ) -> ForwardModelStepJSON:
-            raise ForwardModelStepValidationError("No go from site-installed step")
+        class FM(ert.ForwardModelStepPlugin):
+            def __init__(self):
+                super().__init__(name="A_POPULAR_STEP_NAME", command=["echo"])
+
+            def validate_pre_realization_run(self, fm_step_json):
+                raise ert.ForwardModelStepValidationError(
+                    "No go from site-installed step"
+                )
+
+
+        @ert.plugin(name="popular_step_plugin")
+        def installable_forward_model_steps():
+            return [FM]
+        """,
+    )
 
     parser = ArgumentParser(prog="test_main")
     args = ert_parser(
         parser,
         [TEST_RUN_MODE, "--disable-monitoring", str(tmp_path / "test.ert")],
     )
-    runtime_plugins = ErtRuntimePlugins(
-        installed_forward_model_steps={"A_POPULAR_STEP_NAME": FM()}
-    )
+    runtime_plugins = get_site_plugins()
+    assert "A_POPULAR_STEP_NAME" in runtime_plugins.installed_forward_model_steps
     run_cli(args, runtime_plugins)
 
 
