@@ -836,7 +836,9 @@ def test_run_model_warns_about_cpu_over_spending_as_post_simulation_warning(
     evaluator.return_value.max_memory_violation = MemoryViolation()
 
     with warnings.catch_warnings(record=True) as W:
-        brm._evaluate_and_postprocess(MagicMock(), MagicMock(), MagicMock())
+        brm._evaluate_and_postprocess(
+            MagicMock(), MagicMock(id=uuid.uuid4()), MagicMock()
+        )
         assert any(isinstance(w.message, PostExperimentWarning) for w in W)
         assert any(expected_msg in str(w.message) for w in W)
 
@@ -866,7 +868,9 @@ def test_that_run_model_warns_about_memory_overspending_as_post_simulation_warni
     )
 
     with warnings.catch_warnings(record=True) as W:
-        brm._evaluate_and_postprocess(MagicMock(), MagicMock(), MagicMock())
+        brm._evaluate_and_postprocess(
+            MagicMock(), MagicMock(id=uuid.uuid4()), MagicMock()
+        )
     assert [
         str(w.message) for w in W if isinstance(w.message, PostExperimentWarning)
     ] == [expected_msg]
@@ -883,22 +887,26 @@ def test_that_status_snapshot_is_written_only_when_iteration_is_finalized(use_tm
     brm._iter_snapshot[0] = EnsembleSnapshot.from_nested_dict(
         {"reals": {"0": {"status": "Pending"}, "1": {"status": "Pending"}}}
     )
-    experiment = brm._storage.create_experiment(name="experiment")
+    ensemble = brm._storage.create_experiment(name="experiment").create_ensemble(
+        ensemble_size=2, iteration=0, name="ensemble"
+    )
 
     brm.forward_event_from_ee(
         EESnapshotUpdate(snapshot={"reals": {"0": {"status": "Finished"}}}),
         iteration=0,
+        ensemble_id=ensemble.id,
     )
     brm.forward_event_from_ee(
         EESnapshotUpdate(snapshot={"reals": {"1": {"status": "Running"}}}),
         iteration=0,
+        ensemble_id=ensemble.id,
     )
 
-    assert not experiment.status_snapshot_path(0).exists()
+    assert not ensemble.experiment.status_snapshot_path(0).exists()
 
-    brm._persist_status_snapshot(experiment, 0)
+    brm._persist_status_snapshot(ensemble)
 
-    snapshot_file = experiment.status_snapshot_path(0)
+    snapshot_file = ensemble.experiment.status_snapshot_path(0)
     assert snapshot_file.exists()
 
     persisted = FullSnapshotEvent.model_validate_json(
@@ -906,6 +914,7 @@ def test_that_status_snapshot_is_written_only_when_iteration_is_finalized(use_tm
     )
     assert persisted.event_type == "FullSnapshotEvent"
     assert persisted.iteration == 0
+    assert persisted.ensemble_id == ensemble.id
     assert persisted.snapshot is not None
     assert persisted.snapshot.get_real("0")["status"] == "Finished"
     assert persisted.snapshot.get_real("1")["status"] == "Running"

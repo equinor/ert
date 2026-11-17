@@ -638,6 +638,7 @@ class RunModel(RunModelConfig, ABC):
         self,
         event: EEEvent,
         iteration: int,
+        ensemble_id: uuid.UUID,
     ) -> None:
         if type(event) is EESnapshot:
             snapshot = EnsembleSnapshot.from_nested_dict(event.snapshot)
@@ -653,6 +654,7 @@ class RunModel(RunModelConfig, ABC):
                     realization_count=realization_count,
                     status_count=status,
                     iteration=iteration,
+                    ensemble_id=ensemble_id,
                     snapshot=copy.deepcopy(snapshot),
                 )
             )
@@ -678,13 +680,15 @@ class RunModel(RunModelConfig, ABC):
                     realization_count=realization_count,
                     status_count=status,
                     iteration=iteration,
+                    ensemble_id=ensemble_id,
                     snapshot=copy.deepcopy(snapshot),
                 )
             )
         elif type(event) is EnsembleEvaluationWarning:
             self.send_event(event)
 
-    def _persist_status_snapshot(self, experiment: Experiment, iteration: int) -> None:
+    def _persist_status_snapshot(self, ensemble: Ensemble) -> None:
+        iteration = ensemble.iteration
         snapshot = self._iter_snapshot.get(iteration)
         if snapshot is None:
             return
@@ -695,9 +699,10 @@ class RunModel(RunModelConfig, ABC):
             realization_count=self.get_number_of_active_realizations(),
             status_count=self.get_current_status(),
             iteration=iteration,
+            ensemble_id=ensemble.id,
             snapshot=snapshot,
         )
-        experiment.write_status_snapshot(
+        ensemble.experiment.write_status_snapshot(
             iteration, event.model_dump_json(indent=2).encode("utf-8")
         )
 
@@ -719,13 +724,14 @@ class RunModel(RunModelConfig, ABC):
             event_handler=functools.partial(
                 self.forward_event_from_ee,
                 iteration=ensemble.iteration,
+                ensemble_id=ensemble.id,
             ),
         )
         try:
             return await self._run_evaluator(evaluator, ensemble)
         finally:
             try:
-                self._persist_status_snapshot(ensemble.experiment, ensemble.iteration)
+                self._persist_status_snapshot(ensemble)
             except Exception:
                 logger.exception(
                     f"Failed to persist status snapshot for "

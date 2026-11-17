@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 from textwrap import dedent
+from uuid import uuid4
 
 import numpy as np
 import polars as pl
@@ -888,6 +889,7 @@ def _build_run_status_snapshot(iteration: int) -> FullSnapshotEvent:
         realization_count=2,
         status_count={"Finished": 2},
         iteration=iteration,
+        ensemble_id=uuid4(),
     )
 
 

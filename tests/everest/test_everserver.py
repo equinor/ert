@@ -292,6 +292,7 @@ def test_that_failed_realizations_messages_leave_event_snapshots_unchanged():
         "realization_count": 1,
         "status_count": {},
         "iteration": 0,
+        "ensemble_id": uuid.uuid4(),
     }
     events = [
         FullSnapshotEvent(
