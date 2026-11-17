@@ -114,7 +114,6 @@ def _checked(response: httpx.Response) -> httpx.Response:
         raise httpx.RequestError(message=f"{response.text}")
     if response.status_code != httpx.codes.OK:
         raise httpx.RequestError(
-            f"Please report this error and try restarting the application. "
             f"Response status {response.status_code}: {response.text} "
             f"from url: {response.url}."
         )
