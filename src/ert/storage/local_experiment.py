@@ -966,7 +966,3 @@ class LocalExperiment(BaseMode):
         snapshot_path = self.status_snapshot_path(iteration)
         snapshot_path.parent.mkdir(parents=True, exist_ok=True)
         self._storage._write_transaction(snapshot_path, data)
-        snapshot_path.parent.mkdir(parents=True, exist_ok=True)
-        self._storage._write_transaction(snapshot_path, data)
-        snapshot_path.parent.mkdir(parents=True, exist_ok=True)
-        self._storage._write_transaction(snapshot_path, data)
