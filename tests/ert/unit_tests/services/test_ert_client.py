@@ -115,6 +115,22 @@ def test_that_registration_serializes_parameter_configs_in_arguments():
     transport.request.assert_called_once()
 
 
+@pytest.mark.parametrize("status_code", [409, 422])
+def test_that_registration_rejected_by_the_server_raises_the_reason_as_the_message(
+    status_code: int,
+):
+    config = MagicMock(spec=ErtConfig)
+    config.model_dump.return_value = {}
+    transport = MagicMock(spec=SharedClient)
+    transport.conn_info.auth_token = "token"
+    transport.request.return_value = httpx.Response(
+        status_code, json={"detail": "Invalid weights: 0"}
+    )
+
+    with pytest.raises(httpx.RequestError, match=r"^Invalid weights: 0$"):
+        ErtClient(transport).register_ert_experiment(config, {"mode": "es_mda"})
+
+
 @pytest.mark.parametrize(
     ("method_name", "http_method", "endpoint", "payload", "expected", "timeout"),
     [

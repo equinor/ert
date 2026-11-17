@@ -5,24 +5,23 @@ import logging
 import os
 import stat
 import sys
-import threading
 import warnings
 from pathlib import Path
+from queue import SimpleQueue
 from textwrap import dedent
-from unittest.mock import Mock, call, patch
+from unittest.mock import Mock, patch
 
 import numpy as np
 import polars as pl
 import pytest
 import xtgeo
-import zmq
 from psutil import NoSuchProcess, Popen, Process, ZombieProcess
 
 import _ert.threading
-import ert.shared
-from _ert.forward_model_runner.client import Client
 from ert.cli.main import ErtCliError
+from ert.cli.monitor import Monitor
 from ert.config import ConfigValidationError, ConfigWarning, ErtConfig
+from ert.ensemble_evaluator import EndEvent
 from ert.mode_definitions import (
     ENIF_MODE,
     ENSEMBLE_EXPERIMENT_MODE,
@@ -31,11 +30,11 @@ from ert.mode_definitions import (
 )
 from ert.run_models.event import WorkflowEvent
 from ert.sample_prior import sample_prior
-from ert.scheduler.driver import Driver
-from ert.scheduler.job import Job
+from ert.services import ErtClient, ErtServerController
+from ert.services.ert_server_controller import ErtServerContext
 from ert.storage import open_storage
 
-from .run_cli import run_cli
+from .run_cli import read_server_log, run_cli
 
 
 def test_test_run_on_lsf_configuration_works_with_no_errors(tmp_path):
@@ -99,6 +98,52 @@ def test_that_the_cli_raises_exceptions_when_no_weight_provided_for_es_mda():
             "--weights",
             "0",
         )
+
+
+@pytest.mark.usefixtures("copy_poly_case")
+def test_that_es_mda_arguments_are_forwarded_to_the_ert_server():
+    run_cli(
+        ES_MDA_MODE,
+        "--disable-monitoring",
+        "--realizations",
+        "1,2,4,8,16",
+        "--weights",
+        "1",
+        "--target-ensemble",
+        "served-%d",
+        "--experiment-name",
+        "served-es-mda",
+        "poly.ert",
+    )
+
+    with open_storage("storage", "r") as storage:
+        experiment = storage.get_experiment_by_name("served-es-mda")
+        ensembles = sorted(
+            experiment.ensembles, key=lambda ensemble: ensemble.iteration
+        )
+        assert [ensemble.name for ensemble in ensembles] == ["served-0", "served-1"]
+        for ensemble in ensembles:
+            assert np.flatnonzero(
+                ensemble.get_realization_mask_with_responses()
+            ).tolist() == [1, 2, 4, 8, 16]
+
+
+@pytest.mark.usefixtures("copy_poly_case")
+def test_that_interrupting_the_cli_cancels_the_experiment_on_the_server(
+    monkeypatch,
+):
+    interrupted_monitor = Mock(side_effect=KeyboardInterrupt)
+    monkeypatch.setattr(Monitor, "monitor", interrupted_monitor)
+
+    run_cli(ENSEMBLE_EXPERIMENT_MODE, "poly.ert")
+
+    event_queue = interrupted_monitor.call_args.args[0]
+    events = []
+    while not event_queue.empty():
+        events.append(event_queue.get_nowait())
+    assert isinstance(events[-1], EndEvent)
+    assert events[-1].failed
+    assert "cancelled" in events[-1].msg
 
 
 @pytest.mark.usefixtures("copy_snake_oil_field")
@@ -559,19 +604,6 @@ def test_that_workflow_output_is_written_to_experiment_in_storage():
     assert event.stderr == "problem from the workflow\n"
 
 
-@pytest.fixture(name="mock_cli_run")
-def fixture_mock_cli_run(monkeypatch):
-    end_event = Mock()
-    end_event.failed = False
-    mocked_monitor = Mock(return_value=end_event)
-    mocked_thread_start = Mock()
-    mocked_thread_join = Mock()
-    monkeypatch.setattr(threading.Thread, "start", mocked_thread_start)
-    monkeypatch.setattr(threading.Thread, "join", mocked_thread_join)
-    monkeypatch.setattr(ert.cli.monitor.Monitor, "monitor", mocked_monitor)
-    return mocked_monitor, mocked_thread_join, mocked_thread_start
-
-
 @pytest.mark.usefixtures("copy_poly_case")
 def test_that_es_mda_on_poly_case_matches_snapshot(snapshot):
     with fileinput.input("poly.ert", inplace=True) as fin:
@@ -682,13 +714,46 @@ def test_cli_runs_without_observations_for_non_update_modes(mode):
 
 
 @pytest.mark.usefixtures("copy_poly_case")
-def test_cli_test_run(mock_cli_run):
-    run_cli(TEST_RUN_MODE, "--disable-monitoring", "poly.ert")
+def test_that_test_run_starts_the_registered_experiment_and_monitors_its_events(
+    monkeypatch,
+):
+    server = Mock(spec=ErtServerController)
+    client = Mock(spec=ErtClient)
+    client.register_ert_experiment.return_value = "registered-config"
+    client.get_runmodel_data.return_value = {
+        "number_of_existing_runpaths": 0,
+        "number_of_active_realizations": 1,
+    }
+    client.runpath_exists.return_value = False
+    event_queue = SimpleQueue()
+    event_thread = Mock()
+    client.setup_event_queue_from_ws_endpoint.return_value = event_queue, event_thread
+    monitor = Mock(return_value=EndEvent(failed=False, msg=""))
+    monkeypatch.setattr(Monitor, "monitor", monitor)
 
-    monitor_mock, thread_join_mock, thread_start_mock = mock_cli_run
-    monitor_mock.assert_called_once()
-    thread_join_mock.assert_called_once()
-    thread_start_mock.assert_has_calls([[call(), call()]])
+    with (
+        patch.object(
+            ErtServerController, "init_service", return_value=ErtServerContext(server)
+        ),
+        patch.object(ErtClient, "get_client", return_value=client),
+    ):
+        run_cli(TEST_RUN_MODE, "--disable-monitoring", "poly.ert")
+
+    client.register_ert_experiment.assert_called_once()
+    assert client.register_ert_experiment.call_args.args[1] == {
+        "mode": TEST_RUN_MODE,
+        "current_ensemble": "default",
+    }
+    client.start_experiment_ert.assert_called_once_with("registered-config")
+    client.discard_registration.assert_not_called()
+    client.setup_event_queue_from_ws_endpoint.assert_called_once_with(
+        "registered-config"
+    )
+    event_thread.start.assert_called_once_with()
+    monitor.assert_called_once()
+    assert monitor.call_args.args[0] is event_queue
+    event_thread.join.assert_called_once_with()
+    server.shutdown.assert_called_once_with()
 
 
 @pytest.mark.usefixtures("copy_poly_case")
@@ -706,7 +771,6 @@ def test_cli_test_run(mock_cli_run):
 def test_that_prior_is_not_overwritten_in_ensemble_experiment(
     prior_mask,
     reals_rerun_option,
-    caplog,
 ):
     ert_config = ErtConfig.from_file("poly.ert")
     num_realizations = ert_config.runpath_config.num_realizations
@@ -728,22 +792,21 @@ def test_that_prior_is_not_overwritten_in_ensemble_experiment(
         prior_values = experiment.get_ensemble_by_name(
             ensemble.name
         ).load_parameters_numpy("COEFFS", np.arange(num_realizations))
-    with caplog.at_level(logging.INFO):
-        run_cli(
-            ENSEMBLE_EXPERIMENT_MODE,
-            "--disable-monitoring",
-            "poly.ert",
-            "--current-ensemble=iter-0",
-            "--realizations",
-            reals_rerun_option,
-        )
+    run_cli(
+        ENSEMBLE_EXPERIMENT_MODE,
+        "--disable-monitoring",
+        "poly.ert",
+        "--current-ensemble=iter-0",
+        "--realizations",
+        reals_rerun_option,
+    )
 
     with open_storage(ert_config.ens_path, mode="r") as storage:
         parameter_values = storage.get_ensemble(ensemble.id).load_parameters_numpy(
             "COEFFS", np.arange(num_realizations)
         )
         np.testing.assert_array_equal(parameter_values, prior_values)
-    assert len([msg for msg in caplog.messages if "RANDOM_SEED" in msg]) == 1
+    assert read_server_log().count("RANDOM_SEED") == 1
 
 
 @pytest.mark.usefixtures("copy_poly_case")
@@ -804,11 +867,21 @@ def test_exclude_parameter_from_update():
 
 @pytest.mark.timeout(15)
 @pytest.mark.usefixtures("copy_poly_case")
-def test_that_driver__init__exceptions_are_propagated(monkeypatch, capsys):
-    def mocked__init__(*args, **kwargs) -> None:
-        raise ValueError("Foobar error")
+def test_that_driver__init__exceptions_are_propagated(install_plugin, capsys):
+    install_plugin(
+        "failing_driver_init",
+        """
+        from ert.scheduler.driver import Driver
 
-    monkeypatch.setattr(Driver, "__init__", mocked__init__)
+
+        def failing_init(*args, **kwargs):
+            raise ValueError("Foobar error")
+
+
+        Driver.__init__ = failing_init
+        """,
+        server_only=True,
+    )
     with pytest.raises(
         ErtCliError,
     ):
@@ -898,7 +971,7 @@ def test_that_a_custom_eclrun_can_be_activated_through_setenv():
 @pytest.mark.filterwarnings(
     "ignore:Config contains a SUMMARY key but no forward model steps"
 )
-def test_that_missing_summary_files_fails_gracefully(caplog):
+def test_that_missing_summary_files_fails_gracefully():
     (config_file := Path("config.ert")).write_text(
         """
         NUM_REALIZATIONS 2
@@ -909,6 +982,7 @@ def test_that_missing_summary_files_fails_gracefully(caplog):
     )
     with pytest.raises(ErtCliError):
         run_cli(TEST_RUN_MODE, "--disable-monitoring", str(config_file))
+    server_log = read_server_log()
     assert (
         f"Realization: 0 failed after reaching max submit (1):\n\t\n"
         "status from done callback: "
@@ -916,36 +990,44 @@ def test_that_missing_summary_files_fails_gracefully(caplog):
         f"summary files matching "
         f"{Path().absolute()}/simulations/realization-0/"
         "iter-0/ECLIPSE_CASE"
-    ) in caplog.messages
+    ) in server_log
 
     case = f"{Path().absolute()}/simulations/realization-0/iter-0/ECLIPSE_CASE"
     assert (
         f"Expected file {case}.UNSMRY not created by forward model!\nExpected "
         f"file {case}.SMSPEC not created by forward model!"
-    ) in caplog.messages
+    ) in server_log
 
 
-@pytest.mark.timeout(10)
+@pytest.mark.timeout(120)
 @pytest.mark.usefixtures("copy_poly_case")
-def test_that_connection_errors_do_not_effect_final_result(
-    monkeypatch: pytest.MonkeyPatch,
-):
-    monkeypatch.setattr(Client, "DEFAULT_MAX_RETRIES", 1)
-    monkeypatch.setattr(Client, "DEFAULT_ACK_TIMEOUT", 1)
-    monkeypatch.setattr(Job, "DEFAULT_FILE_VERIFICATION_TIMEOUT", 0)
+def test_that_connection_errors_do_not_affect_final_result(install_plugin):
+    install_plugin(
+        "inject_evaluator_connection_error",
+        """
+        import zmq
 
-    def raise_connection_error(*args, **kwargs):
-        raise zmq.error.ZMQError(None, None)
+        from ert.ensemble_evaluator import evaluator
+        from ert.scheduler.job import Job
 
-    with patch(
-        "ert.ensemble_evaluator.evaluator.dispatcher_event_from_json",
-        raise_connection_error,
-    ):
-        run_cli(
-            TEST_RUN_MODE,
-            "--disable-monitoring",
-            "poly.ert",
-        )
+        Job.DEFAULT_FILE_VERIFICATION_TIMEOUT = 0
+
+        def raise_connection_error(*args, **kwargs):
+            raise zmq.ZMQError("injected evaluator connection error")
+
+        evaluator.dispatcher_event_from_json = raise_connection_error
+        """,
+        server_only=True,
+    )
+    run_cli(
+        TEST_RUN_MODE,
+        "--disable-monitoring",
+        "poly.ert",
+    )
+    assert (
+        "Unexpected error when listening to messages: "
+        "injected evaluator connection error"
+    ) in read_server_log()
 
 
 @pytest.mark.usefixtures("copy_poly_case")

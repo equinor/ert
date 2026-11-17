@@ -1,6 +1,6 @@
 import json
-import logging
 import random
+import re
 import stat
 import warnings
 from pathlib import Path
@@ -19,12 +19,11 @@ from ert.mode_definitions import (
 )
 from ert.storage import open_storage
 from tests.ert.conftest import _create_design_matrix
-from tests.ert.ui_tests.cli.run_cli import run_cli
+from tests.ert.ui_tests.cli.run_cli import read_server_log, run_cli
 
 
 @pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
-def test_run_poly_example_with_design_matrix(copy_poly_case_with_design_matrix, caplog):
-    caplog.set_level(logging.INFO)
+def test_run_poly_example_with_design_matrix(copy_poly_case_with_design_matrix):
     num_realizations = 10
     a_values = list(range(num_realizations))
     design_dict = {
@@ -46,7 +45,7 @@ def test_run_poly_example_with_design_matrix(copy_poly_case_with_design_matrix, 
     assert (
         "Getting parameters: a, category, b, c "
         "from design matrix for realizations [0 1 2 3 4 5 6 7 8 9]"
-    ) in caplog.text
+    ) in read_server_log()
 
     storage_path = ErtConfig.from_file("poly.ert").ens_path
     config_path = ErtConfig.from_file("poly.ert").config_path
@@ -297,15 +296,18 @@ def test_run_poly_example_with_multiple_design_matrix_instances():
             "Use of legacy_ertscript_workflow is deprecated"
         )
     ]
-    # there are two warnings, where one is about NUM_REALIZATIONS begin greater than
-    # the number of realizations in the design matrix
-    assert len(warning_messages) == 2
+    assert warning_messages == [
+        (
+            "Design Matrices 'poly_design_1.xlsx (DesignSheet DefaultSheet)' and "
+            "'poly_design_2.xlsx (DesignSheet DefaultSheet)' do not have the same "
+            "active realizations. The merged design matrix will only contain the "
+            "realizations that are active in all instances."
+        )
+    ]
     assert (
-        "Design Matrices 'poly_design_1.xlsx (DesignSheet DefaultSheet)' and "
-        "'poly_design_2.xlsx (DesignSheet DefaultSheet)' do not have the same active "
-        "realizations. The merged design matrix will only contain the "
-        "realizations that are active in all instances."
-    ) in warning_messages
+        "NUM_REALIZATIONS (10) is greater than the number of realizations "
+        "implied by DESIGN_MATRIX (5)"
+    ) in read_server_log()
     with pytest.warns(
         ConfigWarning,
         match=(
@@ -674,14 +676,14 @@ def test_run_poly_example_with_different_realization_count_chooses_smaller_and_w
     copy_poly_case_with_design_matrix(design_dict, default_list)
     with Path("poly.ert").open("a+", encoding="utf-8") as f:
         f.write(f"\nNUM_REALIZATIONS {num_realizations_in_user_config}")
-    with pytest.warns(ConfigWarning, match=expected_message):
-        run_cli(
-            ENSEMBLE_EXPERIMENT_MODE,
-            "--disable-monitoring",
-            "poly.ert",
-            "--experiment-name",
-            "test-experiment",
-        )
+    run_cli(
+        ENSEMBLE_EXPERIMENT_MODE,
+        "--disable-monitoring",
+        "poly.ert",
+        "--experiment-name",
+        "test-experiment",
+    )
+    assert re.search(expected_message, read_server_log())
     config_path = ErtConfig.from_file("poly.ert").config_path
 
     realizations_run = list((Path(config_path) / "poly_out").iterdir())

@@ -1,7 +1,5 @@
 import stat
 from contextlib import suppress
-from tempfile import NamedTemporaryFile
-from unittest.mock import patch
 
 import pytest
 
@@ -65,20 +63,25 @@ def test_missing_runpath_has_isolated_failures(tmp_path, monkeypatch):
             (tmp_path / "simulations/realization-0/iter-0").chmod(0x777)
 
 
+raising_named_temporary_file_source = """\
+from tempfile import NamedTemporaryFile
+
+import ert.scheduler.{queue_system}_driver as driver
+
+
 def raising_named_temporary_file(*args, **kwargs):
     if "realization-1" in str(kwargs["dir"]):
         raise OSError("Don't like realization-1")
     return NamedTemporaryFile(*args, **kwargs)
 
 
-def patch_raising_named_temporary_file(queue_system):
-    return patch(
-        f"ert.scheduler.{queue_system}_driver.NamedTemporaryFile",
-        raising_named_temporary_file,
-    )
+driver.NamedTemporaryFile = raising_named_temporary_file
+"""
 
 
-def test_failing_writes_lead_to_isolated_failures(tmp_path, monkeypatch, pytestconfig):
+def test_failing_writes_lead_to_isolated_failures(
+    tmp_path, monkeypatch, pytestconfig, install_plugin
+):
     monkeypatch.chdir(tmp_path)
     queue_system = None
     if pytestconfig.getoption("lsf"):
@@ -94,15 +97,17 @@ def test_failing_writes_lead_to_isolated_failures(tmp_path, monkeypatch, pytestc
         NUM_REALIZATIONS 10
         """
     )
-    with (
-        pytest.raises(
-            ErtCliError,
-            match=r"(?s)successful realizations \(9\) is less "
-            r"than .* MIN_REALIZATIONS\(10\).*"
-            "Driver reported: Could not create"
-            " submit script: Don't like realization-1",
-        ),
-        patch_raising_named_temporary_file(queue_system.lower()),
+    install_plugin(
+        "raising_named_temporary_file",
+        raising_named_temporary_file_source.format(queue_system=queue_system.lower()),
+        server_only=True,
+    )
+    with pytest.raises(
+        ErtCliError,
+        match=r"(?s)successful realizations \(9\) is less "
+        r"than .* MIN_REALIZATIONS\(10\).*"
+        "Driver reported: Could not create"
+        " submit script: Don't like realization-1",
     ):
         run_cli_with_pm(
             ["ensemble_experiment", "config.ert", "--disable-monitoring"],

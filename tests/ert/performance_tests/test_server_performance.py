@@ -47,11 +47,6 @@ def get_response_autofilter(
     )
 
 
-@pytest.fixture(autouse=True)
-def _autouse_patch_ertclient_to_testclient(patch_ertclient_to_testclient):
-    pass
-
-
 def run_in_loop[T](coro: Awaitable[T]) -> T:
     try:
         loop = asyncio.get_running_loop()
@@ -200,7 +195,7 @@ def test_direct_dark_performance_with_storage(
 
 
 @pytest.fixture
-def api_and_storage(monkeypatch, tmp_path):
+def api_and_storage(monkeypatch, tmp_path, patch_ertclient_to_testclient):
     ens_path = tmp_path / "storage"
     with open_storage(ens_path, mode="w") as storage:
         monkeypatch.setenv("ERT_STORAGE_NO_TOKEN", "yup")
@@ -214,7 +209,12 @@ def api_and_storage(monkeypatch, tmp_path):
 
 
 @pytest.fixture
-def api_and_snake_oil_storage(snake_oil_case_storage, monkeypatch):
+def api_and_snake_oil_storage(
+    snake_oil_case_storage, patch_ertclient_to_testclient, monkeypatch
+):
+    """snake_oil_case_storage is requested before the ErtClient patch, as it
+    may run the snake oil case through a real ERT server.
+    """
     with open_storage(snake_oil_case_storage.ens_path, mode="r") as storage:
         monkeypatch.setenv("ERT_STORAGE_NO_TOKEN", "yup")
         monkeypatch.setenv("ERT_STORAGE_ENS_PATH", str(storage.path))

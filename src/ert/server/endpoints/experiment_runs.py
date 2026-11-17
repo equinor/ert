@@ -47,6 +47,7 @@ from ert.server.status_event_forwarder import (
     StatusEventNotifier,
     create_status_event_forwarder,
 )
+from ert.warnings import capture_specific_warning
 from everest.config import EverestConfig
 from everest.everserver.server import (
     ExperimentState,
@@ -207,13 +208,20 @@ async def get_status_event_notifier(
     return plugin_manager.notify_status_event
 
 
+def _log_config_warning(message: Warning | str) -> None:
+    logging.getLogger(__name__).warning(str(message))
+
+
 async def _with_runtime_plugins(
     plugin_manager: Annotated[ErtPluginManager, Depends(get_plugin_manager)],
 ) -> AsyncIterator[ErtRuntimePlugins]:
     stack = ExitStack()
     try:
         stack.enter_context(warnings.catch_warnings())
-        warnings.filterwarnings("ignore", category=ConfigWarning)
+        warnings.filterwarnings("default", category=ConfigWarning)
+        stack.enter_context(
+            capture_specific_warning(ConfigWarning, _log_config_warning)
+        )
         site_plugins = get_site_plugins(plugin_manager)
         stack.enter_context(use_runtime_plugins(site_plugins))
         yield site_plugins

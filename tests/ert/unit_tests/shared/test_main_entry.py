@@ -38,23 +38,20 @@ def test_main_logging_argparse(monkeypatch, caplog):
     assert "mode='test_run'" in caplog.text
 
 
+@pytest.mark.slow
 @pytest.mark.usefixtures("copy_poly_case")
 def test_storage_exception_is_not_unexpected_error(caplog):
-    file_lock_mock = MagicMock()
     caplog.set_level(logging.ERROR)
-
-    def mock_acquire(*args, **kwargs):
-        raise filelock.Timeout("storage.lock")
-
-    file_lock_mock.acquire = mock_acquire
+    Path("storage").mkdir()
 
     with (
-        mock.patch("ert.storage.local_storage.FileLock", return_value=file_lock_mock),
+        filelock.FileLock("storage/storage.lock"),
         mock.patch.object(sys, "argv", ["ert", "test_run", "poly.ert"]),
         pytest.raises(SystemExit) as exc_info,
     ):
         main.main()
     assert "ERT crashed unexpectedly" not in str(exc_info.value)
+    assert "Traceback" not in str(exc_info.value)
     assert "Failed to open storage" in str(exc_info.value)
     assert "Not able to acquire lock" in str(exc_info.value)
 
