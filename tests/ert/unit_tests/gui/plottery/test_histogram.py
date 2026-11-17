@@ -3,6 +3,7 @@ from unittest.mock import ANY, Mock
 import pandas as pd
 import pytest
 from matplotlib.figure import Figure
+from matplotlib.patches import Rectangle
 
 import ert
 from ert.gui.plotting.ert_plots import HistogramPlot
@@ -92,6 +93,7 @@ def test_histogram_plot_for_constant_distribution(monkeypatch):
     max_value = value + 0.1
     figure = Figure()
     mock_plot_histogram = Mock()
+    mock_plot_histogram.return_value = Rectangle((0, 0), 1, 1)
     monkeypatch.setattr(
         ert.gui.plotting.ert_plots.histogram,
         "_plotHistogram",
