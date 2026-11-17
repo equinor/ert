@@ -13,8 +13,9 @@ from ert.config import (
     GenKwConfig,
     LocalizationType,
 )
-from ert.config.design_matrix import DESIGN_MATRIX_GROUP, read_default_values
+from ert.config.design_matrix import DESIGN_MATRIX_GROUP
 from ert.config.parsing.config_errors import ConfigWarning
+from fmudesign.utils import read_default_values
 from tests.ert.conftest import _create_design_matrix
 
 
