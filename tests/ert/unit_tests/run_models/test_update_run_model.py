@@ -129,7 +129,7 @@ def test_that_send_smoother_event_persists_update_tables_on_posterior_ensemble(e
     UpdateRunModel.send_smoother_event(
         model,
         iteration=0,
-        run_id=uuid.uuid4(),
+        ensemble_id=uuid.uuid4(),
         ensemble=mock_ensemble,
         event=event,
     )

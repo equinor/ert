@@ -98,12 +98,12 @@ class UpdateRunModel(RunModel, UpdateRunModelConfig):
         self._validate_has_updatable_parameter(prior)
         self.validate_successful_realizations_count()
         self.send_event(
-            RunModelUpdateBeginEvent(iteration=prior.iteration, run_id=prior.id)
+            RunModelUpdateBeginEvent(iteration=prior.iteration, ensemble_id=prior.id)
         )
         self.send_event(
             RunModelStatusEvent(
                 iteration=prior.iteration,
-                run_id=prior.id,
+                ensemble_id=prior.id,
                 msg="Creating posterior ensemble..",
             )
         )
@@ -158,7 +158,7 @@ class UpdateRunModel(RunModel, UpdateRunModelConfig):
     def send_smoother_event(
         self,
         iteration: int,
-        run_id: uuid.UUID,
+        ensemble_id: uuid.UUID,
         ensemble: Ensemble,
         event: AnalysisEvent,
     ) -> None:
@@ -167,7 +167,7 @@ class UpdateRunModel(RunModel, UpdateRunModelConfig):
                 self.send_event(
                     RunModelStatusEvent(
                         iteration=iteration,
-                        run_id=run_id,
+                        ensemble_id=ensemble_id,
                         msg=event.msg,
                         detail=event.detail,
                     )
@@ -176,7 +176,7 @@ class UpdateRunModel(RunModel, UpdateRunModelConfig):
                 self.send_event(
                     RunModelTimeEvent(
                         iteration=iteration,
-                        run_id=run_id,
+                        ensemble_id=ensemble_id,
                         elapsed_time=event.elapsed_time,
                         remaining_time=event.remaining_time,
                     )
@@ -192,7 +192,7 @@ class UpdateRunModel(RunModel, UpdateRunModelConfig):
                 self.send_event(
                     RunModelErrorEvent(
                         iteration=iteration,
-                        run_id=run_id,
+                        ensemble_id=ensemble_id,
                         error_msg=event.error_msg,
                         data=event.data,
                     )
@@ -202,7 +202,7 @@ class UpdateRunModel(RunModel, UpdateRunModelConfig):
                 self.send_event(
                     RunModelDataEvent(
                         iteration=iteration,
-                        run_id=run_id,
+                        ensemble_id=ensemble_id,
                         name=event.name,
                         data=event.data,
                     )
@@ -218,7 +218,7 @@ class UpdateRunModel(RunModel, UpdateRunModelConfig):
                 self.send_event(
                     RunModelUpdateEndEvent(
                         iteration=iteration,
-                        run_id=run_id,
+                        ensemble_id=ensemble_id,
                         data=event.data,
                     )
                 )

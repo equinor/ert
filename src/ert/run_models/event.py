@@ -27,9 +27,14 @@ logger = logging.getLogger(__name__)
 
 
 class RunModelEvent(BaseModel):
+    """Event emitted during an update step.
+
+    `ensemble_id` and `iteration` refer to the prior ensemble being updated.
+    """
+
     model_config = ConfigDict(arbitrary_types_allowed=True, extra="forbid")
     iteration: int
-    run_id: UUID
+    ensemble_id: UUID
 
 
 class RunModelStatusEvent(RunModelEvent):
@@ -73,7 +78,7 @@ class RunModelDataEvent(RunModelEvent):
 
     def write_as_csv(self, output_path: Path | None) -> None:
         if output_path and self.data:
-            self.data.to_csv(self.name, output_path / str(self.run_id))
+            self.data.to_csv(self.name, output_path / str(self.ensemble_id))
 
 
 class RunModelUpdateEndEvent(RunModelEvent):
@@ -82,7 +87,7 @@ class RunModelUpdateEndEvent(RunModelEvent):
 
     def write_as_csv(self, output_path: Path | None) -> None:
         if output_path and self.data:
-            self.data.to_csv("Report", output_path / str(self.run_id))
+            self.data.to_csv("Report", output_path / str(self.ensemble_id))
 
 
 class RunModelErrorEvent(RunModelEvent):
@@ -92,7 +97,7 @@ class RunModelErrorEvent(RunModelEvent):
 
     def write_as_csv(self, output_path: Path | None) -> None:
         if output_path and self.data:
-            self.data.to_csv("Report", output_path / str(self.run_id))
+            self.data.to_csv("Report", output_path / str(self.ensemble_id))
 
 
 class WorkflowEvent(BaseModel, extra="forbid"):
