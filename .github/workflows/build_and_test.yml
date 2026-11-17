@@ -214,6 +214,7 @@ jobs:
         uv run just build-ert-docs
 
   run-codspeed:
+    if: github.event_name == 'pull_request' # codspeed.yml benchmarks pushes to main itself
     needs: [build-wheels, test-linux-ert, test-linux-everest, test-slurm, test-ert-with-flow, run-testdata, run-dummy-site-config, docs-ert]
     uses: ./.github/workflows/codspeed.yml
 
