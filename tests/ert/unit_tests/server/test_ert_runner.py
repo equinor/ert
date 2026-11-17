@@ -143,7 +143,7 @@ async def test_that_registered_ert_experiment_passes_status_events_and_id_to_not
 
     monkeypatch.setattr(ert_runner, "_experiments", {})
     events = [
-        RunModelStatusEvent(iteration=0, run_id=uuid4(), msg="running"),
+        RunModelStatusEvent(iteration=0, ensemble_id=uuid4(), msg="running"),
         EndEvent(failed=False, msg="done"),
     ]
     model = Mock(spec=RunModel)
