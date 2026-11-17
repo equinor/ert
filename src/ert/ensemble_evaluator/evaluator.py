@@ -233,7 +233,7 @@ class EnsembleEvaluator:
 
         for identity in self._dispatchers_connected:
             real_id = int(identity.decode("utf-8").split("-")[2])
-            self._scheduler.mark_job_as_being_killed_by_evaluator(real_id)
+            self._scheduler.mark_terminate_message_sent_to_job(real_id)
 
     async def _terminate_all_dispatchers(self) -> None:
         await self._scheduler._running.wait()
