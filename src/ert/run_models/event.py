@@ -16,6 +16,7 @@ from ert.analysis import (
 from ert.analysis.event import DataSection
 from ert.ensemble_evaluator.event import (
     EndEvent,
+    EnsembleEvent,
     FullSnapshotEvent,
     SnapshotUpdateEvent,
     StartEvent,
@@ -26,7 +27,7 @@ from ert.workflow_runner import WorkflowJobStatus
 logger = logging.getLogger(__name__)
 
 
-class RunModelEvent(BaseModel):
+class RunModelEvent(EnsembleEvent):
     """Event emitted during an update step.
 
     `ensemble_id` and `iteration` refer to the prior ensemble being updated.
@@ -34,7 +35,6 @@ class RunModelEvent(BaseModel):
 
     model_config = ConfigDict(arbitrary_types_allowed=True, extra="forbid")
     iteration: int
-    ensemble_id: UUID
 
 
 class RunModelStatusEvent(RunModelEvent):
@@ -119,7 +119,7 @@ class WorkflowEvent(BaseModel, extra="forbid"):
     stopped_workflow: bool = False
 
 
-class RunPathCreationEvent(BaseModel, extra="forbid"):
+class RunPathCreationEvent(EnsembleEvent, extra="forbid"):
     pass
 
 

@@ -82,6 +82,7 @@ METADATA = EnsembleSnapshotMetadata(
                 realization_count=4,
                 status_count={"Finished": 1, "Pending": 2, "Unknown": 1},
                 iteration=0,
+                ensemble_id=uuid.uuid4(),
             ),
             id="FullSnapshotEvent",
         ),
@@ -105,6 +106,7 @@ METADATA = EnsembleSnapshotMetadata(
                 realization_count=4,
                 status_count={"Finished": 2, "Running": 1, "Unknown": 1},
                 iteration=0,
+                ensemble_id=uuid.uuid4(),
             ),
             id="SnapshotUpdateEvent1",
         ),
@@ -128,6 +130,7 @@ METADATA = EnsembleSnapshotMetadata(
                 realization_count=4,
                 status_count={"Finished": 2, "Failed": 1, "Unknown": 1},
                 iteration=0,
+                ensemble_id=uuid.uuid4(),
             ),
             id="SnapshotUpdateEvent2",
         ),
@@ -249,6 +252,7 @@ def _build_full_snapshot_event() -> FullSnapshotEvent:
         realization_count=2,
         status_count={"Finished": 2},
         iteration=0,
+        ensemble_id=uuid.uuid4(),
     )
 
 
