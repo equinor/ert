@@ -6,6 +6,7 @@ import string
 from collections import defaultdict
 from datetime import UTC, datetime
 from unittest.mock import MagicMock
+from uuid import uuid4
 
 import pytest
 from fastapi.encoders import jsonable_encoder
@@ -202,6 +203,7 @@ def full_snapshot_event():
             "Unknown": 0,
         },
         iteration=0,
+        ensemble_id=uuid4(),
     )
     return json.dumps(jsonable_encoder(event))
 
@@ -227,6 +229,7 @@ def snapshot_update_event():
         realization_count=4,
         status_count={"Finished": 1, "Running": 0, "Unknown": 0},
         iteration=0,
+        ensemble_id=uuid4(),
     )
     return json.dumps(jsonable_encoder(event))
 
@@ -265,6 +268,7 @@ def snapshot_update_failure_event():
         realization_count=4,
         status_count={"Finished": 0, "Running": 0, "Unknown": 0, "Failed": 1},
         iteration=0,
+        ensemble_id=uuid4(),
     )
     return json.dumps(jsonable_encoder(event))
 
@@ -291,6 +295,7 @@ def snapshot_update_event_with_fm_message():
         realization_count=4,
         status_count={"Finished": 1, "Running": 0, "Unknown": 0},
         iteration=0,
+        ensemble_id=uuid4(),
     )
     return json.dumps(jsonable_encoder(event))
 

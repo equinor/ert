@@ -385,7 +385,7 @@ def _create_one_runpath(
     timings["manifest_to_json"] = time.perf_counter() - start_time
     # Let upstream code know which runpath we just created
     if handle_runpath_creation_event:
-        event = RunPathCreatedEvent(iens=run_arg.iens)
+        event = RunPathCreatedEvent(iens=run_arg.iens, ensemble_id=ensemble.id)
         handle_runpath_creation_event(event)
 
     return timings
@@ -438,6 +438,7 @@ async def create_runpath(
     if handle_runpath_creation_event:
         starting_event = StartingTotalRunPathCreationEvent(
             total_runpaths_to_create=total_active_realizations,
+            ensemble_id=ensemble.id,
         )
         handle_runpath_creation_event(starting_event)
 
@@ -470,7 +471,7 @@ async def create_runpath(
         raise e
     finally:
         if handle_runpath_creation_event:
-            finished_event = FinishedTotalRunPathCreationEvent()
+            finished_event = FinishedTotalRunPathCreationEvent(ensemble_id=ensemble.id)
             handle_runpath_creation_event(finished_event)
 
     task_timings = [task.result() for task in tasks]

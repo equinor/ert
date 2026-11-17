@@ -1,3 +1,5 @@
+from uuid import uuid4
+
 from ert.ensemble_evaluator import state
 from ert.gui.experiments.view import run_status as run_status_module
 from ert.gui.experiments.view.run_status import RunStatusView
@@ -24,6 +26,7 @@ def _build_run_status_snapshot(iteration: int) -> FullSnapshotEvent:
         realization_count=2,
         status_count={"Finished": 2},
         iteration=iteration,
+        ensemble_id=uuid4(),
     )
 
 

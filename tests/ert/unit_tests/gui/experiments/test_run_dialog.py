@@ -2,6 +2,7 @@ import tempfile
 from pathlib import Path
 from queue import SimpleQueue
 from unittest.mock import MagicMock, Mock, patch
+from uuid import uuid4
 
 import httpx
 import pandas as pd
@@ -93,6 +94,7 @@ def event_queue_large_snapshot(large_snapshot):
             realization_count=4,
             status_count={"Finished": 2, "Unknown": 2},
             iteration=0,
+            ensemble_id=uuid4(),
         ),
         FullSnapshotEvent(
             snapshot=large_snapshot,
@@ -102,6 +104,7 @@ def event_queue_large_snapshot(large_snapshot):
             realization_count=4,
             status_count={"Finished": 2, "Unknown": 2},
             iteration=1,
+            ensemble_id=uuid4(),
         ),
     ]
 
@@ -334,6 +337,7 @@ def test_large_snapshot(
                     realization_count=4,
                     status_count={"Finished": 1, "Pending": 1, "Unknown": 2},
                     iteration=0,
+                    ensemble_id=uuid4(),
                 ),
                 SnapshotUpdateEvent(
                     snapshot=SnapshotBuilder().build(
@@ -345,6 +349,7 @@ def test_large_snapshot(
                     realization_count=4,
                     status_count={"Finished": 2, "Unknown": 2},
                     iteration=0,
+                    ensemble_id=uuid4(),
                 ),
             ],
             1,
@@ -371,6 +376,7 @@ def test_large_snapshot(
                     realization_count=4,
                     status_count={"Finished": 1, "Pending": 1, "Unknown": 2},
                     iteration=0,
+                    ensemble_id=uuid4(),
                 ),
                 SnapshotUpdateEvent(
                     snapshot=SnapshotBuilder().build(
@@ -382,6 +388,7 @@ def test_large_snapshot(
                     realization_count=4,
                     status_count={"Finished": 2, "Unknown": 2},
                     iteration=0,
+                    ensemble_id=uuid4(),
                 ),
             ],
             1,
@@ -412,6 +419,7 @@ def test_large_snapshot(
                     realization_count=4,
                     status_count={"Finished": 1, "Pending": 2, "Unknown": 1},
                     iteration=0,
+                    ensemble_id=uuid4(),
                 ),
                 SnapshotUpdateEvent(
                     snapshot=SnapshotBuilder()
@@ -428,6 +436,7 @@ def test_large_snapshot(
                     realization_count=4,
                     status_count={"Finished": 2, "Running": 1, "Unknown": 1},
                     iteration=0,
+                    ensemble_id=uuid4(),
                 ),
                 SnapshotUpdateEvent(
                     snapshot=SnapshotBuilder()
@@ -444,6 +453,7 @@ def test_large_snapshot(
                     realization_count=4,
                     status_count={"Finished": 2, "Failed": 1, "Unknown": 1},
                     iteration=0,
+                    ensemble_id=uuid4(),
                 ),
             ],
             1,
@@ -468,6 +478,7 @@ def test_large_snapshot(
                     realization_count=4,
                     status_count={"Pending": 1, "Unknown": 3},
                     iteration=0,
+                    ensemble_id=uuid4(),
                 ),
                 FullSnapshotEvent(
                     snapshot=(
@@ -486,6 +497,7 @@ def test_large_snapshot(
                     realization_count=4,
                     status_count={"Finished": 1, "Pending": 1, "Unknown": 2},
                     iteration=1,
+                    ensemble_id=uuid4(),
                 ),
             ],
             2,
@@ -523,6 +535,7 @@ def test_run_dialog(events, event_queue, tab_widget_count, qtbot: QtBot, run_dia
                     realization_count=4,
                     status_count={"Finished": 1, "Pending": 1, "Unknown": 2},
                     iteration=0,
+                    ensemble_id=uuid4(),
                 ),
                 SnapshotUpdateEvent(
                     snapshot=SnapshotBuilder()
@@ -541,6 +554,7 @@ def test_run_dialog(events, event_queue, tab_widget_count, qtbot: QtBot, run_dia
                     realization_count=4,
                     status_count={"Finished": 2, "Running": 1, "Unknown": 1},
                     iteration=0,
+                    ensemble_id=uuid4(),
                 ),
                 SnapshotUpdateEvent(
                     snapshot=SnapshotBuilder()
@@ -559,6 +573,7 @@ def test_run_dialog(events, event_queue, tab_widget_count, qtbot: QtBot, run_dia
                     realization_count=4,
                     status_count={"Finished": 4},
                     iteration=0,
+                    ensemble_id=uuid4(),
                 ),
             ],
             1,
@@ -627,6 +642,7 @@ def test_run_dialog_memory_usage_showing(
                     realization_count=4,
                     status_count={"Finished": 1, "Pending": 1, "Unknown": 2},
                     iteration=0,
+                    ensemble_id=uuid4(),
                 ),
             ],
             1,
@@ -658,6 +674,7 @@ def test_run_dialog_memory_usage_showing(
                     realization_count=4,
                     status_count={"Finished": 1, "Pending": 1, "Unknown": 2},
                     iteration=0,
+                    ensemble_id=uuid4(),
                 ),
             ],
             1,
@@ -906,6 +923,7 @@ def test_that_design_matrix_show_parameters_button_is_visible(
                     realization_count=2,
                     status_count={"Finished": 1, "Pending": 1},
                     iteration=0,
+                    ensemble_id=uuid4(),
                 ),
                 FullSnapshotEvent(
                     snapshot=(
@@ -924,6 +942,7 @@ def test_that_design_matrix_show_parameters_button_is_visible(
                     realization_count=2,
                     status_count={"Finished": 1, "Pending": 1},
                     iteration=1,
+                    ensemble_id=uuid4(),
                 ),
             ],
             2,
@@ -1120,6 +1139,7 @@ def test_that_run_dialog_clears_warnings_when_rerun(
                     realization_count=2,
                     status_count={"Finished": 1, "Pending": 1},
                     iteration=0,
+                    ensemble_id=uuid4(),
                 ),
                 EnsembleEvaluationWarning(warning_message="foo_bar_error"),
                 FullSnapshotEvent(
@@ -1139,6 +1159,7 @@ def test_that_run_dialog_clears_warnings_when_rerun(
                     realization_count=2,
                     status_count={"Finished": 1, "Pending": 1},
                     iteration=1,
+                    ensemble_id=uuid4(),
                 ),
             ],
             id="scheduler_warning_event_between_snapshot_events",
@@ -1179,7 +1200,12 @@ def test_that_runpath_creation_events_add_update_and_remove_tab(qtbot: QtBot):
 
     assert dialog._tab_widget.count() == 0
 
-    queue.put(StartingTotalRunPathCreationEvent(total_runpaths_to_create=3))
+    ensemble_id = uuid4()
+    queue.put(
+        StartingTotalRunPathCreationEvent(
+            total_runpaths_to_create=3, ensemble_id=ensemble_id
+        )
+    )
     qtbot.waitUntil(lambda: dialog._tab_widget.count() == 1, timeout=2000)
     assert "Creating runpaths" in dialog._tab_widget.tabText(0)
     assert dialog._tab_widget.currentIndex() == 0
@@ -1188,16 +1214,16 @@ def test_that_runpath_creation_events_add_update_and_remove_tab(qtbot: QtBot):
     assert progress_widget._bar.maximum() == 3
     assert progress_widget._bar.value() == 0
 
-    queue.put(RunPathCreatedEvent(iens=1))
+    queue.put(RunPathCreatedEvent(iens=1, ensemble_id=ensemble_id))
     qtbot.waitUntil(lambda: progress_widget._bar.value() == 1, timeout=2000)
     assert "1 / 3" in progress_widget._label.text()
 
-    queue.put(RunPathCreatedEvent(iens=2))
-    queue.put(RunPathCreatedEvent(iens=3))
+    queue.put(RunPathCreatedEvent(iens=2, ensemble_id=ensemble_id))
+    queue.put(RunPathCreatedEvent(iens=3, ensemble_id=ensemble_id))
     qtbot.waitUntil(lambda: progress_widget._bar.value() == 3, timeout=2000)
     assert "3 / 3" in progress_widget._label.text()
 
-    queue.put(FinishedTotalRunPathCreationEvent())
+    queue.put(FinishedTotalRunPathCreationEvent(ensemble_id=ensemble_id))
     qtbot.waitUntil(lambda: dialog._tab_widget.count() == 0, timeout=2000)
 
     # After the progress tab is removed the snapshot model must still add a
@@ -1220,6 +1246,7 @@ def test_that_runpath_creation_events_add_update_and_remove_tab(qtbot: QtBot):
             realization_count=2,
             status_count={"Unknown": 2},
             iteration=0,
+            ensemble_id=uuid4(),
         )
     )
     queue.put(EndEvent(failed=False, msg=""))
@@ -1435,6 +1462,7 @@ def test_that_workflows_tab_does_not_shift_everest_batch_result_events_to_wrong_
             realization_count=1,
             status_count={"Unknown": 1},
             iteration=0,
+            ensemble_id=uuid4(),
         )
     )
     qtbot.waitUntil(lambda: dialog._tab_widget.count() == 1, timeout=2000)
