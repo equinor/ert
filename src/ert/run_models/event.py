@@ -30,7 +30,8 @@ logger = logging.getLogger(__name__)
 class RunModelEvent(EnsembleEvent):
     """Event emitted during an update step.
 
-    `ensemble_id` and `iteration` refer to the prior ensemble being updated.
+    `iteration` is the iteration of the prior ensemble being updated.
+    `ensemble_id` is the posterior ensemble produced by the update.
     """
 
     model_config = ConfigDict(arbitrary_types_allowed=True, extra="forbid")
@@ -69,6 +70,7 @@ class RunModelTimeEvent(RunModelEvent):
 
 class RunModelUpdateBeginEvent(RunModelEvent):
     event_type: Literal["RunModelUpdateBeginEvent"] = "RunModelUpdateBeginEvent"
+    prior_id: UUID
 
 
 class RunModelDataEvent(RunModelEvent):
@@ -98,13 +100,6 @@ class RunModelErrorEvent(RunModelEvent):
     def write_as_csv(self, output_path: Path | None) -> None:
         if output_path and self.data:
             self.data.to_csv("Report", output_path / str(self.ensemble_id))
-
-
-class RunModelPosteriorCreatedEvent(RunModelEvent):
-    event_type: Literal["RunModelPosteriorCreatedEvent"] = (
-        "RunModelPosteriorCreatedEvent"
-    )
-    posterior_id: UUID
 
 
 class WorkflowEvent(BaseModel, extra="forbid"):

@@ -1,7 +1,6 @@
 import dataclasses
 import functools
 import logging
-import uuid
 
 from ert.analysis import build_strategy_map, smoother_update
 from ert.analysis._update_commons import ErtAnalysisError
@@ -27,7 +26,6 @@ from ert.config.parsing.validators import validate_has_updatable_parameter
 from ert.run_models.event import (
     RunModelDataEvent,
     RunModelErrorEvent,
-    RunModelPosteriorCreatedEvent,
     RunModelStatusEvent,
     RunModelTimeEvent,
     RunModelUpdateBeginEvent,
@@ -64,7 +62,6 @@ class UpdateRunModel(RunModel, UpdateRunModelConfig):
         progress_callback = functools.partial(
             self.send_smoother_event,
             prior.iteration,
-            prior.id,
             posterior,
         )
 
@@ -98,9 +95,6 @@ class UpdateRunModel(RunModel, UpdateRunModelConfig):
     ) -> Ensemble:
         self._validate_has_updatable_parameter(prior)
         self.validate_successful_realizations_count()
-        self.send_event(
-            RunModelUpdateBeginEvent(iteration=prior.iteration, ensemble_id=prior.id)
-        )
 
         pre_first_update_fixtures = PreFirstUpdateFixtures(
             storage=self._storage,
@@ -119,11 +113,10 @@ class UpdateRunModel(RunModel, UpdateRunModelConfig):
             name=posterior_name,
             prior_ensemble=prior,
         )
+
         self.send_event(
-            RunModelPosteriorCreatedEvent(
-                iteration=prior.iteration,
-                ensemble_id=prior.id,
-                posterior_id=posterior.id,
+            RunModelUpdateBeginEvent(
+                iteration=prior.iteration, ensemble_id=posterior.id, prior_id=prior.id
             )
         )
 
@@ -160,7 +153,6 @@ class UpdateRunModel(RunModel, UpdateRunModelConfig):
     def send_smoother_event(
         self,
         iteration: int,
-        ensemble_id: uuid.UUID,
         posterior: Ensemble,
         event: AnalysisEvent,
     ) -> None:
@@ -169,7 +161,7 @@ class UpdateRunModel(RunModel, UpdateRunModelConfig):
                 self.send_event(
                     RunModelStatusEvent(
                         iteration=iteration,
-                        ensemble_id=ensemble_id,
+                        ensemble_id=posterior.id,
                         msg=event.msg,
                         detail=event.detail,
                     )
@@ -178,7 +170,7 @@ class UpdateRunModel(RunModel, UpdateRunModelConfig):
                 self.send_event(
                     RunModelTimeEvent(
                         iteration=iteration,
-                        ensemble_id=ensemble_id,
+                        ensemble_id=posterior.id,
                         elapsed_time=event.elapsed_time,
                         remaining_time=event.remaining_time,
                     )
@@ -194,7 +186,7 @@ class UpdateRunModel(RunModel, UpdateRunModelConfig):
                 self.send_event(
                     RunModelErrorEvent(
                         iteration=iteration,
-                        ensemble_id=ensemble_id,
+                        ensemble_id=posterior.id,
                         error_msg=event.error_msg,
                         data=event.data,
                     )
@@ -204,7 +196,7 @@ class UpdateRunModel(RunModel, UpdateRunModelConfig):
                 self.send_event(
                     RunModelDataEvent(
                         iteration=iteration,
-                        ensemble_id=ensemble_id,
+                        ensemble_id=posterior.id,
                         name=event.name,
                         data=event.data,
                     )
@@ -220,7 +212,7 @@ class UpdateRunModel(RunModel, UpdateRunModelConfig):
                 self.send_event(
                     RunModelUpdateEndEvent(
                         iteration=iteration,
-                        ensemble_id=ensemble_id,
+                        ensemble_id=posterior.id,
                         data=event.data,
                     )
                 )
