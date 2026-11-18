@@ -13,7 +13,7 @@ info = "Add ensemble id to status snapshots"
 def _parse_started_at(value: str) -> datetime:
     started_at = datetime.fromisoformat(value)
     if started_at.tzinfo is None:
-        return started_at.replace(tzinfo=UTC)
+        return started_at.astimezone(UTC)
     return started_at
 
 
