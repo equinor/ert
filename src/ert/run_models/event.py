@@ -30,7 +30,8 @@ logger = logging.getLogger(__name__)
 class RunModelEvent(EnsembleEvent):
     """Event emitted during an update step.
 
-    `ensemble_id` and `iteration` refer to the prior ensemble being updated.
+    `iteration` is the iteration of the prior ensemble being updated.
+    `ensemble_id` is the posterior ensemble produced by the update.
     """
 
     model_config = ConfigDict(arbitrary_types_allowed=True, extra="forbid")
@@ -69,6 +70,7 @@ class RunModelTimeEvent(RunModelEvent):
 
 class RunModelUpdateBeginEvent(RunModelEvent):
     event_type: Literal["RunModelUpdateBeginEvent"] = "RunModelUpdateBeginEvent"
+    prior_ensemble_id: UUID
 
 
 class RunModelDataEvent(RunModelEvent):

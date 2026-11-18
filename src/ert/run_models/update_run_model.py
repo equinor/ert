@@ -1,7 +1,6 @@
 import dataclasses
 import functools
 import logging
-import uuid
 
 from ert.analysis import build_strategy_map, smoother_update
 from ert.analysis._update_commons import ErtAnalysisError
@@ -63,7 +62,6 @@ class UpdateRunModel(RunModel, UpdateRunModelConfig):
         progress_callback = functools.partial(
             self.send_smoother_event,
             prior.iteration,
-            prior.id,
             posterior,
         )
 
@@ -97,16 +95,6 @@ class UpdateRunModel(RunModel, UpdateRunModelConfig):
     ) -> Ensemble:
         self._validate_has_updatable_parameter(prior)
         self.validate_successful_realizations_count()
-        self.send_event(
-            RunModelUpdateBeginEvent(iteration=prior.iteration, ensemble_id=prior.id)
-        )
-        self.send_event(
-            RunModelStatusEvent(
-                iteration=prior.iteration,
-                ensemble_id=prior.id,
-                msg="Creating posterior ensemble..",
-            )
-        )
 
         pre_first_update_fixtures = PreFirstUpdateFixtures(
             storage=self._storage,
@@ -125,6 +113,15 @@ class UpdateRunModel(RunModel, UpdateRunModelConfig):
             name=posterior_name,
             prior_ensemble=prior,
         )
+
+        self.send_event(
+            RunModelUpdateBeginEvent(
+                iteration=prior.iteration,
+                ensemble_id=posterior.id,
+                prior_ensemble_id=prior.id,
+            )
+        )
+
         if prior.iteration == 0:
             self.run_workflows(
                 fixtures=pre_first_update_fixtures,
@@ -158,8 +155,7 @@ class UpdateRunModel(RunModel, UpdateRunModelConfig):
     def send_smoother_event(
         self,
         iteration: int,
-        ensemble_id: uuid.UUID,
-        ensemble: Ensemble,
+        posterior: Ensemble,
         event: AnalysisEvent,
     ) -> None:
         match event:
@@ -167,7 +163,7 @@ class UpdateRunModel(RunModel, UpdateRunModelConfig):
                 self.send_event(
                     RunModelStatusEvent(
                         iteration=iteration,
-                        ensemble_id=ensemble_id,
+                        ensemble_id=posterior.id,
                         msg=event.msg,
                         detail=event.detail,
                     )
@@ -176,49 +172,49 @@ class UpdateRunModel(RunModel, UpdateRunModelConfig):
                 self.send_event(
                     RunModelTimeEvent(
                         iteration=iteration,
-                        ensemble_id=ensemble_id,
+                        ensemble_id=posterior.id,
                         elapsed_time=event.elapsed_time,
                         remaining_time=event.remaining_time,
                     )
                 )
             case AnalysisErrorEvent():
                 try:
-                    ensemble.save_blob(event)
+                    posterior.save_blob(event)
                 except Exception:
                     logger.exception(
                         "Could not store the report of the failed update of %s",
-                        ensemble.name,
+                        posterior.name,
                     )
                 self.send_event(
                     RunModelErrorEvent(
                         iteration=iteration,
-                        ensemble_id=ensemble_id,
+                        ensemble_id=posterior.id,
                         error_msg=event.error_msg,
                         data=event.data,
                     )
                 )
             case AnalysisDataEvent():
-                ensemble.save_blob(event)
+                posterior.save_blob(event)
                 self.send_event(
                     RunModelDataEvent(
                         iteration=iteration,
-                        ensemble_id=ensemble_id,
+                        ensemble_id=posterior.id,
                         name=event.name,
                         data=event.data,
                     )
                 )
             case AnalysisMatrixEvent():
-                ensemble.save_blob(event)
+                posterior.save_blob(event)
             case AnalysisScalingEvent():
-                ensemble.save_blob(event)
+                posterior.save_blob(event)
             case AnalysisRhoMatrixEvent():
-                ensemble.experiment.save_blob(event)
+                posterior.experiment.save_blob(event)
             case AnalysisCompleteEvent():
-                ensemble.save_blob(event)
+                posterior.save_blob(event)
                 self.send_event(
                     RunModelUpdateEndEvent(
                         iteration=iteration,
-                        ensemble_id=ensemble_id,
+                        ensemble_id=posterior.id,
                         data=event.data,
                     )
                 )
