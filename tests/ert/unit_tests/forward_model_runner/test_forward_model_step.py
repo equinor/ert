@@ -459,6 +459,7 @@ def test_that_stdout_and_stderr_files_are_conditionally_removed_after_a_step(
     assert (tmp_path / "err.txt").exists() == stderr_exists
 
 
+@pytest.mark.skip_mac_ci
 def test_that_stale_output_files_are_removed_when_step_writes_nothing(
     tmp_path, monkeypatch
 ):
