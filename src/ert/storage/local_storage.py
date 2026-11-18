@@ -816,11 +816,16 @@ class LocalStorage(BaseMode):
         """Return raw bytes for the blob identified by *uri* inside *blob_dir*."""
         uri_path = Path(uri)
         if uri_path.is_absolute() or uri_path.name != uri:
-            logger.warning("Invalid blob URI path: %s", uri)
-            raise ValueError(f"Invalid blob URI path: {uri}")
+            msg = f"Invalid blob URI path: {uri}"
+            logger.warning(msg)
+            raise ValueError(msg)
         if not _BLOB_URI_PATTERN.fullmatch(uri):
-            logger.warning("Invalid blob URI pattern: %s", uri)
-            raise ValueError(f"Invalid blob URI pattern : {uri}")
+            msg = (
+                f"Invalid blob URI pattern: {uri}. "
+                f"Must match pattern: {_BLOB_URI_PATTERN.pattern}"
+            )
+            logger.warning(msg)
+            raise ValueError(msg)
         resolved_dir = blob_dir.resolve()
         blob_path = (resolved_dir / uri).resolve()
         try:
