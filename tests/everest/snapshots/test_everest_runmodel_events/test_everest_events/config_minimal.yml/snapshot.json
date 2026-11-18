@@ -45,18 +45,18 @@
         "objective_gradient_values": [
           {
             "control_name": "point.x",
-            "distance": 0.800386,
-            "distance.total": -0.800386
+            "distance": 0.800378,
+            "distance.total": -0.800378
           },
           {
             "control_name": "point.y",
-            "distance": 0.800548,
-            "distance.total": -0.800548
+            "distance": 0.800553,
+            "distance.total": -0.800553
           },
           {
             "control_name": "point.z",
-            "distance": 0.799338,
-            "distance.total": -0.799338
+            "distance": 0.799347,
+            "distance.total": -0.799347
           }
         ],
         "perturbation_objectives": [
@@ -111,21 +111,21 @@
       "result_type": "FunctionResult",
       "results": {
         "controls": {
-          "point.x": 0.900386,
-          "point.y": 0.900548,
-          "point.z": 0.899338
+          "point.x": 0.900378,
+          "point.y": 0.900553,
+          "point.z": 0.899347
         },
         "objectives": {
-          "distance": -0.480218
+          "distance": -0.480224
         },
         "realization_objectives": [
           {
-            "distance": -0.480218,
+            "distance": -0.480224,
             "realization": 0,
             "simulation_id": 0
           }
         ],
-        "total_objective_value": 0.480218
+        "total_objective_value": 0.480224
       }
     },
     {
@@ -146,9 +146,9 @@
       "result_type": "FunctionResult",
       "results": {
         "controls": {
-          "point.x": 0.500148,
-          "point.y": 0.500228,
-          "point.z": 0.499624
+          "point.x": 0.500143,
+          "point.y": 0.50023,
+          "point.z": 0.499627
         },
         "objectives": {
           "distance": -0.0
@@ -183,18 +183,18 @@
         "objective_gradient_values": [
           {
             "control_name": "point.x",
-            "distance": -0.00259,
-            "distance.total": 0.00259
+            "distance": -0.002579,
+            "distance.total": 0.002579
           },
           {
             "control_name": "point.y",
-            "distance": -0.002198,
-            "distance.total": 0.002198
+            "distance": -0.002201,
+            "distance.total": 0.002201
           },
           {
             "control_name": "point.z",
-            "distance": 0.002055,
-            "distance.total": -0.002055
+            "distance": 0.002049,
+            "distance.total": -0.002049
           }
         ],
         "perturbation_objectives": [

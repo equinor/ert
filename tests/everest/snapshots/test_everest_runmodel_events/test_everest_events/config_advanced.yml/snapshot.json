@@ -66,28 +66,28 @@
           },
           {
             "control_name": "point.x.1",
-            "x-0_coord": -0.000036
+            "x-0_coord": -0.000038
           },
           {
             "control_name": "point.x.2",
-            "x-0_coord": -0.000113
+            "x-0_coord": -0.000115
           }
         ],
         "objective_gradient_values": [
           {
             "control_name": "point.x.0",
-            "distance": -0.495787,
-            "distance.total": 0.495787
+            "distance": -0.495803,
+            "distance.total": 0.495803
           },
           {
             "control_name": "point.x.1",
-            "distance": -0.494386,
-            "distance.total": 0.494386
+            "distance": -0.494397,
+            "distance.total": 0.494397
           },
           {
             "control_name": "point.x.2",
-            "distance": 0.495612,
-            "distance.total": -0.495612
+            "distance": 0.495606,
+            "distance.total": -0.495606
           }
         ],
         "perturbation_constraints": [
@@ -235,11 +235,11 @@
       "results": {
         "controls": {
           "point.x.0": 0.258899,
-          "point.x.1": 0.138638,
-          "point.x.2": 0.172665
+          "point.x.1": 0.138637,
+          "point.x.2": 0.172663
         },
         "objectives": {
-          "distance": -1.693398
+          "distance": -1.693397
         },
         "realization_constraints": [
           {
@@ -255,17 +255,17 @@
         ],
         "realization_objectives": [
           {
-            "distance": -5.88601,
+            "distance": -5.886,
             "realization": 0,
             "simulation_id": 0
           },
           {
-            "distance": -0.295861,
+            "distance": -0.295863,
             "realization": 2,
             "simulation_id": 1
           }
         ],
-        "total_objective_value": 1.693398
+        "total_objective_value": 1.693397
       }
     },
     {
@@ -278,32 +278,32 @@
         "constraint_gradient": [
           {
             "control_name": "point.x.0",
-            "x-0_coord": 0.999989
+            "x-0_coord": 1.000035
           },
           {
             "control_name": "point.x.1",
-            "x-0_coord": 0.00002
+            "x-0_coord": -0.000039
           },
           {
             "control_name": "point.x.2",
-            "x-0_coord": -9e-6
+            "x-0_coord": 0.000039
           }
         ],
         "objective_gradient_values": [
           {
             "control_name": "point.x.0",
-            "distance": -0.509482,
-            "distance.total": 0.509482
+            "distance": -0.509018,
+            "distance.total": 0.509018
           },
           {
             "control_name": "point.x.1",
-            "distance": -0.289235,
-            "distance.total": 0.289235
+            "distance": -0.289234,
+            "distance.total": 0.289234
           },
           {
             "control_name": "point.x.2",
-            "distance": 0.659109,
-            "distance.total": -0.659109
+            "distance": 0.659374,
+            "distance.total": -0.659374
           }
         ],
         "perturbation_constraints": [
@@ -311,7 +311,7 @@
             "perturbation": 0,
             "realization": 0,
             "simulation_id": 2,
-            "x-0_coord": 0.256877
+            "x-0_coord": 0.256876
           },
           {
             "perturbation": 1,
@@ -335,7 +335,7 @@
             "perturbation": 4,
             "realization": 0,
             "simulation_id": 6,
-            "x-0_coord": 0.26144
+            "x-0_coord": 0.261439
           },
           {
             "perturbation": 0,
@@ -347,25 +347,25 @@
             "perturbation": 1,
             "realization": 2,
             "simulation_id": 8,
-            "x-0_coord": 0.261361
+            "x-0_coord": 0.26136
           },
           {
             "perturbation": 2,
             "realization": 2,
             "simulation_id": 9,
-            "x-0_coord": 0.249344
+            "x-0_coord": 0.249343
           },
           {
             "perturbation": 3,
             "realization": 2,
             "simulation_id": 10,
-            "x-0_coord": 0.256409
+            "x-0_coord": 0.256408
           },
           {
             "perturbation": 4,
             "realization": 2,
             "simulation_id": 11,
-            "x-0_coord": 0.260034
+            "x-0_coord": 0.260033
           }
         ],
         "perturbation_objectives": [
@@ -394,37 +394,37 @@
             "simulation_id": 5
           },
           {
-            "distance": -5.89632,
+            "distance": -5.89631,
             "perturbation": 4,
             "realization": 0,
             "simulation_id": 6
           },
           {
-            "distance": -0.286988,
+            "distance": -0.286991,
             "perturbation": 0,
             "realization": 2,
             "simulation_id": 7
           },
           {
-            "distance": -0.293681,
+            "distance": -0.293683,
             "perturbation": 1,
             "realization": 2,
             "simulation_id": 8
           },
           {
-            "distance": -0.306447,
+            "distance": -0.306449,
             "perturbation": 2,
             "realization": 2,
             "simulation_id": 9
           },
           {
-            "distance": -0.289746,
+            "distance": -0.289748,
             "perturbation": 3,
             "realization": 2,
             "simulation_id": 10
           },
           {
-            "distance": -0.293241,
+            "distance": -0.293244,
             "perturbation": 4,
             "realization": 2,
             "simulation_id": 11
@@ -450,38 +450,38 @@
       "result_type": "FunctionResult",
       "results": {
         "controls": {
-          "point.x.0": 0.321688,
-          "point.x.1": -0.002276,
-          "point.x.2": 0.136291
+          "point.x.0": 0.321815,
+          "point.x.1": -0.002387,
+          "point.x.2": 0.136336
         },
         "objectives": {
-          "distance": -1.735773
+          "distance": -1.735823
         },
         "realization_constraints": [
           {
             "realization": 0,
             "simulation_id": 0,
-            "x-0_coord": 0.321688
+            "x-0_coord": 0.321815
           },
           {
             "realization": 2,
             "simulation_id": 1,
-            "x-0_coord": 0.321688
+            "x-0_coord": 0.321815
           }
         ],
         "realization_objectives": [
           {
-            "distance": -5.69401,
+            "distance": -5.69411,
             "realization": 0,
             "simulation_id": 0
           },
           {
-            "distance": -0.416361,
+            "distance": -0.416394,
             "realization": 2,
             "simulation_id": 1
           }
         ],
-        "total_objective_value": 1.735773
+        "total_objective_value": 1.735823
       }
     },
     {
@@ -494,32 +494,32 @@
         "constraint_gradient": [
           {
             "control_name": "point.x.0",
-            "x-0_coord": 1.000034
+            "x-0_coord": 1.000011
           },
           {
             "control_name": "point.x.1",
-            "x-0_coord": -0.000161
+            "x-0_coord": 0.000021
           },
           {
             "control_name": "point.x.2",
-            "x-0_coord": -0.000208
+            "x-0_coord": 0.000026
           }
         ],
         "objective_gradient_values": [
           {
             "control_name": "point.x.0",
-            "distance": -0.646068,
-            "distance.total": 0.646068
+            "distance": -0.646216,
+            "distance.total": 0.646216
           },
           {
             "control_name": "point.x.1",
-            "distance": -0.006749,
-            "distance.total": 0.006749
+            "distance": -0.006584,
+            "distance.total": 0.006584
           },
           {
             "control_name": "point.x.2",
-            "distance": 0.714991,
-            "distance.total": -0.714991
+            "distance": 0.714935,
+            "distance.total": -0.714935
           }
         ],
         "perturbation_constraints": [
@@ -527,120 +527,120 @@
             "perturbation": 0,
             "realization": 0,
             "simulation_id": 2,
-            "x-0_coord": 0.318116
+            "x-0_coord": 0.318243
           },
           {
             "perturbation": 1,
             "realization": 0,
             "simulation_id": 3,
-            "x-0_coord": 0.319231
+            "x-0_coord": 0.319358
           },
           {
             "perturbation": 2,
             "realization": 0,
             "simulation_id": 4,
-            "x-0_coord": 0.324475
+            "x-0_coord": 0.324602
           },
           {
             "perturbation": 3,
             "realization": 0,
             "simulation_id": 5,
-            "x-0_coord": 0.317759
+            "x-0_coord": 0.317886
           },
           {
             "perturbation": 4,
             "realization": 0,
             "simulation_id": 6,
-            "x-0_coord": 0.333093
+            "x-0_coord": 0.33322
           },
           {
             "perturbation": 0,
             "realization": 2,
             "simulation_id": 7,
-            "x-0_coord": 0.320777
+            "x-0_coord": 0.320904
           },
           {
             "perturbation": 1,
             "realization": 2,
             "simulation_id": 8,
-            "x-0_coord": 0.323673
+            "x-0_coord": 0.323801
           },
           {
             "perturbation": 2,
             "realization": 2,
             "simulation_id": 9,
-            "x-0_coord": 0.320718
+            "x-0_coord": 0.320846
           },
           {
             "perturbation": 3,
             "realization": 2,
             "simulation_id": 10,
-            "x-0_coord": 0.327552
+            "x-0_coord": 0.32768
           },
           {
             "perturbation": 4,
             "realization": 2,
             "simulation_id": 11,
-            "x-0_coord": 0.324056
+            "x-0_coord": 0.324184
           }
         ],
         "perturbation_objectives": [
           {
-            "distance": -5.67617,
+            "distance": -5.67627,
             "perturbation": 0,
             "realization": 0,
             "simulation_id": 2
           },
           {
-            "distance": -5.67357,
+            "distance": -5.67367,
             "perturbation": 1,
             "realization": 0,
             "simulation_id": 3
           },
           {
-            "distance": -5.69213,
+            "distance": -5.69223,
             "perturbation": 2,
             "realization": 0,
             "simulation_id": 4
           },
           {
-            "distance": -5.68819,
+            "distance": -5.68829,
             "perturbation": 3,
             "realization": 0,
             "simulation_id": 5
           },
           {
-            "distance": -5.75052,
+            "distance": -5.75062,
             "perturbation": 4,
             "realization": 0,
             "simulation_id": 6
           },
           {
-            "distance": -0.413819,
+            "distance": -0.41385,
             "perturbation": 0,
             "realization": 2,
             "simulation_id": 7
           },
           {
-            "distance": -0.415527,
+            "distance": -0.415562,
             "perturbation": 1,
             "realization": 2,
             "simulation_id": 8
           },
           {
-            "distance": -0.414145,
+            "distance": -0.414177,
             "perturbation": 2,
             "realization": 2,
             "simulation_id": 9
           },
           {
-            "distance": -0.409632,
+            "distance": -0.409665,
             "perturbation": 3,
             "realization": 2,
             "simulation_id": 10
           },
           {
-            "distance": -0.409662,
+            "distance": -0.409694,
             "perturbation": 4,
             "realization": 2,
             "simulation_id": 11
@@ -666,38 +666,38 @@
       "result_type": "FunctionResult",
       "results": {
         "controls": {
-          "point.x.0": 0.242329,
-          "point.x.1": 0.025213,
-          "point.x.2": 0.245514
+          "point.x.0": 0.242399,
+          "point.x.1": 0.025122,
+          "point.x.2": 0.245517
         },
         "objectives": {
-          "distance": -1.624123
+          "distance": -1.624149
         },
         "realization_constraints": [
           {
             "realization": 0,
             "simulation_id": 0,
-            "x-0_coord": 0.242329
+            "x-0_coord": 0.242399
           },
           {
             "realization": 2,
             "simulation_id": 1,
-            "x-0_coord": 0.242329
+            "x-0_coord": 0.242399
           }
         ],
         "realization_objectives": [
           {
-            "distance": -5.42675,
+            "distance": -5.42671,
             "realization": 0,
             "simulation_id": 0
           },
           {
-            "distance": -0.35658,
+            "distance": -0.356629,
             "realization": 2,
             "simulation_id": 1
           }
         ],
-        "total_objective_value": 1.624123
+        "total_objective_value": 1.624149
       }
     },
     {
@@ -710,32 +710,32 @@
         "constraint_gradient": [
           {
             "control_name": "point.x.0",
-            "x-0_coord": 1.000038
+            "x-0_coord": 0.999971
           },
           {
             "control_name": "point.x.1",
-            "x-0_coord": -0.0001
+            "x-0_coord": -2e-6
           },
           {
             "control_name": "point.x.2",
-            "x-0_coord": 0.000033
+            "x-0_coord": -0.000015
           }
         ],
         "objective_gradient_values": [
           {
             "control_name": "point.x.0",
-            "distance": -0.490092,
-            "distance.total": 0.490092
+            "distance": -0.490287,
+            "distance.total": 0.490287
           },
           {
             "control_name": "point.x.1",
-            "distance": -0.047162,
-            "distance.total": 0.047162
+            "distance": -0.047042,
+            "distance.total": 0.047042
           },
           {
             "control_name": "point.x.2",
-            "distance": 0.505438,
-            "distance.total": -0.505438
+            "distance": 0.505357,
+            "distance.total": -0.505357
           }
         ],
         "perturbation_constraints": [
@@ -743,120 +743,120 @@
             "perturbation": 0,
             "realization": 0,
             "simulation_id": 2,
-            "x-0_coord": 0.237494
+            "x-0_coord": 0.237564
           },
           {
             "perturbation": 1,
             "realization": 0,
             "simulation_id": 3,
-            "x-0_coord": 0.236602
+            "x-0_coord": 0.236672
           },
           {
             "perturbation": 2,
             "realization": 0,
             "simulation_id": 4,
-            "x-0_coord": 0.239089
+            "x-0_coord": 0.239159
           },
           {
             "perturbation": 3,
             "realization": 0,
             "simulation_id": 5,
-            "x-0_coord": 0.246967
+            "x-0_coord": 0.247036
           },
           {
             "perturbation": 4,
             "realization": 0,
             "simulation_id": 6,
-            "x-0_coord": 0.249236
+            "x-0_coord": 0.249306
           },
           {
             "perturbation": 0,
             "realization": 2,
             "simulation_id": 7,
-            "x-0_coord": 0.24609
+            "x-0_coord": 0.246159
           },
           {
             "perturbation": 1,
             "realization": 2,
             "simulation_id": 8,
-            "x-0_coord": 0.247335
+            "x-0_coord": 0.247405
           },
           {
             "perturbation": 2,
             "realization": 2,
             "simulation_id": 9,
-            "x-0_coord": 0.250589
+            "x-0_coord": 0.250658
           },
           {
             "perturbation": 3,
             "realization": 2,
             "simulation_id": 10,
-            "x-0_coord": 0.242067
+            "x-0_coord": 0.242136
           },
           {
             "perturbation": 4,
             "realization": 2,
             "simulation_id": 11,
-            "x-0_coord": 0.247702
+            "x-0_coord": 0.247771
           }
         ],
         "perturbation_objectives": [
           {
-            "distance": -5.40886,
+            "distance": -5.40882,
             "perturbation": 0,
             "realization": 0,
             "simulation_id": 2
           },
           {
-            "distance": -5.41157,
+            "distance": -5.41153,
             "perturbation": 1,
             "realization": 0,
             "simulation_id": 3
           },
           {
-            "distance": -5.42681,
+            "distance": -5.42677,
             "perturbation": 2,
             "realization": 0,
             "simulation_id": 4
           },
           {
-            "distance": -5.43743,
+            "distance": -5.43739,
             "perturbation": 3,
             "realization": 0,
             "simulation_id": 5
           },
           {
-            "distance": -5.46057,
+            "distance": -5.46053,
             "perturbation": 4,
             "realization": 0,
             "simulation_id": 6
           },
           {
-            "distance": -0.351907,
+            "distance": -0.351957,
             "perturbation": 0,
             "realization": 2,
             "simulation_id": 7
           },
           {
-            "distance": -0.3524,
+            "distance": -0.352451,
             "perturbation": 1,
             "realization": 2,
             "simulation_id": 8
           },
           {
-            "distance": -0.356538,
+            "distance": -0.356589,
             "perturbation": 2,
             "realization": 2,
             "simulation_id": 9
           },
           {
-            "distance": -0.358079,
+            "distance": -0.358129,
             "perturbation": 3,
             "realization": 2,
             "simulation_id": 10
           },
           {
-            "distance": -0.357974,
+            "distance": -0.358026,
             "perturbation": 4,
             "realization": 2,
             "simulation_id": 11
@@ -882,9 +882,9 @@
       "result_type": "FunctionResult",
       "results": {
         "controls": {
-          "point.x.0": 0.144529,
-          "point.x.1": 0.017082,
-          "point.x.2": 0.365267
+          "point.x.0": 0.144467,
+          "point.x.1": 0.017049,
+          "point.x.2": 0.365186
         },
         "objectives": {
           "distance": -1.539335
@@ -893,22 +893,22 @@
           {
             "realization": 0,
             "simulation_id": 0,
-            "x-0_coord": 0.144529
+            "x-0_coord": 0.144467
           },
           {
             "realization": 2,
             "simulation_id": 1,
-            "x-0_coord": 0.144529
+            "x-0_coord": 0.144467
           }
         ],
         "realization_objectives": [
           {
-            "distance": -5.02417,
+            "distance": -5.02388,
             "realization": 0,
             "simulation_id": 0
           },
           {
-            "distance": -0.377723,
+            "distance": -0.37782,
             "realization": 2,
             "simulation_id": 1
           }
@@ -926,32 +926,32 @@
         "constraint_gradient": [
           {
             "control_name": "point.x.0",
-            "x-0_coord": 1.000037
+            "x-0_coord": 1.000038
           },
           {
             "control_name": "point.x.1",
-            "x-0_coord": 0.000015
+            "x-0_coord": 0.000014
           },
           {
             "control_name": "point.x.2",
-            "x-0_coord": -8e-6
+            "x-0_coord": -7e-6
           }
         ],
         "objective_gradient_values": [
           {
             "control_name": "point.x.0",
-            "distance": -0.287554,
-            "distance.total": 0.287554
+            "distance": -0.28798,
+            "distance.total": 0.28798
           },
           {
             "control_name": "point.x.1",
-            "distance": -0.035259,
-            "distance.total": 0.035259
+            "distance": -0.035478,
+            "distance.total": 0.035478
           },
           {
             "control_name": "point.x.2",
-            "distance": 0.279103,
-            "distance.total": -0.279103
+            "distance": 0.27927,
+            "distance.total": -0.27927
           }
         ],
         "perturbation_constraints": [
@@ -959,120 +959,120 @@
             "perturbation": 0,
             "realization": 0,
             "simulation_id": 2,
-            "x-0_coord": 0.144783
+            "x-0_coord": 0.144721
           },
           {
             "perturbation": 1,
             "realization": 0,
             "simulation_id": 3,
-            "x-0_coord": 0.145042
+            "x-0_coord": 0.14498
           },
           {
             "perturbation": 2,
             "realization": 0,
             "simulation_id": 4,
-            "x-0_coord": 0.143989
+            "x-0_coord": 0.143927
           },
           {
             "perturbation": 3,
             "realization": 0,
             "simulation_id": 5,
-            "x-0_coord": 0.149685
+            "x-0_coord": 0.149623
           },
           {
             "perturbation": 4,
             "realization": 0,
             "simulation_id": 6,
-            "x-0_coord": 0.147193
+            "x-0_coord": 0.147131
           },
           {
             "perturbation": 0,
             "realization": 2,
             "simulation_id": 7,
-            "x-0_coord": 0.146072
+            "x-0_coord": 0.14601
           },
           {
             "perturbation": 1,
             "realization": 2,
             "simulation_id": 8,
-            "x-0_coord": 0.149509
+            "x-0_coord": 0.149447
           },
           {
             "perturbation": 2,
             "realization": 2,
             "simulation_id": 9,
-            "x-0_coord": 0.138879
+            "x-0_coord": 0.138817
           },
           {
             "perturbation": 3,
             "realization": 2,
             "simulation_id": 10,
-            "x-0_coord": 0.136368
+            "x-0_coord": 0.136306
           },
           {
             "perturbation": 4,
             "realization": 2,
             "simulation_id": 11,
-            "x-0_coord": 0.145124
+            "x-0_coord": 0.145062
           }
         ],
         "perturbation_objectives": [
           {
-            "distance": -5.01646,
+            "distance": -5.01618,
             "perturbation": 0,
             "realization": 0,
             "simulation_id": 2
           },
           {
-            "distance": -5.03124,
+            "distance": -5.03096,
             "perturbation": 1,
             "realization": 0,
             "simulation_id": 3
           },
           {
-            "distance": -5.0168,
+            "distance": -5.01652,
             "perturbation": 2,
             "realization": 0,
             "simulation_id": 4
           },
           {
-            "distance": -5.04221,
+            "distance": -5.04193,
             "perturbation": 3,
             "realization": 0,
             "simulation_id": 5
           },
           {
-            "distance": -5.05578,
+            "distance": -5.0555,
             "perturbation": 4,
             "realization": 0,
             "simulation_id": 6
           },
           {
-            "distance": -0.374655,
+            "distance": -0.374753,
             "perturbation": 0,
             "realization": 2,
             "simulation_id": 7
           },
           {
-            "distance": -0.374386,
+            "distance": -0.374483,
             "perturbation": 1,
             "realization": 2,
             "simulation_id": 8
           },
           {
-            "distance": -0.380565,
+            "distance": -0.380663,
             "perturbation": 2,
             "realization": 2,
             "simulation_id": 9
           },
           {
-            "distance": -0.384502,
+            "distance": -0.384603,
             "perturbation": 3,
             "realization": 2,
             "simulation_id": 10
           },
           {
-            "distance": -0.3757,
+            "distance": -0.375798,
             "perturbation": 4,
             "realization": 2,
             "simulation_id": 11
