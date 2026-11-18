@@ -161,7 +161,7 @@ class UpdateRunModel(RunModel, UpdateRunModelConfig):
         self,
         iteration: int,
         ensemble_id: uuid.UUID,
-        ensemble: Ensemble,
+        posterior: Ensemble,
         event: AnalysisEvent,
     ) -> None:
         match event:
@@ -185,11 +185,11 @@ class UpdateRunModel(RunModel, UpdateRunModelConfig):
                 )
             case AnalysisErrorEvent():
                 try:
-                    ensemble.save_blob(event)
+                    posterior.save_blob(event)
                 except Exception:
                     logger.exception(
                         "Could not store the report of the failed update of %s",
-                        ensemble.name,
+                        posterior.name,
                     )
                 self.send_event(
                     RunModelErrorEvent(
@@ -200,7 +200,7 @@ class UpdateRunModel(RunModel, UpdateRunModelConfig):
                     )
                 )
             case AnalysisDataEvent():
-                ensemble.save_blob(event)
+                posterior.save_blob(event)
                 self.send_event(
                     RunModelDataEvent(
                         iteration=iteration,
@@ -210,13 +210,13 @@ class UpdateRunModel(RunModel, UpdateRunModelConfig):
                     )
                 )
             case AnalysisMatrixEvent():
-                ensemble.save_blob(event)
+                posterior.save_blob(event)
             case AnalysisScalingEvent():
-                ensemble.save_blob(event)
+                posterior.save_blob(event)
             case AnalysisRhoMatrixEvent():
-                ensemble.experiment.save_blob(event)
+                posterior.experiment.save_blob(event)
             case AnalysisCompleteEvent():
-                ensemble.save_blob(event)
+                posterior.save_blob(event)
                 self.send_event(
                     RunModelUpdateEndEvent(
                         iteration=iteration,
