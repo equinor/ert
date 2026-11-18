@@ -8,7 +8,12 @@ from typing import cast
 
 logger = logging.getLogger(__name__)
 
-info = "Add ensemble id to status snapshots"
+info = (
+    "Add ensemble id to status snapshots lacking it, using the ensemble with "
+    "the same experiment and iteration. If several ensembles match, the most "
+    "recently started one is used. Snapshots that are unreadable or have no "
+    "matching ensemble are removed"
+)
 
 
 def _parse_started_at(value: str) -> datetime:
