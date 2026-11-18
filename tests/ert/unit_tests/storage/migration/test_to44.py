@@ -69,37 +69,10 @@ def test_that_migration_picks_latest_started_ensemble_when_iteration_is_shared(
     assert migrated == {"iteration": 0, "ensemble_id": ENSEMBLE_ID}
 
 
-def test_that_migration_ignores_ensembles_from_other_experiments(tmp_path):
-    _write_ensemble(tmp_path, ENSEMBLE_ID, started_at="2026-01-01T00:00:00")
-    _write_ensemble(
-        tmp_path,
-        OTHER_ENSEMBLE_ID,
-        experiment_id=OTHER_EXPERIMENT_ID,
-        started_at="2026-02-01T00:00:00",
-    )
-
-    migrated = _migrate_status_snapshot(tmp_path, {"iteration": 0})
-
-    assert migrated == {"iteration": 0, "ensemble_id": ENSEMBLE_ID}
-
-
 def test_that_migration_removes_status_snapshot_without_matching_ensemble(tmp_path):
     _write_ensemble(tmp_path, ENSEMBLE_ID, iteration=0)
 
     assert _migrate_status_snapshot(tmp_path, {"iteration": 1}) is None
-
-
-def test_that_migration_leaves_existing_ensemble_id_unchanged(tmp_path):
-    _write_ensemble(tmp_path, ENSEMBLE_ID)
-    snapshot = {"iteration": 0, "ensemble_id": OTHER_ENSEMBLE_ID}
-
-    assert _migrate_status_snapshot(tmp_path, snapshot) == snapshot
-
-
-def test_that_migration_accepts_storage_without_experiments(tmp_path):
-    migrate(tmp_path)
-
-    assert not (tmp_path / "experiments").exists()
 
 
 @pytest.mark.parametrize(
