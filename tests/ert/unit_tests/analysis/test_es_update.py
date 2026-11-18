@@ -217,9 +217,9 @@ def test_update_report_with_different_observation_status_from_smoother_update(
     )
 
     strategy_map = build_strategy_map(
-        parameters=["KEY_1"],
+        parameters=experiment.parameter_keys,
         param_configs=experiment.parameter_configuration,
-        enkf_truncation=ESSettings().enkf_truncation,
+        enkf_truncation=0.5,
         correlation_threshold=lambda _: 1.0,
     )
     ss = smoother_update(
