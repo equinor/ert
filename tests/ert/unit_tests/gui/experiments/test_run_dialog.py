@@ -315,6 +315,10 @@ def test_large_snapshot(
     )
 
 
+ENSEMBLE_ID = uuid4()
+SECOND_ITERATION_ENSEMBLE_ID = uuid4()
+
+
 @pytest.mark.parametrize(
     ("events", "tab_widget_count"),
     [
@@ -337,7 +341,7 @@ def test_large_snapshot(
                     realization_count=4,
                     status_count={"Finished": 1, "Pending": 1, "Unknown": 2},
                     iteration=0,
-                    ensemble_id=uuid4(),
+                    ensemble_id=ENSEMBLE_ID,
                 ),
                 SnapshotUpdateEvent(
                     snapshot=SnapshotBuilder().build(
@@ -349,7 +353,7 @@ def test_large_snapshot(
                     realization_count=4,
                     status_count={"Finished": 2, "Unknown": 2},
                     iteration=0,
-                    ensemble_id=uuid4(),
+                    ensemble_id=ENSEMBLE_ID,
                 ),
             ],
             1,
@@ -376,7 +380,7 @@ def test_large_snapshot(
                     realization_count=4,
                     status_count={"Finished": 1, "Pending": 1, "Unknown": 2},
                     iteration=0,
-                    ensemble_id=uuid4(),
+                    ensemble_id=ENSEMBLE_ID,
                 ),
                 SnapshotUpdateEvent(
                     snapshot=SnapshotBuilder().build(
@@ -388,7 +392,7 @@ def test_large_snapshot(
                     realization_count=4,
                     status_count={"Finished": 2, "Unknown": 2},
                     iteration=0,
-                    ensemble_id=uuid4(),
+                    ensemble_id=ENSEMBLE_ID,
                 ),
             ],
             1,
@@ -419,7 +423,7 @@ def test_large_snapshot(
                     realization_count=4,
                     status_count={"Finished": 1, "Pending": 2, "Unknown": 1},
                     iteration=0,
-                    ensemble_id=uuid4(),
+                    ensemble_id=ENSEMBLE_ID,
                 ),
                 SnapshotUpdateEvent(
                     snapshot=SnapshotBuilder()
@@ -436,7 +440,7 @@ def test_large_snapshot(
                     realization_count=4,
                     status_count={"Finished": 2, "Running": 1, "Unknown": 1},
                     iteration=0,
-                    ensemble_id=uuid4(),
+                    ensemble_id=ENSEMBLE_ID,
                 ),
                 SnapshotUpdateEvent(
                     snapshot=SnapshotBuilder()
@@ -453,7 +457,7 @@ def test_large_snapshot(
                     realization_count=4,
                     status_count={"Finished": 2, "Failed": 1, "Unknown": 1},
                     iteration=0,
-                    ensemble_id=uuid4(),
+                    ensemble_id=ENSEMBLE_ID,
                 ),
             ],
             1,
@@ -478,7 +482,7 @@ def test_large_snapshot(
                     realization_count=4,
                     status_count={"Pending": 1, "Unknown": 3},
                     iteration=0,
-                    ensemble_id=uuid4(),
+                    ensemble_id=ENSEMBLE_ID,
                 ),
                 FullSnapshotEvent(
                     snapshot=(
@@ -497,7 +501,7 @@ def test_large_snapshot(
                     realization_count=4,
                     status_count={"Finished": 1, "Pending": 1, "Unknown": 2},
                     iteration=1,
-                    ensemble_id=uuid4(),
+                    ensemble_id=SECOND_ITERATION_ENSEMBLE_ID,
                 ),
             ],
             2,
