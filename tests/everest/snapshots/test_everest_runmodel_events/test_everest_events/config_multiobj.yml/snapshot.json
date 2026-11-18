@@ -48,23 +48,23 @@
           {
             "control_name": "point.x",
             "distance_p": 0.995893,
-            "distance_p.total": 0.005629,
-            "distance_q": -3.004565,
-            "distance_q.total": 0.005629
+            "distance_p.total": 0.005631,
+            "distance_q": -3.004572,
+            "distance_q.total": 0.005631
           },
           {
             "control_name": "point.y",
-            "distance_p": 0.988662,
-            "distance_p.total": 0.015134,
-            "distance_q": -3.011388,
-            "distance_q.total": 0.015134
+            "distance_p": 0.988663,
+            "distance_p.total": 0.015138,
+            "distance_q": -3.011403,
+            "distance_q.total": 0.015138
           },
           {
             "control_name": "point.z",
-            "distance_p": 1.004652,
-            "distance_p.total": -1.339482,
-            "distance_q": 1.004489,
-            "distance_q.total": -1.339482
+            "distance_p": 1.004653,
+            "distance_p.total": -1.339483,
+            "distance_q": 1.004488,
+            "distance_q.total": -1.339483
           }
         ],
         "perturbation_objectives": [
@@ -124,23 +124,23 @@
       "result_type": "FunctionResult",
       "results": {
         "controls": {
-          "point.x": -0.004202,
-          "point.y": -0.011298,
+          "point.x": -0.004204,
+          "point.y": -0.011301,
           "point.z": 1.0
         },
         "objectives": {
-          "distance_p": -0.765646,
-          "distance_q": -4.70364
+          "distance_p": -0.765651,
+          "distance_q": -4.70363
         },
         "realization_objectives": [
           {
-            "distance_p": -0.765646,
-            "distance_q": -4.70364,
+            "distance_p": -0.765651,
+            "distance_q": -4.70363,
             "realization": 0,
             "simulation_id": 0
           }
         ],
-        "total_objective_value": 2.333526
+        "total_objective_value": 2.333528
       }
     },
     {
@@ -161,18 +161,18 @@
       "result_type": "FunctionResult",
       "results": {
         "controls": {
-          "point.x": -0.002101,
-          "point.y": -0.005648,
-          "point.z": 0.499928
+          "point.x": -0.002102,
+          "point.y": -0.00565,
+          "point.z": 0.499927
         },
         "objectives": {
-          "distance_p": -0.507785,
-          "distance_q": -4.47679
+          "distance_p": -0.507788,
+          "distance_q": -4.47678
         },
         "realization_objectives": [
           {
-            "distance_p": -0.507785,
-            "distance_q": -4.47679,
+            "distance_p": -0.507788,
+            "distance_q": -4.47678,
             "realization": 0,
             "simulation_id": 0
           }
