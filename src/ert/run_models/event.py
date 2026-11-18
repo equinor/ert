@@ -100,6 +100,13 @@ class RunModelErrorEvent(RunModelEvent):
             self.data.to_csv("Report", output_path / str(self.ensemble_id))
 
 
+class RunModelPosteriorCreatedEvent(RunModelEvent):
+    event_type: Literal["RunModelPosteriorCreatedEvent"] = (
+        "RunModelPosteriorCreatedEvent"
+    )
+    posterior_id: UUID
+
+
 class WorkflowEvent(BaseModel, extra="forbid"):
     """The output of a single workflow job invocation."""
 

@@ -27,6 +27,7 @@ from ert.config.parsing.validators import validate_has_updatable_parameter
 from ert.run_models.event import (
     RunModelDataEvent,
     RunModelErrorEvent,
+    RunModelPosteriorCreatedEvent,
     RunModelStatusEvent,
     RunModelTimeEvent,
     RunModelUpdateBeginEvent,
@@ -100,13 +101,6 @@ class UpdateRunModel(RunModel, UpdateRunModelConfig):
         self.send_event(
             RunModelUpdateBeginEvent(iteration=prior.iteration, ensemble_id=prior.id)
         )
-        self.send_event(
-            RunModelStatusEvent(
-                iteration=prior.iteration,
-                ensemble_id=prior.id,
-                msg="Creating posterior ensemble..",
-            )
-        )
 
         pre_first_update_fixtures = PreFirstUpdateFixtures(
             storage=self._storage,
@@ -125,6 +119,14 @@ class UpdateRunModel(RunModel, UpdateRunModelConfig):
             name=posterior_name,
             prior_ensemble=prior,
         )
+        self.send_event(
+            RunModelPosteriorCreatedEvent(
+                iteration=prior.iteration,
+                ensemble_id=prior.id,
+                posterior_id=posterior.id,
+            )
+        )
+
         if prior.iteration == 0:
             self.run_workflows(
                 fixtures=pre_first_update_fixtures,
