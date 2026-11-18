@@ -61,6 +61,7 @@ from .parsing import (
     ObservationConfigError,
     init_forward_model_schema,
     init_user_config_schema,
+    make_pre_defines,
     parse_contents,
     read_file,
 )
@@ -1138,8 +1139,15 @@ class ErtConfig(BaseModel, extra="forbid"):
         except PydanticValidationError as err:
             errors.append(ConfigValidationError.from_pydantic(err))
 
-        if model_config is not None:
-            substitutions.update(_model_config_substitutions(model_config))
+        queue_config = None
+        try:
+            queue_config = QueueConfig.from_dict(
+                config_dict, site_queue_options=cls.QUEUE_OPTIONS
+            )
+        except ConfigValidationError as err:
+            errors.append(err)
+
+        _set_post_defines(substitutions, model_config, queue_config)
 
         try:
             workflow_jobs, workflows, hooked_workflows = workflows_from_dict(
@@ -1172,16 +1180,6 @@ class ErtConfig(BaseModel, extra="forbid"):
 
         except ConfigValidationError as e:
             errors.append(e)
-
-        try:
-            queue_config = QueueConfig.from_dict(
-                config_dict, site_queue_options=cls.QUEUE_OPTIONS
-            )
-
-            substitutions["<NUM_CPU>"] = str(queue_config.queue_options.num_cpu)
-
-        except ConfigValidationError as err:
-            errors.append(err)
 
         obs_config_args = config_dict.get(ConfigKeys.OBS_CONFIG)
         obs_configs: list[Observation] = []
@@ -1685,22 +1683,24 @@ def _get_files_in_directory(
     return files
 
 
-def _model_config_substitutions(model_config: ModelConfig) -> dict[str, str]:
-    ecl_base = model_config.summary_file_base_name or DEFAULT_ECLBASE_FORMAT
-    return {
-        "<RUNPATH>": model_config.runpath_format_string,
-        "<ECL_BASE>": ecl_base,
-        "<ECLBASE>": ecl_base,
-    }
+def _set_post_defines(
+    substitutions: dict[str, str],
+    model_config: ModelConfig | None,
+    queue_config: QueueConfig | None,
+) -> None:
+    if model_config is not None:
+        ecl_base = model_config.summary_file_base_name or DEFAULT_ECLBASE_FORMAT
+        substitutions["<RUNPATH>"] = model_config.runpath_format_string
+        substitutions["<ECL_BASE>"] = ecl_base
+        substitutions["<ECLBASE>"] = ecl_base
+    if queue_config is not None:
+        substitutions["<NUM_CPU>"] = str(queue_config.queue_options.num_cpu)
 
 
 def _substitutions_from_dict(config_dict: ConfigDict) -> dict[str, str]:
     substitutions = dict(config_dict.get("DEFINE", []))
-
-    if "<CONFIG_PATH>" not in substitutions:
-        substitutions["<CONFIG_PATH>"] = str(Path.cwd())
-
-    substitutions.setdefault("<SCRATCH>", "simulations")
+    for key, value in make_pre_defines():
+        substitutions.setdefault(key, value)
     substitutions["<RUNPATH_FILE>"] = config_dict.get(
         ConfigKeys.RUNPATH_FILE, ErtConfig.DEFAULT_RUNPATH_FILE
     )

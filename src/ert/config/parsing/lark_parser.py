@@ -502,6 +502,20 @@ def parse_contents(
     )
 
 
+def make_pre_defines(file: str = "no_config") -> Defines:
+    filepath = Path(file).resolve()
+    config_dir = str(filepath.parent)
+    return [
+        ["<CONFIG_PATH>", config_dir],
+        ["<CONFIG_FILE_BASE>", filepath.name.split(".")[0]],
+        ["<DATE>", dt.datetime.now().astimezone().date().isoformat()],
+        ["<CWD>", config_dir],
+        ["<CONFIG_FILE>", filepath.name],
+        ["<USER>", os.environ.get("USER", "$USER")],
+        ["<SCRATCH>", "simulations"],
+    ]
+
+
 def _transform_tree(
     tree: Tree[Instruction],
     file: str,
@@ -509,20 +523,9 @@ def _transform_tree(
     pre_defines: Defines | None = None,
 ) -> ConfigDict:
     filepath = Path(file).resolve()
-    config_dir = str(filepath.parent)
-    config_file_name = filepath.name
-    config_file_base = config_file_name.split(".")[0]
 
     if pre_defines is None:
-        pre_defines = [
-            ["<CONFIG_PATH>", config_dir],
-            ["<CONFIG_FILE_BASE>", config_file_base],
-            ["<DATE>", dt.datetime.now().astimezone().date().isoformat()],
-            ["<CWD>", config_dir],
-            ["<CONFIG_FILE>", Path(file).name],
-            ["<USER>", os.environ.get("USER", "$USER")],
-            ["<SCRATCH>", "simulations"],
-        ]
+        pre_defines = make_pre_defines(file)
 
     # need to copy pre_defines because _handle_includes will
     # add to this list
