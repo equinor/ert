@@ -189,9 +189,7 @@ class ParameterConfig(BaseModel, extra="forbid"):
         the parameter, or `num_realizations` changes the design, while
         `active_realizations` only selects a subset of it.
         """
-        key_hash = sha256(
-            global_seed.encode("utf-8") + f"{self.group_name}:{self.name}".encode()
-        )
+        key_hash = sha256(global_seed.encode("utf-8") + self.name.encode())
         seed = np.frombuffer(key_hash.digest(), dtype="uint32")
         rng = np.random.default_rng(seed)
         sampler = sp.stats.qmc.LatinHypercube(d=1, rng=rng)
