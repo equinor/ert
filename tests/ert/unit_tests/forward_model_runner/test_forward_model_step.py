@@ -467,7 +467,8 @@ def test_that_stale_output_files_are_removed_when_step_writes_nothing(
     step = ForwardModelStep(
         {
             "name": "silent",
-            "executable": "/bin/true",
+            "executable": "/bin/sh",
+            "argList": ["-c", ":"],
             "stdout": "out.txt",
         },
         0,
