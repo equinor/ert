@@ -32,7 +32,6 @@ class ManualUpdateEnIF(ManualUpdate):
             progress_callback=functools.partial(
                 self.send_smoother_event,
                 prior.iteration,
-                prior.id,
                 posterior,
             ),
         )

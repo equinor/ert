@@ -164,7 +164,9 @@ METADATA = EnsembleSnapshotMetadata(
             id="RunModelTimeEvent",
         ),
         pytest.param(
-            RunModelUpdateBeginEvent(iteration=2, ensemble_id=uuid.uuid1()),
+            RunModelUpdateBeginEvent(
+                iteration=2, ensemble_id=uuid.uuid1(), prior_ensemble_id=uuid.uuid1()
+            ),
             id="RunModelUpdateBeginEvent",
         ),
         pytest.param(

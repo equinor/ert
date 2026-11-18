@@ -16,6 +16,7 @@ from ert.config import (
     ObservationSettings,
 )
 from ert.run_models import ErtRunError
+from ert.run_models.event import RunModelUpdateBeginEvent
 from ert.run_models.update_run_model import UpdateRunModel
 from ert.storage import Storage
 
@@ -93,6 +94,30 @@ def test_that_update_creates_next_iteration_from_updatable_prior(
     )
 
 
+def test_that_update_begin_event_refers_to_posterior_and_links_prior(
+    update_model: MagicMock, storage: Storage
+):
+    parameter = GenKwConfig(
+        name="PARAMETER", distribution={"name": "normal", "mean": 0, "std": 1}
+    )
+    experiment = storage.create_experiment(
+        experiment_config={
+            "parameter_configuration": [parameter.model_dump(mode="json")]
+        }
+    )
+    prior = storage.create_ensemble(experiment, name="prior", ensemble_size=2)
+
+    posterior = UpdateRunModel.update(update_model, prior, "posterior")
+
+    update_model.send_event.assert_called_once_with(
+        RunModelUpdateBeginEvent(
+            iteration=prior.iteration,
+            ensemble_id=posterior.id,
+            prior_ensemble_id=prior.id,
+        )
+    )
+
+
 _DATA_SECTION = DataSection(
     header=["observation_key", "status"],
     data=[("OBS_1", "Active"), ("OBS_2", "Deactivated, outlier")],
@@ -124,14 +149,15 @@ _DATA_SECTION = DataSection(
 )
 def test_that_send_smoother_event_persists_update_tables_on_posterior_ensemble(event):
     model = MagicMock(spec=UpdateRunModel)
-    mock_ensemble = MagicMock()
+    posterior = MagicMock(id=uuid.uuid4())
 
     UpdateRunModel.send_smoother_event(
         model,
         iteration=0,
-        ensemble_id=uuid.uuid4(),
-        ensemble=mock_ensemble,
+        posterior=posterior,
         event=event,
     )
 
-    mock_ensemble.save_blob.assert_called_once_with(event)
+    posterior.save_blob.assert_called_once_with(event)
+    (sent_event,) = model.send_event.call_args.args
+    assert sent_event.ensemble_id == posterior.id
