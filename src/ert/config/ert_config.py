@@ -47,7 +47,7 @@ from .forward_model_step import (
 )
 from .gen_data_config import GenDataConfig
 from .gen_kw_config import DataSource, GenKwConfig
-from .model_config import DEFAULT_ECLBASE_FORMAT, DEFAULT_SCRATCH, ModelConfig
+from .model_config import DEFAULT_ECLBASE_FORMAT, ModelConfig
 from .parameter_config import LocalizationType, ParameterType
 from .parse_arg_types_list import parse_arg_types_list
 from .parsing import (
@@ -83,6 +83,8 @@ if TYPE_CHECKING:
     from .parameter_config import ParameterConfig
 
 logger = logging.getLogger(__name__)
+
+SCRATCH_RUNPATH = "<SCRATCH>/realization-<IENS>/iter-<ITER>"
 
 EMPTY_LINES = re.compile(r"\n[\s\n]*\n")
 
@@ -1108,10 +1110,6 @@ class ErtConfig(BaseModel, extra="forbid"):
     def from_dict(cls, config_dict: ConfigDict) -> Self:
         cls._apply_ecosystem_plugin(config_dict)
         substitutions = _substitutions_from_dict(config_dict)
-        runpath_file = config_dict.get(
-            ConfigKeys.RUNPATH_FILE, ErtConfig.DEFAULT_RUNPATH_FILE
-        )
-        substitutions["<RUNPATH_FILE>"] = runpath_file
         config_dir = substitutions.get("<CONFIG_PATH>", "")
         config_file = substitutions.get("<CONFIG_FILE>", "no_config")
         config_file_path = Path(config_dir) / config_file
@@ -1128,7 +1126,12 @@ class ErtConfig(BaseModel, extra="forbid"):
         model_config = None
 
         try:
-            model_config = ModelConfig.from_dict(config_dict)
+            runpath = Substitutions(substitutions).substitute(
+                config_dict.get(ConfigKeys.RUNPATH, SCRATCH_RUNPATH)
+            )
+            model_config = ModelConfig.from_dict(
+                {**config_dict, ConfigKeys.RUNPATH: runpath}
+            )
 
         except ConfigValidationError as e:
             errors.append(e)
@@ -1136,13 +1139,6 @@ class ErtConfig(BaseModel, extra="forbid"):
             errors.append(ConfigValidationError.from_pydantic(err))
 
         if model_config is not None:
-            model_config = model_config.model_copy(
-                update={
-                    "runpath_format_string": Substitutions(substitutions).substitute(
-                        model_config.runpath_format_string
-                    )
-                }
-            )
             substitutions.update(_model_config_substitutions(model_config))
 
         try:
@@ -1340,7 +1336,7 @@ class ErtConfig(BaseModel, extra="forbid"):
                 workflow_jobs=workflow_jobs,
                 workflows=workflows,
                 hooked_workflows=hooked_workflows,
-                runpath_file=Path(runpath_file),
+                runpath_file=Path(substitutions["<RUNPATH_FILE>"]),
                 ert_templates=read_templates(config_dict),
                 forward_model_steps=cls._create_list_of_forward_model_steps_to_run(
                     installed_forward_model_steps,
@@ -1700,10 +1696,14 @@ def _model_config_substitutions(model_config: ModelConfig) -> dict[str, str]:
 
 def _substitutions_from_dict(config_dict: ConfigDict) -> dict[str, str]:
     substitutions = dict(config_dict.get("DEFINE", []))
-    substitutions.setdefault("<SCRATCH>", DEFAULT_SCRATCH)
 
     if "<CONFIG_PATH>" not in substitutions:
         substitutions["<CONFIG_PATH>"] = str(Path.cwd())
+
+    substitutions.setdefault("<SCRATCH>", "simulations")
+    substitutions["<RUNPATH_FILE>"] = config_dict.get(
+        ConfigKeys.RUNPATH_FILE, ErtConfig.DEFAULT_RUNPATH_FILE
+    )
 
     substitutions.update(dict(config_dict.get("DATA_KW", [])))
 
