@@ -635,39 +635,28 @@ def test_that_a_failing_job_shows_error_message_with_context(
 
     # Click start simulation and agree to the message
     run_experiment = get_child(experiment_panel, QWidget, name="run_experiment")
-
-    def handle_error_dialog(run_dialog):
-        qtbot.waitUntil(
-            lambda: run_dialog.fail_msg_box is not None,
-            timeout=20000,
-        )
-        error_dialog: Suggestor = run_dialog.fail_msg_box
-        assert error_dialog
-
-        assert "ERT experiment failed" in error_dialog.findChild(QLabel).text()
-        expected_substrings = [
-            "Realization: 0 failed after reaching max submit (1)",
-            "Step poly_eval failed",
-            "Process exited with status code 1",
-            "Traceback",
-            "raise RuntimeError('Argh')",
-            "RuntimeError: Argh",
-        ]
-        suggestor_messages = (
-            error_dialog.findChild(QWidget, name="suggestor_messages")
-            .findChild(QLabel)
-            .text()
-        )
-        for substring in expected_substrings:
-            assert substring in suggestor_messages
-        error_dialog.close()
-
     qtbot.mouseClick(run_experiment, Qt.MouseButton.LeftButton)
 
     run_dialog = wait_for_child(gui, qtbot, RunDialog)
+    qtbot.waitUntil(lambda: run_dialog.fail_msg_box is not None, timeout=100000)
+    error_dialog: Suggestor = run_dialog.fail_msg_box
 
-    QTimer.singleShot(200, lambda: handle_error_dialog(run_dialog))
-    qtbot.waitUntil(lambda: run_dialog.is_experiment_done() is True, timeout=100000)
+    assert "ERT experiment failed" in error_dialog.findChild(QLabel).text()
+    expected_substrings = [
+        "Realization: 0 failed after reaching max submit (1)",
+        "Step poly_eval failed",
+        "Process exited with status code 1",
+        "Traceback",
+        "raise RuntimeError('Argh')",
+        "RuntimeError: Argh",
+    ]
+    suggestor_messages = (
+        error_dialog.findChild(QWidget, name="suggestor_messages")
+        .findChild(QLabel)
+        .text()
+    )
+    for substring in expected_substrings:
+        assert substring in suggestor_messages
 
 
 @pytest.mark.skip_mac_ci
