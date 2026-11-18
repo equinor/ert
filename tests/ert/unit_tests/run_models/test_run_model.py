@@ -850,9 +850,8 @@ def test_that_status_snapshot_is_written_only_when_iteration_is_finalized(use_tm
     brm._iter_snapshot[0] = EnsembleSnapshot.from_nested_dict(
         {"reals": {"0": {"status": "Pending"}, "1": {"status": "Pending"}}}
     )
-    experiment = brm._storage.create_experiment(name="experiment")
-    ensemble = brm._storage.create_ensemble(
-        experiment, ensemble_size=2, iteration=0, name="ensemble"
+    ensemble = brm._storage.create_experiment(name="experiment").create_ensemble(
+        ensemble_size=2, iteration=0, name="ensemble"
     )
 
     brm.forward_event_from_ee(
@@ -866,11 +865,11 @@ def test_that_status_snapshot_is_written_only_when_iteration_is_finalized(use_tm
         ensemble_id=ensemble.id,
     )
 
-    assert not experiment.status_snapshot_path(0).exists()
+    assert not ensemble.experiment.status_snapshot_path(0).exists()
 
     brm._persist_status_snapshot(ensemble)
 
-    snapshot_file = experiment.status_snapshot_path(0)
+    snapshot_file = ensemble.experiment.status_snapshot_path(0)
     assert snapshot_file.exists()
 
     persisted = FullSnapshotEvent.model_validate_json(
