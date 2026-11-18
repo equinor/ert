@@ -9,7 +9,7 @@ from .forward_model_keywords import ForwardModelStepKeys
 from .forward_model_schema import init_forward_model_schema
 from .history_source import HistorySource
 from .hook_runtime import HookRuntime
-from .lark_parser import parse, parse_contents, read_file
+from .lark_parser import make_pre_defines, parse, parse_contents, read_file
 from .observations_parser import (
     ObservationConfigError,
     ObservationDict,
@@ -45,6 +45,7 @@ __all__ = [
     "init_user_config_schema",
     "init_workflow_job_schema",
     "init_workflow_schema",
+    "make_pre_defines",
     "parse",
     "parse_contents",
     "parse_observations",
