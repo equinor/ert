@@ -1,6 +1,8 @@
 import json
 from pathlib import Path
 
+import pytest
+
 from ert.storage.migration.to44 import migrate
 
 EXPERIMENT_ID = "1f2e3d4c-5b6a-4978-8899-aabbccddeeff"
@@ -98,3 +100,27 @@ def test_that_migration_accepts_storage_without_experiments(tmp_path):
     migrate(tmp_path)
 
     assert not (tmp_path / "experiments").exists()
+
+
+@pytest.mark.parametrize(
+    "content",
+    [
+        pytest.param('{"iteration": 0', id="truncated_json"),
+        pytest.param("[0]", id="not_an_object"),
+        pytest.param('{"status": "done"}', id="missing_iteration"),
+        pytest.param('{"iteration": "0"}', id="non_integer_iteration"),
+    ],
+)
+def test_that_migration_removes_unreadable_status_snapshot_and_migrates_others(
+    tmp_path, content
+):
+    _write_ensemble(tmp_path, ENSEMBLE_ID, iteration=0)
+    experiment_dir = tmp_path / "experiments" / "exp1"
+    corrupt_path = experiment_dir / "status" / "iteration-1.json"
+    corrupt_path.parent.mkdir(parents=True)
+    corrupt_path.write_text(content, encoding="utf-8")
+
+    migrated = _migrate_status_snapshot(tmp_path, {"iteration": 0})
+
+    assert not corrupt_path.exists()
+    assert migrated == {"iteration": 0, "ensemble_id": ENSEMBLE_ID}
