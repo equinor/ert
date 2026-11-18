@@ -59,8 +59,7 @@ uv run pytest tests/everest/test_<file>.py::test_<name>
 ## Key repository conventions
 
 - Prefer `just` targets for standardized test groupings and CI parity (`rapid-tests`, `check-all`, `ert-*`, `everest-tests`).
-- Keep unit tests in `tests/ert/unit_tests` exceptionally fast; slower/broader cases should be marked with `@pytest.mark.slow` or moved.
-- Test naming convention in this repo is explicit behavior-driven names (often `test_that_...`), not vague names like `test_works`.
+- Test conventions (naming, organization, categories, mocking) are defined in `.github/instructions/coding-standards/python-tests.instructions.md`.
 - Type-hint policy from `CONTRIBUTING.md`:
   - avoid `Any` when possible,
   - use `@override` for overridden non-dunder methods,
@@ -81,11 +80,7 @@ Focus on: correctness, clarity, reliability, and maintainability.
 
 - [ ] Code should not have any critical security flaws or bugs
 - [ ] All new or changed logic is covered by appropriate automated tests.
-- [ ] Test names follow the `test_that_<behavior_or_condition>` specification style.
-- [ ] Test names clearly state the expected behavior or invariant (they answer: “What is correct behavior?”).
-- [ ] Test names avoid vague terms: `works`, `correctly`, `as_expected`, `are_handled`, `handles`, `success`, `failure`, etc.
-- [ ] Unit tests in `tests/ert/unit_tests` (not marked `slow`, `unreliable` or `high_utilization`) are fast, reliable, and produce clear error messages.
-- [ ] UI tests (in `tests/ert/ui_tests`) describe user-visible interactions and outcomes.
+- [ ] Tests follow `.github/instructions/coding-standards/python-tests.instructions.md`.
 - [ ] Each commit performs one atomic, logically isolated change.
 - [ ] Commit messages follow the prescribed format and explain the *what* and *why*, not the detailed *how*.
 - [ ] Code does not contain trivial or redundant documentation.
@@ -114,59 +109,9 @@ Also ensure that the code does not have any inconsistencies such as
 
 ## 2. Testing
 
-### 2.1 Coverage
 Ensure all new functional paths or behaviors introduced by the PR are covered with unit tests or integration/UI tests as appropriate.
 
-### 2.2 Naming Style
-Test names MUST:
-- Start with `test_that_` (or `test_when_` if describing conditional sequences) and then explicitly describe the behavior, condition, or invariant.
-- Read like an executable specification: someone running `pytest --collect-only tests/` should infer purpose without opening the test file.
-
-Good examples:
-- `test_that_adaptive_localization_with_cutoff_1_equals_ensemble_prior`
-- `test_that_adaptive_localization_with_cutoff_0_equals_ESupdate`
-- `test_that_posterior_generalized_variance_increases_in_cutoff`
-- `test_that_missing_arglist_does_not_affect_subsequent_calls`
-- `test_that_setenv_does_not_expand_envvar`
-- `test_that_new_line_can_be_escaped`
-- `test_that_unknown_queue_option_gives_error_message`
-- `test_when_forward_model_contains_multiple_steps_just_one_checksum_status_is_given`
-- `test_that_config_path_substitution_is_the_name_of_the_configs_directory`
-
-Poor examples (too vague, not behavior-focused, etc.):
-- `test_color_always`
-- `test_legends`
-- `test_result_success`
-- `test_result_failure`
-- `test_print_progress`
-- `test_bad_user_config_file_error_message`
-
-### 2.3 Avoid Vague Terms (“Name Smells”)
-Reject test names containing ambiguous fillers, e.g.:
-- `works`, `correctly`, `as_expected`, `are_handled`, `handles`, `success`, `failure`
-These words state *judgment* rather than *behavior*. Replace with the explicit condition or outcome.
-
-Instead of: `test_that_arglist_is_parsed_correctly`
-Prefer: `test_that_arglist_parsing_preserves_quoted_values` (be precise about the correctness criterion).
-
-Instead of: `test_that_history_observation_errors_are_calculated_correctly`
-Prefer: `test_that_history_observation_relative_error_is_a_percentage_of_the_value`
-
-Instead of: `test_that_double_comments_are_handled`
-Prefer: `test_that_double_comments_are_ignored`
-
-(NOTE: If the PR contains any of the vague forms above, recommend renaming.)
-
-### 2.4 Fast, Reliable Unit Tests
-Tests in `tests/ert/unit_tests` not marked `slow`, `unreliable` or `high_utilization` MUST:
-- Execute quickly (aim: sub-second or minimal dependency overhead).
-- Have deterministic outcomes (no flaky timing, random seeds un-fixed, or external service reliance).
-- Produce clear, concise assertion failure messages.
-
-### 2.5 UI Tests
-Tests in `tests/ert/ui_tests` SHOULD:
-- Reflect user-visible workflows (actions + expected UI states).
-- Avoid duplicating pure logic assertions that are already covered in unit tests.
+Review test code against `.github/instructions/coding-standards/python-tests.instructions.md`.
 
 ---
 
