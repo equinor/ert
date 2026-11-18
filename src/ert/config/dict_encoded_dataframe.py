@@ -12,10 +12,10 @@ from pydantic import BaseModel, PlainSerializer, PlainValidator
 # ref https://github.com/pola-rs/polars/issues/20426
 # then this workaround can be omitted.
 def str_to_dtype(dtype_str: str) -> pl.DataType:
-    dtype = eval(f"pl.{dtype_str}")
-    if isinstance(dtype, DataTypeClass):
-        dtype = dtype()
-    return dtype
+    dtype = getattr(pl, dtype_str, None)
+    if not isinstance(dtype, DataTypeClass):
+        raise ValueError(f"Unsupported datatype: {dtype_str}")
+    return dtype()
 
 
 class DictEncodedDataFrame(BaseModel):
