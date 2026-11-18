@@ -53,23 +53,27 @@ def uniform_parameter():
 
 
 @pytest.fixture
-def obs() -> list[dict[str, Any]]:
-    return [
-        {
-            "type": "general_observation",
-            "name": "OBSERVATION",
-            "data": "RESPONSE",
-            "restart": 0,
-            "index": index,
-            "value": value,
-            "error": error,
-        }
-        for index, value, error in [
+def obs() -> callable:
+    def func(values=None) -> list[dict[str, Any]]:
+        values = values or [
             (0, 1.0, 0.1),
             (1, 1.0, 1.0),
             (2, 1.0, 10.0),
         ]
-    ]
+        return [
+            {
+                "type": "general_observation",
+                "name": "OBSERVATION",
+                "data": "RESPONSE",
+                "restart": 0,
+                "index": index,
+                "value": value,
+                "error": error,
+            }
+            for index, value, error in values
+        ]
+
+    return func
 
 
 @pytest.mark.slow
@@ -159,9 +163,8 @@ def test_update_report_with_different_observation_status_from_smoother_update(
     num_active,
     storage,
     uniform_parameter,
+    obs,
 ):
-    # Each observation has responses with mean 1.0 and the given std (NaN gives
-    # missing responses), and an observation value offset from that mean.
     response_std_and_obs_offset = [
         (0.05, 0.0),
         (1.0, 0.5),
@@ -177,18 +180,12 @@ def test_update_report_with_different_observation_status_from_smoother_update(
             "response_configuration": [
                 GenDataConfig(keys=["RESPONSE"]).model_dump(mode="json")
             ],
-            "observations": [
-                {
-                    "type": "general_observation",
-                    "name": "OBSERVATION",
-                    "data": "RESPONSE",
-                    "restart": 0,
-                    "index": index,
-                    "value": 1.0 + offset,
-                    "error": 1.0,
-                }
-                for index, (_, offset) in enumerate(response_std_and_obs_offset)
-            ],
+            "observations": obs(
+                [
+                    (index, 1.0 + offset, 1.0)
+                    for index, (_, offset) in enumerate(response_std_and_obs_offset)
+                ]
+            ),
         },
     )
     prior = storage.create_ensemble(experiment, ensemble_size=4, name="prior")
@@ -485,7 +482,7 @@ def test_that_alpha_can_be_used_for_outlier_detection(
         experiment_config={
             "parameter_configuration": [uniform_parameter],
             "response_configuration": [response_config],
-            "observations": obs,
+            "observations": obs(),
         },
     )
     prior_storage = storage.create_ensemble(
@@ -615,7 +612,7 @@ def test_that_constant_parameter_is_skipped_with_warning_and_carried_over(
         experiment_config={
             "parameter_configuration": [constant_parameter],
             "response_configuration": [response_config],
-            "observations": obs,
+            "observations": obs(),
         },
     )
     prior_storage = storage.create_ensemble(
@@ -1374,7 +1371,7 @@ def test_gen_data_missing(storage, uniform_parameter, obs):
         experiment_config={
             "parameter_configuration": [uniform_parameter],
             "response_configuration": [response_config],
-            "observations": obs,
+            "observations": obs(),
         }
     )
     prior = storage.create_ensemble(
@@ -1455,7 +1452,7 @@ def test_update_subset_parameters(storage, uniform_parameter, obs):
                 no_update_param.model_dump(mode="json"),
             ],
             "response_configuration": [response_config],
-            "observations": obs,
+            "observations": obs(),
         },
     )
     prior = storage.create_ensemble(
@@ -1617,7 +1614,7 @@ def test_that_field_parameter_with_update_false_is_copied_to_posterior(
                 field_config.model_dump(mode="json"),
             ],
             "response_configuration": [response_config],
-            "observations": obs,
+            "observations": obs(),
         },
     )
     prior = storage.create_ensemble(
