@@ -21,7 +21,6 @@ def _write_ensemble(
     ensemble_id: str,
     iteration: int = 0,
     experiment_id: str = EXPERIMENT_ID,
-    started_at: str = "2026-01-01T00:00:00",
 ) -> None:
     _write_json(
         root / "ensembles" / ensemble_id / "index.json",
@@ -29,7 +28,6 @@ def _write_ensemble(
             "id": ensemble_id,
             "experiment_id": experiment_id,
             "iteration": iteration,
-            "started_at": started_at,
         },
     )
 
@@ -58,15 +56,13 @@ def test_that_migration_adds_id_of_ensemble_at_the_snapshot_iteration(tmp_path):
     assert migrated == {"iteration": 10, "ensemble_id": ENSEMBLE_ID}
 
 
-def test_that_migration_picks_latest_started_ensemble_when_iteration_is_shared(
+def test_that_migration_removes_status_snapshot_when_several_ensembles_share_iteration(
     tmp_path,
 ):
-    _write_ensemble(tmp_path, OTHER_ENSEMBLE_ID, started_at="2026-01-01T12:00:00")
-    _write_ensemble(tmp_path, ENSEMBLE_ID, started_at="2026-01-02T00:00:00+00:00")
+    _write_ensemble(tmp_path, OTHER_ENSEMBLE_ID, iteration=0)
+    _write_ensemble(tmp_path, ENSEMBLE_ID, iteration=0)
 
-    migrated = _migrate_status_snapshot(tmp_path, {"iteration": 0})
-
-    assert migrated == {"iteration": 0, "ensemble_id": ENSEMBLE_ID}
+    assert _migrate_status_snapshot(tmp_path, {"iteration": 0}) is None
 
 
 def test_that_migration_removes_status_snapshot_without_matching_ensemble(tmp_path):
