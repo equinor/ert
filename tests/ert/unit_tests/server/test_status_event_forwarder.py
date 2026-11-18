@@ -17,7 +17,7 @@ from tests.ert.utils import wait_until_all_status_events_are_delivered
 
 def make_events(count: int) -> list[StatusEvents]:
     return [
-        RunModelStatusEvent(iteration=0, run_id=uuid.uuid4(), msg=f"event {i}")
+        RunModelStatusEvent(iteration=0, ensemble_id=uuid.uuid4(), msg=f"event {i}")
         for i in range(count)
     ]
 
