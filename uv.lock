@@ -3599,7 +3599,7 @@ wheels = [
 
 [[package]]
 name = "probabilit"
-version = "0.5.2"
+version = "0.5.4"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "cvxpy" },
@@ -3609,9 +3609,9 @@ dependencies = [
     { name = "scipy" },
     { name = "seaborn" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/d4/11/16ec642f9fe5655dbfc1445281ff34cb24d057fc5862bdb372e4d2077168/probabilit-0.5.2.tar.gz", hash = "sha256:0c42b52562a1a15011b0613aaf6e4d8e9fb405f687773aa40c91d2e2f3a0ffab", size = 65278, upload-time = "2026-10-07T10:54:05.135Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/c9/cb/45eefb2773c9c8609bc34ac51f03b126982a081dd15f2dba0801f9fdc6da/probabilit-0.5.4.tar.gz", hash = "sha256:516340063b81fb626f25a99dccfbbee1bae985a7a04e67aac5d0b1fcb684e875", size = 65353, upload-time = "2026-11-19T09:48:55.486Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/96/6b/4b7468b9d87cf5f2469b23d2275570febaf454cb188db437d3e281b82a43/probabilit-0.5.2-py3-none-any.whl", hash = "sha256:5408f121c547394bbaa06fed394000240efa075e3cb63e8b54ced356bd98d79d", size = 51724, upload-time = "2026-10-07T10:54:03.163Z" },
+    { url = "https://files.pythonhosted.org/packages/f6/d9/f44f171763310024237e103eeb05443a1360f7f0250e0fc5403d7808083a/probabilit-0.5.4-py3-none-any.whl", hash = "sha256:b1a30c912805579be2c0b4168be872f5abd2e78140b3a4b30c502521012321b4", size = 51809, upload-time = "2026-11-19T09:48:54.245Z" },
 ]
 
 [[package]]
