@@ -106,6 +106,14 @@ def read_excel_sheet(
     )
 
 
+def strip_text_cells(df: pd.DataFrame) -> pd.DataFrame:
+    """Strip whitespace around text cells. Whitespace-only cells count as
+    empty, and rows left without any value are dropped.
+    """
+    df = df.map(lambda cell: cell.strip() if isinstance(cell, str) else cell)
+    return df.mask(df.eq("")).dropna(how="all")
+
+
 def parameters_from_extern(filename: str) -> pd.DataFrame:
     """Read parameter values or background values
     from specified file. Format either Excel ('xlsx')

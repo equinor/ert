@@ -571,6 +571,22 @@ def test_that_background_sheet_matching_ignores_case_underscores_and_whitespace(
     assert background["correlations"]["sheetnames"] == ["bgcorr"]
 
 
+def test_that_whitespace_around_background_sheet_text_is_stripped(use_tmpdir):
+    background = pd.DataFrame(
+        data=[
+            ["param_name", "dist_name", "dist_param1"],
+            [" PARAM_A ", " const ", " high "],
+        ]
+    )
+    input_path = _write_background_workbook(
+        "designinput.xlsx", background, None, "backgroundsheet"
+    )
+
+    assert excel_to_config(input_path).background["parameters"] == {
+        "PARAM_A": ["const", ["high"], None]
+    }
+
+
 def test_that_missing_background_csv_file_raises_value_error(use_tmpdir):
     input_path = _write_background_workbook(
         "designinput.xlsx",
@@ -649,12 +665,12 @@ def _write_dependency_workbook(path, rows):
     return path
 
 
-def test_that_dependency_columns_map_by_parameter_name_and_exact_source_value(tmp_path):
+def test_that_dependency_columns_map_by_parameter_name_and_source_value(tmp_path):
     input_path = _write_dependency_workbook(
         tmp_path / "dependencies.xlsx",
         [
             ["MULTIPLIER", "SOURCE", "LABEL"],
-            [1, " high ", " sand "],
+            [1, "high", "sand"],
             [2.5, 2, "mixed"],
             [-3, "low", "shale"],
         ],
@@ -664,15 +680,26 @@ def test_that_dependency_columns_map_by_parameter_name_and_exact_source_value(tm
     )
 
     result = map_dependencies(
-        pd.DataFrame({"SOURCE": ["low", 2, " high "]}),
+        pd.DataFrame({"SOURCE": ["low", 2, "high"]}),
         dependencies={"SOURCE": dependencies},
     )
 
     assert result.to_dict(orient="list") == {
-        "SOURCE": ["low", 2, " high "],
+        "SOURCE": ["low", 2, "high"],
         "MULTIPLIER": [-3, 2.5, 1],
-        "LABEL": ["shale", "mixed", " sand "],
+        "LABEL": ["shale", "mixed", "sand"],
     }
+
+
+def test_that_whitespace_around_dependency_sheet_text_is_stripped(tmp_path):
+    input_path = _write_dependency_workbook(
+        tmp_path / "dependencies.xlsx",
+        [[" SOURCE ", " TARGET "], [" high ", " upper "]],
+    )
+
+    assert _read_dependencies(
+        filename=str(input_path), sheetname="dependencies", from_parameter="SOURCE"
+    ) == {"from_values": ["high"], "to_params": {"TARGET": ["upper"]}}
 
 
 def test_that_numeric_dependency_keys_and_targets_preserve_precision(tmp_path):
