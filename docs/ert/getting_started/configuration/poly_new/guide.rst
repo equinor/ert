@@ -61,7 +61,7 @@ The focus will be moved to the left sidebar menu item "Experiment status", displ
   This is due to an upper limit on how many realizations can run concurrently, a constraint determined by the queue system.
   We will configure this at a later stage.
 
-Once all the realizations are complete, close all ERT windows.
+Once all the realizations are complete, close all ERT windows. Only one ERT GUI can use the ``storage`` folder at a time, so you must close ERT before starting it again (see :ref:`one_gui_per_storage`).
 
 Inspect the results
 *******************

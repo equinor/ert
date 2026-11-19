@@ -20,7 +20,6 @@ from ert.gui.experiments.view.disk_space_widget import DiskSpaceWidget
 from ert.gui.plotting.widgets import DataTypeKeysWidget, EnsembleSelectionWidget
 from ert.gui.tools.load_results import LoadResultsPanel
 from ert.run_models import EnsembleExperiment, RunModel
-from ert.services import ErtServerController
 from ert.storage import open_storage
 from tests.ert.handle_runpath_dialog import handle_runpath_dialog
 from tests.ert.ui_tests.gui.conftest import open_gui_with_config
@@ -358,18 +357,15 @@ def test_that_poly_new_with_results_screenshots_are_up_to_date(
     open_storage(gui.ert_config.ens_path, mode="w")
     gui_evaluator = GuiEvaluator(source_root, example_folder, gui, qtbot)
 
-    with ErtServerController.init_service(
-        project=Path(gui.ert_config.ens_path).absolute(),
-    ):
-        button_plot_tool = get_child(gui, QToolButton, name="button_Create_plot")
-        qtbot.mouseClick(button_plot_tool, Qt.MouseButton.LeftButton)
+    button_plot_tool = get_child(gui, QToolButton, name="button_Create_plot")
+    qtbot.mouseClick(button_plot_tool, Qt.MouseButton.LeftButton)
 
-        gui_evaluator.compare_img_with_gui("poly_plot.png", POLY_PLOT_PNG_THRESHOLD)
+    gui_evaluator.compare_img_with_gui("poly_plot.png", POLY_PLOT_PNG_THRESHOLD)
 
-        data_type_widget = wait_for_child(gui, qtbot, DataTypeKeysWidget)
-        set_data_type_selection_index(data_type_widget, 1)
+    data_type_widget = wait_for_child(gui, qtbot, DataTypeKeysWidget)
+    set_data_type_selection_index(data_type_widget, 1)
 
-        gui_evaluator.compare_img_with_gui("plots.png", PLOTS_PNG_THRESHOLD)
+    gui_evaluator.compare_img_with_gui("plots.png", PLOTS_PNG_THRESHOLD)
 
     assert not gui_evaluator.gui_change_detected(), gui_evaluator.change_report()
 
@@ -428,33 +424,30 @@ def test_that_poly_new_with_observations_screenshots_are_up_to_date(
     open_storage(gui.ert_config.ens_path, mode="w")
     gui_evaluator = GuiEvaluator(source_root, example_folder, gui, qtbot)
 
-    with ErtServerController.init_service(
-        project=Path(gui.ert_config.ens_path).absolute(),
-    ):
-        button_plot_tool = get_child(gui, QToolButton, name="button_Create_plot")
-        qtbot.mouseClick(button_plot_tool, Qt.MouseButton.LeftButton)
+    button_plot_tool = get_child(gui, QToolButton, name="button_Create_plot")
+    qtbot.mouseClick(button_plot_tool, Qt.MouseButton.LeftButton)
 
-        ensemble_selector_widget = wait_for_child(gui, qtbot, EnsembleSelectionWidget)
+    ensemble_selector_widget = wait_for_child(gui, qtbot, EnsembleSelectionWidget)
 
-        selected_ensembles = ensemble_selector_widget._selected_ensembles
+    selected_ensembles = ensemble_selector_widget._selected_ensembles
 
-        for index in range(selected_ensembles.count()):
-            item = selected_ensembles.item(index)
-            if not item.data(Qt.ItemDataRole.CheckStateRole):
-                selected_ensembles.slot_toggle_plot(item)
-        selected_ensembles.ensembleSelectionListChanged.emit()
+    for index in range(selected_ensembles.count()):
+        item = selected_ensembles.item(index)
+        if not item.data(Qt.ItemDataRole.CheckStateRole):
+            selected_ensembles.slot_toggle_plot(item)
+    selected_ensembles.ensembleSelectionListChanged.emit()
 
-        gui_evaluator.compare_img_with_gui("plot_obs.png", PLOT_OBS_PNG_THRESHOLD)
+    gui_evaluator.compare_img_with_gui("plot_obs.png", PLOT_OBS_PNG_THRESHOLD)
 
-        data_type_widget = wait_for_child(gui, qtbot, DataTypeKeysWidget)
+    data_type_widget = wait_for_child(gui, qtbot, DataTypeKeysWidget)
 
-        for index, img, threshold in [
-            (1, "coeff_a.png", COEFF_A_PNG_THRESHOLD),
-            (2, "coeff_b.png", COEFF_B_PNG_THRESHOLD),
-            (3, "coeff_c.png", COEFF_C_PNG_THRESHOLD),
-        ]:
-            set_data_type_selection_index(data_type_widget, index)
-            gui_evaluator.compare_img_with_gui(img, threshold)
+    for index, img, threshold in [
+        (1, "coeff_a.png", COEFF_A_PNG_THRESHOLD),
+        (2, "coeff_b.png", COEFF_B_PNG_THRESHOLD),
+        (3, "coeff_c.png", COEFF_C_PNG_THRESHOLD),
+    ]:
+        set_data_type_selection_index(data_type_widget, index)
+        gui_evaluator.compare_img_with_gui(img, threshold)
 
     assert not gui_evaluator.gui_change_detected(), gui_evaluator.change_report()
 
@@ -484,25 +477,22 @@ def test_that_poly_new_with_more_observations_screenshots_are_up_to_date(
     open_storage(gui.ert_config.ens_path, mode="w")
     gui_evaluator = GuiEvaluator(source_root, example_folder, gui, qtbot)
 
-    with ErtServerController.init_service(
-        project=Path(gui.ert_config.ens_path).absolute(),
-    ):
-        button_plot_tool = get_child(gui, QToolButton, name="button_Create_plot")
-        qtbot.mouseClick(button_plot_tool, Qt.MouseButton.LeftButton)
+    button_plot_tool = get_child(gui, QToolButton, name="button_Create_plot")
+    qtbot.mouseClick(button_plot_tool, Qt.MouseButton.LeftButton)
 
-        ensemble_selector_widget = wait_for_child(gui, qtbot, EnsembleSelectionWidget)
+    ensemble_selector_widget = wait_for_child(gui, qtbot, EnsembleSelectionWidget)
 
-        selected_ensembles = ensemble_selector_widget._selected_ensembles
-        for index in range(selected_ensembles.count()):
-            item = selected_ensembles.item(index)
-            if not item.data(Qt.ItemDataRole.CheckStateRole):
-                selected_ensembles.slot_toggle_plot(item)
-        selected_ensembles.ensembleSelectionListChanged.emit()
+    selected_ensembles = ensemble_selector_widget._selected_ensembles
+    for index in range(selected_ensembles.count()):
+        item = selected_ensembles.item(index)
+        if not item.data(Qt.ItemDataRole.CheckStateRole):
+            selected_ensembles.slot_toggle_plot(item)
+    selected_ensembles.ensembleSelectionListChanged.emit()
 
-        data_type_widget = wait_for_child(gui, qtbot, DataTypeKeysWidget)
-        set_data_type_selection_index(data_type_widget, 2)
+    data_type_widget = wait_for_child(gui, qtbot, DataTypeKeysWidget)
+    set_data_type_selection_index(data_type_widget, 2)
 
-        gui_evaluator.compare_img_with_gui("coeff_b.png", COEFF_B_PNG_THRESHOLD)
+    gui_evaluator.compare_img_with_gui("coeff_b.png", COEFF_B_PNG_THRESHOLD)
 
     assert not gui_evaluator.gui_change_detected(), gui_evaluator.change_report()
 
