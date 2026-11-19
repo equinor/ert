@@ -369,7 +369,7 @@ class QueueConfig(BaseModelWithContextSupport):
     )
     stop_long_running: bool = False
     max_runtime: int | None = None
-    realization_memory_is_site_default: bool = Field(default=False, exclude=True)
+    realization_memory_is_site_default: bool = False
 
     @staticmethod
     def _user_queue_options_from_dict(
