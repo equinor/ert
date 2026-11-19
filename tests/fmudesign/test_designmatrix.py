@@ -59,7 +59,6 @@ def test_that_cli_accepts_relative_input_and_custom_output_paths(tmp_path, monke
     )
 
     assert "Reading file:" in result.stdout
-    assert "Reading background values from:" in result.stdout
     assert "Adjusted to nearest consistent correlation matrix:" in result.stdout
     assert "Design matrix of shape (91, 22) written to:" in result.stdout
     assert "Thank you for using fmudesign" in result.stdout
@@ -70,10 +69,9 @@ def test_that_cli_accepts_relative_input_and_custom_output_paths(tmp_path, monke
 
 @pytest.mark.slow
 def test_that_cli_resolves_external_seeds_file_relative_to_input(tmp_path, monkeypatch):
-    """'rms_seeds' can also point to an external file. Like 'background' above,
-    it must be resolved relative to the input file, not the CWD: the seeds file
-    only exists in the nested case_dir, so a CWD-relative fallback would fail
-    to find it.
+    """'rms_seeds' can point to an external file, which must be resolved
+    relative to the input file, not the CWD: the seeds file only exists in
+    the nested case_dir, so a CWD-relative fallback would fail to find it.
     """
     case_dir = tmp_path / "path" / "going" / "down"
     case_dir.mkdir(parents=True)
