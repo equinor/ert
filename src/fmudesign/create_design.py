@@ -666,15 +666,21 @@ class DesignMatrix:
         if not plot or self.output_dir is None:
             return
 
+        # Importing matplotlib and seaborn is slow, so wait until they are needed
+        from .quality_plots import (  # ruff: ignore[import-outside-top-level]
+            QualityPlotter,
+        )
+
+        quality_plotter = QualityPlotter(df=sensitivity.sensvalues, variables=variables)
         output_dir = self.output_dir / sensitivity.sensname
-        quality_reporter.plot_columns(output_dir=output_dir)
+        quality_plotter.plot_columns(output_dir=output_dir)
         for corr_name, df_corr in sensitivity.correlation_dfs_.items():
-            quality_reporter.plot_correlation_heatmap(
+            quality_plotter.plot_correlation_heatmap(
                 corr_name, df_corr, output_dir=output_dir
             )
             # Only plot pairgrid for small correlation groups
             if len(df_corr) <= 6:
-                quality_reporter.plot_correlation(
+                quality_plotter.plot_correlation(
                     corr_name, df_corr, output_dir=output_dir
                 )
 
