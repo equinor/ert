@@ -764,6 +764,7 @@ simulations are executed. It should contain <IENS> and <ITER>, which
 will be replaced by the realization number and iteration number when ERT creates the folders.
 By default, RUNPATH is set to "<SCRATCH>/realization-<IENS>/iter-<ITER>",
 which is "simulations/realization-<IENS>/iter-<ITER>" when :ref:`SCRATCH <scratch>` is not set.
+A relative path is relative to the directory of the configuration file.
 
 Deprecated syntax still allow use of two `%d` specifiers. Use of more than two `%d` specifiers,
 using multiple `<IENS>` or `<ITER>` keywords or mixing styles is prohibited.
@@ -2121,6 +2122,8 @@ UPDATE_LOG_PATH
 ---------------
 
 A summary of the data used for updates are stored in this directory.
+Defaults to ``update_log``. A relative path is relative to the directory
+of the configuration file.
 
 .. _keywords_related_to_running_the_forward_model:
 

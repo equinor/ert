@@ -31,7 +31,7 @@ from ._observations import (
     make_observations,
 )
 from ._shapes import ShapeRegistry
-from .analysis_config import AnalysisConfig
+from .analysis_config import DEFAULT_UPDATE_LOG_PATH, AnalysisConfig
 from .breakthrough_config import BreakthroughConfig
 from .ecosystem_plugin import EcosystemPlugin
 from .ensemble_config import EnsembleConfig
@@ -1608,6 +1608,11 @@ class ErtConfig(BaseModel, extra="forbid"):
             content_dict[ConfigKeys.ENSPATH] = str(
                 Path(config_dir) / ErtConfig.DEFAULT_ENSPATH
             )
+
+        content_dict[ConfigKeys.UPDATE_LOG_PATH] = str(
+            Path(config_dir)
+            / content_dict.get(ConfigKeys.UPDATE_LOG_PATH, DEFAULT_UPDATE_LOG_PATH)
+        )
 
         if ConfigKeys.RUNPATH_FILE not in content_dict:
             content_dict[ConfigKeys.RUNPATH_FILE] = str(

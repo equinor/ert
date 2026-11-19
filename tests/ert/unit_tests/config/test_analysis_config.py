@@ -51,6 +51,7 @@ def test_analysis_config_from_file_is_same_as_from_dict(monkeypatch, tmp_path):
             ConfigKeys.ANALYSIS_SET_VAR: [
                 ("STD_ENKF", "ENKF_TRUNCATION", 0.8),
             ],
+            ConfigKeys.UPDATE_LOG_PATH: str(tmp_path / "update_log"),
             ConfigKeys.DESIGN_MATRIX: [
                 [
                     str(Path("my_design_matrix.xlsx").resolve()),
