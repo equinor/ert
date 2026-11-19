@@ -1,10 +1,28 @@
 import hypothesis.strategies as st
+import numpy as np
 import xtgeo
+from resfo_utilities.testing import EGrid, egrids
 
 indices = st.integers(min_value=1, max_value=4)
 finites = st.floats(
     min_value=-100.0, max_value=100.0, allow_nan=False, allow_infinity=False, width=32
 )
+
+
+def _has_contiguous_active_columns(egrid: EGrid) -> bool:
+    grid = egrid.global_grid
+    if grid.actnum is None:
+        return True
+    head = grid.grid_head
+    is_active_column = grid.actnum.reshape(
+        (head.num_x, head.num_y, head.num_z), order="F"
+    ).any(axis=(1, 2))
+    return bool(np.all(np.diff(np.flatnonzero(is_active_column)) == 1))
+
+
+# xtgeo cannot give the handedness of nested hybrid grids, which it
+# recognises by fully inactive I-columns separating active ones.
+field_egrids = egrids.filter(_has_contiguous_active_columns)
 
 
 @st.composite
