@@ -13,6 +13,7 @@ from fmudesign.utils import (
     parse_decimals,
     read_excel_sheet,
     resolve_path,
+    strip_text_cells,
 )
 
 
@@ -30,9 +31,7 @@ class DesignInput:
 
     @classmethod
     def from_dataframe(cls, input_filename: str, df: pd.DataFrame) -> Self:
-        # Strip 'sensname'; whitespace-only cells count as empty
-        sensname = df["sensname"].str.strip()
-        df = df.assign(sensname=sensname.mask(sensname.eq(""))).dropna(how="all")
+        df = strip_text_cells(df)
         _check_designinput(df)
         df["sensname"] = df["sensname"].ffill()
 
@@ -271,9 +270,7 @@ def _read_dependencies(
         if sheetname not in workbook.sheet_names:
             raise FmudesignError(f"Worksheet {sheetname!r} not found")
         cells = workbook.get_sheet_by_name(sheetname).to_python(skip_empty_area=False)
-    rows = (
-        [value if value.strip() else "" for value in map(str, row)] for row in cells
-    )
+    rows = ([str(value).strip() for value in row] for row in cells)
 
     headers = {index: name for index, name in enumerate(next(rows, [])) if name}
     if from_parameter not in headers.values():
