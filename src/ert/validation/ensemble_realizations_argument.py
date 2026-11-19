@@ -1,8 +1,9 @@
 from collections.abc import Callable, Iterable
 from typing import TYPE_CHECKING, Union
 
+from _ert.rangestring import rangestring_to_list
+
 from .range_string_argument import RangeStringArgument
-from .rangestring import rangestring_to_list
 from .validation_status import ValidationStatus
 
 if TYPE_CHECKING:
