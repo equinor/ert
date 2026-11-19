@@ -446,6 +446,26 @@ def test_that_the_default_runpath_is_below_scratch():
     )
 
 
+@pytest.mark.parametrize(
+    ("update_log_path_line", "expected_update_log_dir"),
+    [("", "update_log"), ("UPDATE_LOG_PATH my_logs", "my_logs")],
+    ids=["default_update_log_path", "relative_update_log_path"],
+)
+def test_that_update_log_path_is_relative_to_config_dir(
+    tmp_path, monkeypatch, update_log_path_line, expected_update_log_dir
+):
+    config_dir = tmp_path / "config_dir"
+    config_dir.mkdir()
+    (config_dir / "config.ert").write_text(
+        f"NUM_REALIZATIONS 1\n{update_log_path_line}\n", encoding="utf-8"
+    )
+    monkeypatch.chdir(tmp_path)
+
+    ert_config = ErtConfig.from_file(str(config_dir / "config.ert"))
+
+    assert ert_config.analysis_config.log_path == config_dir / expected_update_log_dir
+
+
 def test_that_subst_list_is_given_default_runpath_file():
     assert ErtConfig.from_file_contents("NUM_REALIZATIONS 1").substitutions[
         "<RUNPATH_FILE>"

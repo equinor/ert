@@ -653,6 +653,7 @@ def config_generators(draw, use_eclbase=booleans):
                 "enspath",
                 "obs_config",
                 "data_file",
+                "update_log_path",
             ]:
                 setattr(config_values, key, str(tmp / getattr(config_values, key)))
             for dirname in should_exist_directories:
