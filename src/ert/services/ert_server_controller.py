@@ -328,7 +328,7 @@ class ErtServerController:
         logging_config: str | None = None,
     ) -> ErtServerContext:
         conn_info_path = project / _ERT_SERVER_CONNECTION_INFO_FILE
-
+        print("Initializing ERT server service...")
         try:
             if conn_info_path.stat().st_size > 0:
                 conn_info = json.loads(conn_info_path.read_text(encoding="utf-8"))
