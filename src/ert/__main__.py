@@ -139,33 +139,6 @@ def valid_num_iterations(user_input: str) -> str:
     return user_input
 
 
-def _attempt_int_conversion(val: str) -> int:
-    try:
-        return int(val)
-    except ValueError as e:
-        raise ArgumentTypeError(f"{val} is not a valid integer") from e
-
-
-def convert_port(val: str) -> int:
-    int_val = _attempt_int_conversion(val)
-    if not 0 <= int_val <= 65535:
-        raise ArgumentTypeError(f"{int_val} is not in valid port range 0-65535")
-    return int_val
-
-
-def valid_port_range(user_input: str) -> range:
-    if "-" not in user_input:
-        raise ArgumentTypeError("Port range must contain two integers separated by '-'")
-    a, b = user_input.split("-")
-
-    port_a, port_b = convert_port(a), convert_port(b)
-
-    if port_b < port_a:
-        raise ArgumentTypeError(f"Invalid port range [{a},{b}], {b} is < {a}")
-
-    return range(port_a, port_b + 1)
-
-
 def run_gui_wrapper(args: Namespace, runtime_plugins: ErtRuntimePlugins) -> None:
     # Importing ert.gui on-demand saves ~0.5 seconds off `from ert import __main__`
     from ert.gui import run_gui  # ruff: ignore[import-outside-top-level]
@@ -521,12 +494,6 @@ def get_ert_parser(parser: ArgumentParser | None = None) -> ArgumentParser:
             " classified into Waiting, Pending, Running, Failed, Finished"
             " and Unknown.",
             default=False,
-        )
-        cli_parser.add_argument(
-            "--port-range",
-            type=valid_port_range,
-            required=False,
-            help="Port range [a,b] to be used by the evaluator. Format: a-b",
         )
         cli_parser.add_argument("config", type=valid_file, help=config_help)
 

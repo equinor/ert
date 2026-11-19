@@ -1,4 +1,5 @@
 import json
+import logging
 import shutil
 from collections.abc import Iterator
 from pathlib import Path
@@ -11,7 +12,7 @@ import pytest
 from fastapi import BackgroundTasks, FastAPI
 from fastapi.testclient import TestClient
 
-from ert.config import ErtConfig, QueueSystem
+from ert.config import ConfigWarning, ErtConfig, QueueSystem
 from ert.config.gen_kw_config import GenKwConfig
 from ert.config.parsing.config_errors import ConfigValidationError
 from ert.ensemble_evaluator import EndEvent, EvaluatorServerConfig
@@ -28,7 +29,7 @@ from ert.server.endpoints.experiment_runs import (
     verify_auth,
 )
 from ert.server.status_event_forwarder import StatusEventForwarder
-from ert.storage import LocalStorage, open_storage
+from ert.storage import ErtStorageException, LocalStorage, open_storage
 from everest.everserver.server import ExperimentState, ExperimentStatus
 from tests.ert.utils import wait_until_all_status_events_are_delivered
 
@@ -316,6 +317,32 @@ async def test_that_config_validation_error_on_registration_gives_http_422(
 
 
 @pytest.mark.asyncio
+async def test_that_storage_error_on_registration_gives_http_409_with_the_reason(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    registry: dict[str, ert_runner.ErtExperimentRunnerState] = {}
+    monkeypatch.setattr(ert_runner, "_experiments", registry)
+    monkeypatch.setattr(
+        ert_runner,
+        "create_model",
+        Mock(side_effect=ErtStorageException("Not able to acquire lock")),
+    )
+    request = ert_runner.StartErtExperimentRequest.model_construct(
+        config=Mock(spec=ErtConfig),
+        args=ert_runner.RunArgs(
+            mode="ensemble_experiment", experiment_name="registration-test"
+        ),
+    )
+
+    with pytest.raises(ert_runner.HTTPException) as error:
+        await ert_runner.register(request, None)
+
+    assert error.value.status_code == 409
+    assert error.value.detail == "Not able to acquire lock"
+    assert not registry
+
+
+@pytest.mark.asyncio
 async def test_that_failed_registration_releases_partially_initialized_storage(
     minimum_case: ErtConfig, monkeypatch: pytest.MonkeyPatch
 ):
@@ -469,6 +496,24 @@ async def test_that_setup_failure_closes_storage_and_publishes_one_failed_end_ev
     ]
     assert state.status.status == ExperimentState.failed
     assert state.finalized.is_set()
+
+
+@pytest.mark.asyncio
+async def test_that_config_warnings_raised_with_runtime_plugins_are_logged(
+    caplog: pytest.LogCaptureFixture,
+):
+    runtime_plugins = ert_runner._with_runtime_plugins(ErtPluginManager(plugins=[]))
+    await anext(runtime_plugins)
+    try:
+        ConfigWarning.warn("NUM_REALIZATIONS is greater than DESIGN_MATRIX")
+    finally:
+        await runtime_plugins.aclose()
+
+    assert (
+        "ert.server.endpoints.experiment_runs",
+        logging.WARNING,
+        "NUM_REALIZATIONS is greater than DESIGN_MATRIX",
+    ) in caplog.record_tuples
 
 
 @pytest.fixture

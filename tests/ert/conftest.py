@@ -35,7 +35,6 @@ from ert.cli.main import run_cli
 from ert.config import ConfigWarning, ErtConfig
 from ert.config.parsing.file_context_token import FileContextToken
 from ert.config.rft_config import _get_zonemap, _read_egrid
-from ert.ensemble_evaluator.config import EvaluatorServerConfig
 from ert.mode_definitions import (
     ENIF_MODE,
     ENSEMBLE_EXPERIMENT_MODE,
@@ -598,22 +597,6 @@ def block_storage_path(source_root: Path):
 
 
 @pytest.fixture(autouse=True)
-def no_cert_in_test(monkeypatch):
-    # Do not generate certificates during test, parts of it can be time
-    # consuming (e.g. 30 seconds)
-    # Specifically generating the RSA key <_openssl.RSA_generate_key_ex>
-    class MockESConfig(EvaluatorServerConfig):
-        def __init__(self, *args, **kwargs) -> None:
-            if "use_token" not in kwargs:
-                kwargs["use_token"] = False
-            if sys.platform != "linux":
-                kwargs["use_ipc_protocol"] = True
-            super().__init__(*args, **kwargs)
-
-    monkeypatch.setattr("ert.cli.main.EvaluatorServerConfig", MockESConfig)
-
-
-@pytest.fixture(autouse=True)
 def no_hostname_on_mac(monkeypatch):
     def mock_get_machine_name() -> str:
         return "localhost"
@@ -728,3 +711,39 @@ def mock_resfo_file(mocked_files):
         mocked_files[filename] = buffer.getvalue()
 
     return inner
+
+
+@pytest.fixture
+def install_plugin(tmp_path, monkeypatch):
+    """Installs python source as an ert plugin for the ERT server that run_cli
+    starts and, unless server_only is given, for this process.
+
+    The server imports the module when it loads its plugins, so a server_only
+    module can also patch code that runs in the server.
+    """
+    imported_modules = []
+
+    def install(module_name: str, source: str, *, server_only: bool = False) -> None:
+        site_packages = tmp_path / (
+            "server-site-packages" if server_only else "site-packages"
+        )
+        dist_info = site_packages / f"{module_name}-1.0.dist-info"
+        dist_info.mkdir(parents=True)
+        (site_packages / f"{module_name}.py").write_text(
+            dedent(source), encoding="utf-8"
+        )
+        (dist_info / "METADATA").write_text(
+            f"Metadata-Version: 2.1\nName: {module_name}\nVersion: 1.0\n",
+            encoding="utf-8",
+        )
+        (dist_info / "entry_points.txt").write_text(
+            f"[ert]\n{module_name} = {module_name}\n", encoding="utf-8"
+        )
+        monkeypatch.setenv("PYTHONPATH", str(site_packages), prepend=os.pathsep)
+        if not server_only:
+            monkeypatch.syspath_prepend(site_packages)
+            imported_modules.append(module_name)
+
+    yield install
+    for module_name in imported_modules:
+        sys.modules.pop(module_name, None)
