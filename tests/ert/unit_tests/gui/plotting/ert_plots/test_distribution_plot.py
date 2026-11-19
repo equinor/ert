@@ -13,6 +13,7 @@ from ert.gui.plotting.ert_plots.distribution import (
 )
 from ert.gui.plotting.plot_api import EnsembleObject
 from ert.gui.plotting.utils import PlotConfig, PlotContext, PlotTools
+from ert.gui.plotting.widgets.plot_widget import PlotWidget
 
 
 def _make_ensemble(name: str = "ensemble_1") -> EnsembleObject:
@@ -254,3 +255,121 @@ def test_that_the_plot_skips_categorical_data_without_raising_error(
     assert _count_kde_lines(figure) == 0
     assert _count_histogram_bars(figure) == 0
     assert _count_rug_marker_lines(figure) == 0
+
+
+@pytest.mark.parametrize(
+    ("histogram", "gkde_plot", "rug_plot"),
+    [
+        (False, False, False),
+        (True, True, True),
+        (True, True, False),
+        (True, False, True),
+        (False, True, True),
+        (True, False, False),
+        (False, True, False),
+        (False, False, True),
+    ],
+)
+@pytest.mark.parametrize(
+    "data",
+    [
+        pytest.param(pd.DataFrame(), id="no_columns"),
+        pytest.param(pd.DataFrame(columns=pd.DatetimeIndex([])), id="datetime_columns"),
+        pytest.param(pd.DataFrame({0: []}), id="empty_parameter"),
+    ],
+)
+def test_that_missing_parameter_data_is_labeled_without_raising(
+    single_ensemble: EnsembleObject,
+    data: pd.DataFrame,
+    histogram: bool,
+    gkde_plot: bool,
+    rug_plot: bool,
+):
+    context = _make_context(
+        [single_ensemble], histogram=histogram, gkde_plot=gkde_plot, rug_plot=rug_plot
+    )
+
+    figure = _plot(context, {single_ensemble: data})
+
+    if histogram or gkde_plot or rug_plot:
+        assert any("<no data>" in text.get_text() for text in figure.texts)
+    else:
+        assert any(
+            "No plot options selected." in text.get_text() for text in figure.texts
+        )
+    assert _count_histogram_bars(figure) == 0
+    assert _count_kde_lines(figure) == 0
+    assert _count_rug_marker_lines(figure) == 0
+
+
+@pytest.mark.parametrize(
+    ("histogram", "gkde_plot", "rug_plot"),
+    [
+        (False, False, False),
+        (True, True, True),
+        (True, True, False),
+        (True, False, True),
+        (False, True, True),
+        (True, False, False),
+        (False, True, False),
+        (False, False, True),
+    ],
+)
+def test_that_missing_ensemble_data_preserves_the_other_ensembles_plot(
+    histogram: bool, gkde_plot: bool, rug_plot: bool
+):
+    valid, missing = _make_ensemble("valid"), _make_ensemble("missing")
+    values = pd.DataFrame({0: [0.1, 0.2, 0.3, 0.4, 0.5, 0.6]})
+    context = _make_context(
+        [valid, missing], histogram=histogram, gkde_plot=gkde_plot, rug_plot=rug_plot
+    )
+    reference_context = _make_context(
+        [valid], histogram=histogram, gkde_plot=gkde_plot, rug_plot=rug_plot
+    )
+
+    figure = _plot(context, {valid: values, missing: pd.DataFrame()})
+    reference = _plot(reference_context, {valid: values})
+
+    assert _count_histogram_bars(figure) == _count_histogram_bars(reference)
+    assert _count_kde_lines(figure) == _count_kde_lines(reference)
+    assert _count_rug_marker_lines(figure) == _count_rug_marker_lines(reference)
+    if histogram or gkde_plot or rug_plot:
+        assert "experiment_1 : valid" in context.plotConfig().legend_labels()
+        assert (
+            "experiment_1 : missing <no data>" in context.plotConfig().legend_labels()
+        )
+        if rug_plot:
+            if not histogram and not gkde_plot:
+                assert figure.axes[-1].xaxis.get_visible()
+                assert any(
+                    label.get_visible() for label in figure.axes[-1].get_xticklabels()
+                )
+            assert any(
+                "<no data>" in text.get_text()
+                for axes in figure.axes
+                for text in axes.texts
+            )
+
+
+@pytest.mark.parametrize("include_valid_ensemble", [False, True])
+def test_that_the_widget_draws_missing_parameter_data_without_logging_an_error(
+    qtbot, caplog, capsys, include_valid_ensemble: bool
+):
+    missing = _make_ensemble("missing")
+    data_map = {missing: pd.DataFrame(columns=pd.DatetimeIndex([]))}
+    if include_valid_ensemble:
+        valid = _make_ensemble("valid")
+        data_map = {valid: pd.DataFrame({0: [0.1, 0.2, 0.3, 0.4]}), **data_map}
+    context = _make_context(list(data_map))
+    widget = PlotWidget("Distribution", DistributionPlot())
+    qtbot.addWidget(widget)
+
+    widget.update_plot(context, data_map, pd.DataFrame(), {}, None)
+
+    assert not caplog.records
+    assert "An error occurred during plotting" not in capsys.readouterr().err
+    if include_valid_ensemble:
+        assert _count_histogram_bars(widget._figure) > 0
+        assert _count_rug_marker_lines(widget._figure) == 1
+    else:
+        assert any("<no data>" in text.get_text() for text in widget._figure.texts)
