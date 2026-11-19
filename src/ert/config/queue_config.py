@@ -369,6 +369,7 @@ class QueueConfig(BaseModelWithContextSupport):
     )
     stop_long_running: bool = False
     max_runtime: int | None = None
+    realization_memory_is_site_default: bool = False
 
     @staticmethod
     def _user_queue_options_from_dict(
@@ -420,11 +421,14 @@ class QueueConfig(BaseModelWithContextSupport):
             selected_queue_system, config_dict
         )
 
-        merged_queue_options_dict = (
+        selected_site_queue_options_dict = (
             site_queue_options_dict
             if str(selected_queue_system) == site_queue_system
             else {}
-        ) | usr_queue_options_dict
+        )
+        merged_queue_options_dict = (
+            selected_site_queue_options_dict | usr_queue_options_dict
+        )
 
         max_submit: int = config_dict.get(ConfigKeys.MAX_SUBMIT, 1)
         stop_long_running = config_dict.get(ConfigKeys.STOP_LONG_RUNNING, False)
@@ -472,6 +476,10 @@ class QueueConfig(BaseModelWithContextSupport):
             queue_options=selected_queue_options,
             stop_long_running=bool(stop_long_running),
             max_runtime=config_dict.get(ConfigKeys.MAX_RUNTIME),
+            realization_memory_is_site_default=(
+                "realization_memory" in selected_site_queue_options_dict
+                and "realization_memory" not in usr_queue_options_dict
+            ),
         )
 
     @staticmethod

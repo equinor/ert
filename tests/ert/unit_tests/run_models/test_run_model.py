@@ -32,7 +32,7 @@ from ert.config.parsing import ObservationDict
 from ert.config.queue_config import LsfQueueOptions
 from ert.config.workflow_fixtures import PostExperimentFixtures, PreExperimentFixtures
 from ert.ensemble_evaluator import EndEvent, EvaluatorServerConfig, StartEvent
-from ert.ensemble_evaluator.evaluator import ParallelismViolation
+from ert.ensemble_evaluator.evaluator import MemoryViolation, ParallelismViolation
 from ert.ensemble_evaluator.event import FullSnapshotEvent
 from ert.ensemble_evaluator.snapshot import EnsembleSnapshot
 from ert.ensemble_evaluator.state import (
@@ -556,6 +556,7 @@ async def test_terminate_in_post_evaluation(evaluator, use_tmpdir):
         return list(range(5))
 
     evaluator.return_value.max_parallelism_violation = ParallelismViolation()
+    evaluator.return_value.max_memory_violation = MemoryViolation()
     evaluator().run_and_get_successful_realizations = (
         mocked_run_and_get_successful_realizations
     )
@@ -795,6 +796,7 @@ async def test_run_model_stores_largest_cpu_overspending_from_ensemble_evaluator
     )
 
     brm = create_run_model()
+    evaluator.return_value.max_memory_violation = MemoryViolation()
 
     evaluator.return_value.max_parallelism_violation = ParallelismViolation(0, "")
     await brm.run_ensemble_evaluator_async(AsyncMock(), Mock(), AsyncMock())
@@ -831,11 +833,44 @@ def test_run_model_warns_about_cpu_over_spending_as_post_simulation_warning(
     evaluator.return_value.max_parallelism_violation = ParallelismViolation(
         5, expected_msg
     )
+    evaluator.return_value.max_memory_violation = MemoryViolation()
 
     with warnings.catch_warnings(record=True) as W:
         brm._evaluate_and_postprocess(MagicMock(), MagicMock(), MagicMock())
         assert any(isinstance(w.message, PostExperimentWarning) for w in W)
         assert any(expected_msg in str(w.message) for w in W)
+
+
+@patch("ert.run_models.run_model.EnsembleEvaluator")
+def test_that_run_model_warns_about_memory_overspending_as_post_simulation_warning(
+    evaluator, use_tmpdir
+):
+    async def mocked_run_and_get_successful_realizations() -> list[int]:
+        return list(range(5))
+
+    async def mocked_wait_for_evaluation_result() -> bool:
+        return True
+
+    evaluator().wait_for_evaluation_result = mocked_wait_for_evaluation_result
+    evaluator().run_and_get_successful_realizations = (
+        mocked_run_and_get_successful_realizations
+    )
+
+    brm = create_run_model()
+    brm.queue_config.queue_system = MagicMock()
+
+    expected_msg = "Overuse of memory detected!"
+    evaluator.return_value.max_parallelism_violation = ParallelismViolation()
+    evaluator.return_value.max_memory_violation = MemoryViolation(
+        2 * 1024**3, expected_msg
+    )
+
+    with warnings.catch_warnings(record=True) as W:
+        brm._evaluate_and_postprocess(MagicMock(), MagicMock(), MagicMock())
+    assert [
+        str(w.message) for w in W if isinstance(w.message, PostExperimentWarning)
+    ] == [expected_msg]
+    assert brm.resource_overspending_warnings() == [expected_msg]
 
 
 def test_that_status_snapshot_is_written_only_when_iteration_is_finalized(use_tmpdir):

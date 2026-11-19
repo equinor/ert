@@ -179,6 +179,10 @@ def run_cli(args: Namespace, runtime_plugins: ErtRuntimePlugins | None = None) -
 
     thread.join()
 
+    if not args.disable_monitoring:
+        for warning in model.resource_overspending_warnings():
+            print(warning, file=sys.stderr)
+
     if end_event is not None and end_event.failed:
         # If monitor has not reported, give some info if the job failed
         msg = end_event.msg if args.disable_monitoring else ""

@@ -6,7 +6,7 @@ import logging
 import threading
 import traceback
 from collections import defaultdict
-from collections.abc import Awaitable, Callable, Iterable, Sequence
+from collections.abc import Awaitable, Callable, Iterable, Mapping, Sequence
 from dataclasses import dataclass
 from math import ceil
 from typing import Any, cast, get_args
@@ -59,6 +59,28 @@ from .state import (
 class ParallelismViolation:
     amount: float = 0
     message: str = ""
+
+
+@dataclass(order=True)
+class MemoryViolation:
+    amount: int = 0
+    message: str = ""
+
+
+REALIZATION_MEMORY_DOCS_URL = (
+    "https://ert.readthedocs.io/en/latest/reference/configuration/"
+    "keywords.html#realization-memory"
+)
+
+
+def _format_memory(byte_count: int) -> str:
+    if byte_count < 1024**3:
+        return f"{ceil(byte_count / 1024**2)}MB"
+    return f"{ceil(byte_count * 10 / 1024**3) / 10:g}GB"
+
+
+def _suggest_realization_memory(peak_usage: int) -> str:
+    return f"{ceil(peak_usage * 11 / (10 * 1024**3))}GB"
 
 
 logger = logging.getLogger(__name__)
@@ -146,6 +168,7 @@ class EnsembleEvaluator:
             ens_id=self.ensemble.id_,
         )
         self.max_parallelism_violation = ParallelismViolation()
+        self.max_memory_violation = MemoryViolation()
 
     async def _publisher(self) -> None:
         heartbeat_interval = 0.1
@@ -347,6 +370,12 @@ class EnsembleEvaluator:
 
             num_cpu = self.ensemble.reals[int(real_id)].num_cpu
             self.detect_overspent_cpu(num_cpu, real_id, fm_step)
+
+        self.detect_overspent_memory(
+            self.ensemble._queue_config.queue_options.realization_memory,
+            self.ensemble.snapshot.get_all_fm_steps(),
+            is_site_default=self.ensemble._queue_config.realization_memory_is_site_default,
+        )
 
         logger.info(
             f"Ensemble resource usage: {walltime_seconds=:g} {cputime_seconds=:g} "
@@ -759,3 +788,53 @@ class EnsembleEvaluator:
                     self.max_parallelism_violation,
                     ParallelismViolation(parallelization_obtained, warning_msg),
                 )
+
+    def detect_overspent_memory(
+        self,
+        realization_memory: int,
+        fm_steps: Mapping[tuple[str, str], FMStepSnapshot],
+        *,
+        is_site_default: bool = False,
+    ) -> None:
+        if not realization_memory or self.ensemble.queue_system == QueueSystem.LOCAL:
+            return
+
+        peak_usage = 0
+        peak_step_name: str | None = None
+        for fm_step in fm_steps.values():
+            usage = int(fm_step.get(ids.MAX_MEMORY_USAGE) or 0)
+            if usage > peak_usage:
+                peak_usage = usage
+                peak_step_name = fm_step.get(ids.NAME)
+
+        if peak_usage <= realization_memory:
+            return
+
+        site_default_note = " (site default)" if is_site_default else ""
+        logger.warning(
+            f"Misconfigured REALIZATION_MEMORY{site_default_note}, "
+            f"used more than {realization_memory} bytes, "
+            f"maximum was {peak_usage} bytes in step '{peak_step_name}'"
+        )
+        requested = _format_memory(realization_memory)
+        booking_description = (
+            "while REALIZATION_MEMORY is not set in the Ert config, "
+            f"so only the default of {requested} was requested"
+            if is_site_default
+            else f"while the Ert config has only requested {requested}"
+        )
+        warning_msg = (
+            "Overuse of memory detected!\n\n"
+            f"Your experiment has used up to {_format_memory(peak_usage)} "
+            f"of memory in step '{peak_step_name}', "
+            f"{booking_description}.\n\n"
+            "Why this matters - memory is a shared resource and your overuse "
+            "could be the direct cause of other simulations failing, "
+            "including your own.\n\n"
+            "To resolve this, set the following in your Ert config:\n\n"
+            f"REALIZATION_MEMORY {_suggest_realization_memory(peak_usage)}\n\n"
+            f"{REALIZATION_MEMORY_DOCS_URL}"
+        )
+        self.max_memory_violation = max(
+            self.max_memory_violation, MemoryViolation(peak_usage, warning_msg)
+        )

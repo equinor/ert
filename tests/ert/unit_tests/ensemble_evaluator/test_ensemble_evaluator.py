@@ -409,6 +409,69 @@ def test_that_average_computer_load_is_included_in_overspent_cpu_message(
     assert "computer load 12.34" in caplog.text
 
 
+def test_that_memory_overspending_warning_suggests_realization_memory_from_peak_usage(
+    evaluator_to_use, monkeypatch
+):
+    evaluator, _ = evaluator_to_use
+    monkeypatch.setattr(TestEnsemble, "queue_system", QueueSystem.LSF)
+
+    evaluator.detect_overspent_memory(
+        5 * 1024**2,
+        {
+            ("0", "0"): FMStepSnapshot(name="step_a", max_memory_usage=13_100_000),
+            ("0", "1"): FMStepSnapshot(name="step_b", max_memory_usage=8 * 1024**2),
+            ("1", "0"): FMStepSnapshot(name="step_a", max_memory_usage=1024**2),
+        },
+    )
+
+    assert evaluator.max_memory_violation.amount == 13_100_000
+    message = evaluator.max_memory_violation.message
+    assert "used up to 13MB of memory in step 'step_a'" in message
+    assert "only requested 5MB" in message
+    assert "REALIZATION_MEMORY 1GB" in message
+
+
+def test_that_memory_overspending_warning_states_that_default_was_used(
+    evaluator_to_use, monkeypatch
+):
+    evaluator, _ = evaluator_to_use
+    monkeypatch.setattr(TestEnsemble, "queue_system", QueueSystem.LSF)
+
+    evaluator.detect_overspent_memory(
+        7 * 1024**3,
+        {("0", "0"): FMStepSnapshot(name="step_a", max_memory_usage=8_000_000_000)},
+        is_site_default=True,
+    )
+
+    message = evaluator.max_memory_violation.message
+    assert "used up to 7.5GB of memory in step 'step_a'" in message
+    assert "REALIZATION_MEMORY is not set in the Ert config" in message
+    assert "default of 7GB" in message
+    assert "REALIZATION_MEMORY 9GB" in message
+
+
+@pytest.mark.parametrize(
+    ("queue_system", "realization_memory"),
+    [
+        pytest.param(QueueSystem.LSF, 2 * 1024**3, id="within_limit"),
+        pytest.param(QueueSystem.LSF, 0, id="realization_memory_unset"),
+        pytest.param(QueueSystem.LOCAL, 1024**2, id="local_queue"),
+    ],
+)
+def test_that_memory_overspending_is_not_reported_when_memory_is_not_booked_or_exceeded(
+    evaluator_to_use, monkeypatch, queue_system, realization_memory
+):
+    evaluator, _ = evaluator_to_use
+    monkeypatch.setattr(TestEnsemble, "queue_system", queue_system)
+
+    evaluator.detect_overspent_memory(
+        realization_memory,
+        {("0", "0"): FMStepSnapshot(name="step_a", max_memory_usage=1024**3)},
+    )
+
+    assert evaluator.max_memory_violation.amount == 0
+
+
 @pytest.mark.slow
 async def test_snapshot_on_resubmit_is_cleared(evaluator_to_use):
     (evaluator, event_queue) = evaluator_to_use

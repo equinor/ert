@@ -633,6 +633,10 @@ Setting this number lower than the peak memory consumption of each realization p
 the realization at risk of being killed in an out-of-memory situation. Setting this
 number higher than needed will give longer wait times in the queue.
 
+When running on a cluster queue system, ERT warns after the ensemble has been
+evaluated if any realization used more memory than REALIZATION_MEMORY, and
+suggests a value 10% above the highest memory usage it recorded.
+
 For the local queue system, this keyword has no effect. In that scenario, you
 can use MAX_RUNNING to choke the memory consumption.
 
