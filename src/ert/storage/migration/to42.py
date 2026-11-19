@@ -1,8 +1,9 @@
 from __future__ import annotations
 
-import json
 import logging
 from pathlib import Path
+
+from .migration_utils import experiment_dirs, read_json, resolve_blob_path
 
 logger = logging.getLogger(__name__)
 
@@ -13,25 +14,20 @@ info = (
 
 
 def _remove_rho_matrix_blobs(path: Path) -> None:
-    experiments_dir = path / "experiments"
-    if not experiments_dir.exists():
-        return
-
-    for exp_dir in experiments_dir.iterdir():
+    for exp_dir in experiment_dirs(path):
         blob_dir = exp_dir / "blobs"
         if not blob_dir.is_dir():
             continue
-        resolved_blob_dir = blob_dir.resolve()
 
         for json_path in blob_dir.glob("*.json"):
-            blob_data = json.loads(json_path.read_text(encoding="utf-8"))
+            blob_data = read_json(json_path)
             if blob_data.get("blob_info", {}).get("blob_type") != "rho_matrix":
                 continue
 
             uri = blob_data.get("uri")
             if isinstance(uri, str):
-                blob_path = (resolved_blob_dir / uri).resolve()
-                if blob_path.is_relative_to(resolved_blob_dir):
+                blob_path = resolve_blob_path(blob_dir, uri)
+                if blob_path is not None:
                     blob_path.unlink(missing_ok=True)
                 else:
                     logger.warning(

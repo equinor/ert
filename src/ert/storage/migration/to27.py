@@ -1,8 +1,9 @@
 from __future__ import annotations
 
-import json
 from pathlib import Path
 from typing import Any
+
+from .migration_utils import experiment_index_files, read_json, write_json
 
 DEFAULT_LOCALIZATION_RADIUS = 2000
 
@@ -37,19 +38,8 @@ def _register_shape(
 
 
 def _migrate_observations(path: Path) -> None:
-    experiments_dir = path / "experiments"
-    if not experiments_dir.exists():
-        return
-
-    for exp_dir in experiments_dir.iterdir():
-        if not exp_dir.is_dir():
-            continue
-
-        index_file = exp_dir / "index.json"
-        if not index_file.exists():
-            continue
-
-        index_data = json.loads(index_file.read_text(encoding="utf-8"))
+    for index_file in experiment_index_files(path):
+        index_data = read_json(index_file)
         experiment_data = index_data.get("experiment", {})
         observations = experiment_data.get("observations", [])
 
@@ -91,7 +81,7 @@ def _migrate_observations(path: Path) -> None:
                 obs.setdefault("shape_id", None)
 
         experiment_data["shape_registry"] = {"shapes": shapes}
-        index_file.write_text(json.dumps(index_data, indent=2), encoding="utf-8")
+        write_json(index_file, index_data)
 
 
 def migrate(path: Path) -> None:
