@@ -72,7 +72,7 @@ def create_run_model(**kwargs):
         # Note: Will create a storage in cwd
         "storage_path": "./storage",
         "runpath_file": MagicMock(spec=Path),
-        "user_config_file": MagicMock(spec=Path),
+        "user_config_file": Path("config.ert"),
         "env_vars": MagicMock(spec=dict),
         "env_pr_fm_step": MagicMock(spec=dict),
         "runpath_config": ModelConfig(),

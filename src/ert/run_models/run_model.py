@@ -220,7 +220,9 @@ class RunModel(RunModelConfig, ABC):
 
         self._runpaths = Runpaths(
             jobname_format=self.runpath_config.jobname_format_string,
-            runpath_format=self.runpath_config.runpath_format_string,
+            runpath_format=str(
+                self.user_config_file.parent / self.runpath_config.runpath_format_string
+            ),
             filename=str(self.runpath_file),
             substitutions=self.substitutions,
             eclbase=self.runpath_config.summary_file_base_name,

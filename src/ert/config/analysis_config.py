@@ -27,6 +27,9 @@ logger = logging.getLogger(__name__)
 ObservationGroups = list[str]
 
 
+DEFAULT_UPDATE_LOG_PATH: Final = "update_log"
+
+
 @dataclass
 class OutlierSettings:
     alpha: float = Field(default=3.0)
@@ -44,7 +47,7 @@ class ObservationSettings:
 @dataclasses.dataclass
 class AnalysisConfig:
     minimum_required_realizations: int = 0
-    update_log_path: str | Path = "update_log"
+    update_log_path: str | Path = DEFAULT_UPDATE_LOG_PATH
     es_settings: ESSettings = field(default_factory=ESSettings)
     observation_settings: ObservationSettings = field(
         default_factory=ObservationSettings
@@ -325,7 +328,9 @@ class AnalysisConfig:
             logger.info("Running ERT with DESIGN_MATRIX")
         return cls(
             minimum_required_realizations=min_realization,
-            update_log_path=config_dict.get(ConfigKeys.UPDATE_LOG_PATH, "update_log"),
+            update_log_path=config_dict.get(
+                ConfigKeys.UPDATE_LOG_PATH, DEFAULT_UPDATE_LOG_PATH
+            ),
             observation_settings=obs_settings,
             es_settings=es_settings if es_settings is not None else ESSettings(),
             design_matrix=design_matrix,

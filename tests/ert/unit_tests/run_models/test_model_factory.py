@@ -312,6 +312,31 @@ def test_that_multiple_data_assimilation_runpaths_start_after_prior_iteration(
     assert set(model.paths) == set(expected_path)
 
 
+@pytest.mark.parametrize("config_dir_name", ["config_dir", "my case", "model%d"])
+def test_that_runpaths_are_relative_to_config_dir_not_working_dir(
+    tmp_path, monkeypatch, config_dir_name
+):
+    monkeypatch.chdir(tmp_path)
+    config_dir = tmp_path / config_dir_name
+    config_dir.mkdir()
+    (config_dir / "config.ert").write_text("NUM_REALIZATIONS 1\n", encoding="utf-8")
+    config = ErtConfig.from_file(str(config_dir / "config.ert"))
+    config_on_server = ErtConfig.model_validate(config.model_dump(mode="json"))
+
+    model = create_model(
+        config_on_server,
+        Namespace(
+            mode=TEST_RUN_MODE,
+            realizations=None,
+            current_ensemble="ensemble",
+            experiment_name="experiment",
+        ),
+        queue.SimpleQueue(),
+    )
+
+    assert model.paths == [str(config_dir / "simulations/realization-0/iter-0")]
+
+
 @pytest.mark.usefixtures("use_tmpdir")
 def test_that_mismatched_prior_ensemble_size_raises_validation_error(monkeypatch):
     args = Namespace(
