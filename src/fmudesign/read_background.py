@@ -4,7 +4,13 @@ from fmudesign.exceptions import FmudesignError
 
 from .read_correlations import parse_sensitivity_correlations
 from .read_distributions import parse_distribution_parameters
-from .utils import excel_sheet_names, find_sheet, parse_decimals, read_excel_sheet
+from .utils import (
+    excel_sheet_names,
+    find_sheet,
+    parse_decimals,
+    read_excel_sheet,
+    strip_text_cells,
+)
 
 
 def read_background(inp_filename: str, bck_sheet: str) -> dict[str, Any]:
@@ -29,7 +35,7 @@ def read_background(inp_filename: str, bck_sheet: str) -> dict[str, Any]:
             "Use 'None' as background in the general input sheet if no "
             "background parameters are wanted."
         ) from err
-    bck_input = read_excel_sheet(inp_filename, bck_sheet)
+    bck_input = strip_text_cells(read_excel_sheet(inp_filename, bck_sheet))
 
     backdict["correlations"] = parse_sensitivity_correlations(
         bck_input, inp_filename, group_description=f"background sheet {bck_sheet!r}"
