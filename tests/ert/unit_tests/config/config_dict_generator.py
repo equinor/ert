@@ -17,7 +17,6 @@ from resfo_utilities.testing import (
     Date,
     EGrid,
     Smspec,
-    egrids,
     smspecs,
     summary_variables,
 )
@@ -34,6 +33,7 @@ from ert.config.queue_config import (
     SlurmQueueOptions,
     TorqueQueueOptions,
 )
+from tests.ert.grid_generator import field_egrids
 
 from .observations_generator import (
     GeneralObservation,
@@ -506,7 +506,7 @@ def ert_config_values(draw, use_eclbase=booleans):
             random_seed=st.integers(),
             setenv=small_list(st.tuples(words, words)),
             observations=st.just(obs),
-            egrid=egrids,
+            egrid=field_egrids,
         )
     )
 
