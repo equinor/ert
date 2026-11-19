@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
 import polars as pl
 from matplotlib.collections import TriMesh
+from matplotlib.ticker import EngFormatter
 
 from ert.gui.plotting.ert_plots.misfits import wide_pandas_to_long_polars_with_misfits
 from ert.gui.plotting.utils.plot_tools import PlotTools
@@ -20,8 +21,9 @@ if TYPE_CHECKING:
     from ert.gui.plotting.utils import PlotContext
     from ert.gui.plotting.utils.plot_types import ObservationPlotLocations
 
-MISFIT_MAP_TITLE = "Mean signed χ² Misfit Map"
-OBSERVATIONS_MAP_TITLE = "Observations Map"
+MISFIT_MAP_TITLE = "Mean signed χ² Misfit"
+OBSERVATIONS_MAP_TITLE = "Observations"
+MEAN_SIMULATED_RESPONSE_MAP_TITLE = "Mean Simulated Response"
 NO_MAP_SELECTED_MESSAGE = (
     "No map selected."
     "\n\nFrom the Map options (on the right-side panel),"
@@ -44,6 +46,19 @@ class MapsPlot:
         obs_loc: ObservationPlotLocations | None,
         key_def: PlotApiKeyDefinition | None = None,
     ) -> None:
+
+        plot_context.deactivate_date_support()
+        if observation_data.empty:
+            figure.text(
+                0.5,
+                0.5,
+                "No observation data available",
+                ha="center",
+                va="center",
+                fontsize=12,
+            )
+            return
+
         maps: list[tuple[str, Callable[[Axes], None]]] = []
         if plot_context.observations_map:
             maps.append(
@@ -69,6 +84,20 @@ class MapsPlot:
                 )
             )
 
+        if plot_context.mean_simulated_response_map:
+            maps.append(
+                (
+                    MEAN_SIMULATED_RESPONSE_MAP_TITLE,
+                    lambda axes: draw_mean_simulated_response_map(
+                        figure,
+                        axes,
+                        plot_context,
+                        ensemble_to_data_map,
+                        observation_data,
+                    ),
+                )
+            )
+
         if not maps:
             figure.text(
                 0.5,
@@ -80,11 +109,16 @@ class MapsPlot:
             )
             return
 
+        first_axes: Axes | None = None
         gridspec = figure.add_gridspec(1, len(maps))
         for column, (title, draw) in enumerate(maps):
-            axes = figure.add_subplot(gridspec[0, column])
+            axes = figure.add_subplot(gridspec[0, column], sharey=first_axes)
+            first_axes = first_axes or axes
             draw(axes)
             axes.set_title(title)
+            if column > 0:
+                axes.tick_params(axis="y", labelleft=False)
+                axes.set_ylabel("")
 
         figure_title = plot_context.plotConfig().title()
         if figure_title is not None:
@@ -97,9 +131,6 @@ def draw_observations_map(
     plot_context: PlotContext,
     observation_data: pd.DataFrame,
 ) -> None:
-    if observation_data.empty:
-        PlotTools.show_no_data(axes, "No observation data available")
-        return
 
     observation = pl.from_pandas(observation_data.T)
     east = observation.get_column("EAST").to_numpy()
@@ -119,37 +150,15 @@ def draw_misfit_map(
     ensemble_to_data_map: dict[EnsembleObject, pd.DataFrame],
     observation_data: pd.DataFrame,
 ) -> None:
-    if not ensemble_to_data_map:
-        PlotTools.show_no_data(axes, "No ensemble data available")
-        return
-
-    if len(ensemble_to_data_map) > 1:
-        PlotTools.show_no_data(
-            axes, "Multiple ensembles selected; misfit map supports one at a time"
-        )
-        return
-
-    if observation_data.empty:
-        PlotTools.show_no_data(axes, "No observation data available")
-        return
-
-    ensemble, ensemble_data = next(iter(ensemble_to_data_map.items()))
-    misfits_by_realization = wide_pandas_to_long_polars_with_misfits(
-        {(ensemble.name, ensemble.id): ensemble_data},
-        observation_data,
-        "seismic",
-    )[ensemble.name, ensemble.id]
-
-    if misfits_by_realization.is_empty():
-        PlotTools.show_no_data(axes, "No misfit data available")
-        return
-
-    mean_misfits = misfits_by_realization.group_by(["EAST", "NORTH"]).agg(
-        pl.col("misfit").mean()
+    misfits_by_realization = _preprocess_ensemble_data(
+        ensemble_to_data_map, observation_data, axes, "misfit"
     )
-    east = mean_misfits["EAST"].to_numpy()
-    north = mean_misfits["NORTH"].to_numpy()
-    misfit_values = mean_misfits["misfit"].to_numpy()
+    if misfits_by_realization is None:
+        return
+
+    east = misfits_by_realization["EAST"].to_numpy()
+    north = misfits_by_realization["NORTH"].to_numpy()
+    misfit_values = misfits_by_realization["misfit"].to_numpy()
 
     vmin, vmax = (None, None)
     if plot_context.colorbar_range is not None:
@@ -166,6 +175,32 @@ def draw_misfit_map(
     _finalize_map(figure, axes, misfit_tripcolor, plot_context)
 
 
+def draw_mean_simulated_response_map(
+    figure: Figure,
+    axes: Axes,
+    plot_context: PlotContext,
+    ensemble_to_data_map: dict[EnsembleObject, pd.DataFrame],
+    observation_data: pd.DataFrame,
+) -> None:
+
+    responses_by_realization = _preprocess_ensemble_data(
+        ensemble_to_data_map, observation_data, axes, "response"
+    )
+
+    if responses_by_realization is None:
+        return
+
+    responses_tripcolor = axes.tripcolor(
+        responses_by_realization["EAST"].to_numpy(),
+        responses_by_realization["NORTH"].to_numpy(),
+        responses_by_realization["response"].to_numpy(),
+        shading="gouraud",
+        cmap="viridis",
+    )
+
+    _finalize_map(figure, axes, responses_tripcolor, plot_context)
+
+
 def _finalize_map(
     figure: Figure, axes: Axes, tripcolor: TriMesh, plot_context: PlotContext
 ) -> None:
@@ -178,7 +213,8 @@ def _finalize_map(
 
     cbar.ax.set_visible(plot_context.plotConfig().is_legend_enabled())
     cbar.ax.ticklabel_format(useOffset=False, style="plain")
-    axes.ticklabel_format(useOffset=False, style="plain")
+    axes.xaxis.set_major_formatter(EngFormatter(sep=""))
+    axes.yaxis.set_major_formatter(EngFormatter(sep=""))
     axes.set_aspect("equal")
     axes.set_anchor("C")
     PlotTools.finalize_plot(
@@ -187,4 +223,37 @@ def _finalize_map(
         axes,
         default_x_label="east coordinate",
         default_y_label="north coordinate",
+    )
+
+
+def _preprocess_ensemble_data(
+    ensemble_to_data_map: dict[EnsembleObject, pd.DataFrame],
+    observation_data: pd.DataFrame,
+    axes: Axes,
+    column: Literal["misfit", "response"],
+) -> pl.DataFrame | None:
+
+    if not ensemble_to_data_map:
+        PlotTools.show_no_data(axes, "No ensemble data available")
+        return None
+
+    if len(ensemble_to_data_map) > 1:
+        PlotTools.show_no_data(
+            axes, "Multiple ensembles selected; this map supports one at a time"
+        )
+        return None
+
+    ensemble, ensemble_data = next(iter(ensemble_to_data_map.items()))
+    ensemble_by_realization = wide_pandas_to_long_polars_with_misfits(
+        {(ensemble.name, ensemble.id): ensemble_data},
+        observation_data,
+        "seismic",
+    )[ensemble.name, ensemble.id]
+
+    if ensemble_by_realization.is_empty():
+        PlotTools.show_no_data(axes, f"No {column} data available")
+        return None
+
+    return ensemble_by_realization.group_by(["EAST", "NORTH"]).agg(
+        pl.col(column).mean()
     )
