@@ -105,6 +105,7 @@ class _Index(BaseModel, extra="forbid"):
     prior_ensemble_id: UUID | None
     started_at: datetime
     everest_realization_info: dict[int, EverestRealizationInfo] | None = None
+    everest_batch_success: bool = False
 
 
 class _Failure(BaseModel, extra="forbid"):
@@ -1228,6 +1229,16 @@ class LocalEnsemble(BaseMode):
             raise ValueError("Bad everest realization info: " + "\n".join(errors))
 
         self._index.everest_realization_info = realization_info
+        self._storage._write_transaction(
+            self._path / "index.json", self._index.model_dump_json().encode("utf-8")
+        )
+
+    @property
+    def everest_batch_success(self) -> bool:
+        return self._index.everest_batch_success
+
+    def save_everest_batch_success(self, success: bool) -> None:
+        self._index.everest_batch_success = success
         self._storage._write_transaction(
             self._path / "index.json", self._index.model_dump_json().encode("utf-8")
         )
