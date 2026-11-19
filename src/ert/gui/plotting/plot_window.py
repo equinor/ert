@@ -147,9 +147,10 @@ def handle_exception(e: BaseException) -> None:
         e.args = (
             "An error occurred while making a request to the Plot API. ",
             "Please check your connection or the storage server status",
+            *e.args,
         )
         logger.exception(e)  # ruff: ignore[log-exception-outside-except-handler]
-        open_error_dialog(type(e).__name__, str(e))
+        open_error_dialog(type(e).__name__, "\n".join(map(str, e.args)))
     elif isinstance(e, ServerBootFail):
         e.args = ("The storage server failed to start",)
         logger.exception(e)  # ruff: ignore[log-exception-outside-except-handler]

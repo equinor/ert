@@ -143,6 +143,16 @@ def hook_workflow_job_keyword() -> SchemaItem:
     )
 
 
+def ecosystem_keyword() -> SchemaItem:
+    return SchemaItem(
+        kw=ConfigKeys.ECOSYSTEM,
+        argc_min=1,
+        argc_max=None,
+        options_after=1,
+        type_map=[SchemaItemType.STRING],
+    )
+
+
 def set_env_keyword() -> SchemaItem:
     # You can set environment variables which will be applied to the run-time
     # environment.
@@ -367,6 +377,8 @@ def init_user_config_schema() -> ConfigSchemaDict:
         forward_model_keyword(),
         data_kw_keyword(),
         define_keyword(),
+        single_arg_keyword(ConfigKeys.CASE),
+        single_arg_keyword(ConfigKeys.SCRATCH),
         existing_path_inline_keyword(
             ConfigKeys.OBS_CONFIG, parser=lambda f, c: parse_observations(c, f)
         ),
@@ -389,6 +401,7 @@ def init_user_config_schema() -> ConfigSchemaDict:
         hook_workflow_keyword(),
         hook_workflow_job_keyword(),
         create_workflow_from_job_keyword(),
+        ecosystem_keyword(),
     ]:
         schema[item.kw] = item
         if item.kw in ConfigAliases:

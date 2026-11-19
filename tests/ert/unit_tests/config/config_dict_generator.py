@@ -363,6 +363,8 @@ class ErtConfigValues:
             ("<DATE>", dt.datetime.now().astimezone().date().isoformat()),
             ("<CWD>", cwd),
             ("<CONFIG_FILE>", config_file_name),
+            ("<USER>", os.environ.get("USER", "$USER")),
+            ("<SCRATCH>", "simulations"),
         ]
         result.extend(self.define)
         result.extend(

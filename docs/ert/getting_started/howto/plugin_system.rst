@@ -123,6 +123,60 @@ isolated from other forward models.
 * ``config_key`` will always be exposed as upper case environment variables.
 
 
+Ecosystem plugins
+~~~~~~~~~~~~~~~~~
+
+An ecosystem plugin is selected by the user with :code:`ECOSYSTEM <name>` in
+the config file (see :ref:`ecosystem`) and is given the parsed configuration
+dict before ERT validates it. This lets the plugin insert the
+forward model steps and hooked workflows.
+
+An ecosystem plugin may also override :code:`on_gui_startup`, which is called
+on the Qt main thread when :code:`ert gui` has read a configuration selecting
+the plugin, before the main window is shown. This allows the plugin to provide
+a login flow through a qt dialog.
+
+
+Ecosystem plugins are subclasses of :code:`ert.EcosystemPlugin` registered
+with the :code:`ecosystem_plugin` hook:
+
+.. code-block:: python
+
+    import ert
+
+    class MyEcosystem(ert.EcosystemPlugin):
+        name: str = "MY_ECOSYSTEM"
+
+        def configure(self, config_dict: dict, upload: str = "AUTOMATIC") -> None:
+            if upload.upper() == "AUTOMATIC":
+                steps = config_dict.setdefault("FORWARD_MODEL", [])
+                if ["MY_UPLOAD_STEP"] not in steps:
+                    steps.append(["MY_UPLOAD_STEP"])
+            config_dict.setdefault("HOOK_WORKFLOW_JOB", []).append(
+                ["my_register_case", "MY_REGISTER_CASE", "PRE_SIMULATION"]
+            )
+
+        def on_gui_startup(self) -> None:
+            _login()
+
+    def _login():
+        QDialog(...).ask()
+
+    @ert.plugin(name="my_plugin")
+    def ecosystem_plugin():
+        return MyEcosystem
+
+Options written as ``KEY:VALUE`` after the plugin name, e.g.
+``ECOSYSTEM MY_ECOSYSTEM UPLOAD:MANUAL``, are passed to ``configure`` as
+keyword arguments with lower-cased names (``upload="MANUAL"``). The accepted
+options are thus the keyword parameters of ``configure``; ERT rejects any other
+option with an error listing the accepted ones. Raise
+:code:`ert.config.ConfigValidationError` from ``configure`` to report an invalid value;
+it is shown with the line of the ``ECOSYSTEM`` keyword.
+
+Only one ecosystem plugin can be installed; ERT raises an error if more than
+one is found.
+
 Workflow job
 ~~~~~~~~~~~~
 

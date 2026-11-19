@@ -178,6 +178,18 @@ def _substitute_token(
     return current
 
 
+# Keywords that are shorthand for DEFINE <KEYWORD> value
+DEFINE_SHORTHAND_KEYWORDS = ("CASE", "SCRATCH")
+
+
+def _set_define(defines: Defines, key: str, value: Sequence[Any]) -> None:
+    existing_define = next((define for define in defines if define[0] == key), None)
+    if existing_define:
+        existing_define[1:] = value
+    else:
+        defines.append([key, *value])
+
+
 def _tree_to_dict(
     config_file: str,
     pre_defines: Defines,
@@ -218,13 +230,10 @@ def _tree_to_dict(
             if kw == "DEFINE":
                 assert isinstance(value_list, list)
                 define_key, *define_args = value_list
-                existing_define = next(
-                    (define for define in arglist if define[0] == define_key), None
-                )
-                if existing_define:
-                    existing_define[1:] = define_args  # type: ignore
-                else:
-                    arglist.append(value_list)  # type: ignore
+                _set_define(defines, str(define_key), define_args)
+            elif kw in DEFINE_SHORTHAND_KEYWORDS:
+                _set_define(defines, f"<{kw}>", [value_list])
+                config_dict[kw] = value_list  # type: ignore
             elif constraints.multi_occurrence:
                 arglist.append(value_list)  # type: ignore
 
@@ -346,6 +355,8 @@ def _handle_includes(
             args = _substitute_args(args, constraints, defines)  # type: ignore
             args = constraints.apply_constraints(args, kw, Path.cwd())  # type: ignore
             defines.append(args)  # type: ignore
+        if kw in DEFINE_SHORTHAND_KEYWORDS and len(args) == 1:
+            _set_define(defines, f"<{kw}>", [_substitute_token(defines, args[0])])
         if kw == "INCLUDE":
             if len(args) > 1:
                 superfluous_tokens: list[FileContextToken] = args[1:]
@@ -491,6 +502,20 @@ def parse_contents(
     )
 
 
+def make_pre_defines(file: str = "no_config") -> Defines:
+    filepath = Path(file).resolve()
+    config_dir = str(filepath.parent)
+    return [
+        ["<CONFIG_PATH>", config_dir],
+        ["<CONFIG_FILE_BASE>", filepath.name.split(".")[0]],
+        ["<DATE>", dt.datetime.now().astimezone().date().isoformat()],
+        ["<CWD>", config_dir],
+        ["<CONFIG_FILE>", filepath.name],
+        ["<USER>", os.environ.get("USER", "$USER")],
+        ["<SCRATCH>", "simulations"],
+    ]
+
+
 def _transform_tree(
     tree: Tree[Instruction],
     file: str,
@@ -498,18 +523,9 @@ def _transform_tree(
     pre_defines: Defines | None = None,
 ) -> ConfigDict:
     filepath = Path(file).resolve()
-    config_dir = str(filepath.parent)
-    config_file_name = filepath.name
-    config_file_base = config_file_name.split(".")[0]
 
     if pre_defines is None:
-        pre_defines = [
-            ["<CONFIG_PATH>", config_dir],
-            ["<CONFIG_FILE_BASE>", config_file_base],
-            ["<DATE>", dt.datetime.now().astimezone().date().isoformat()],
-            ["<CWD>", config_dir],
-            ["<CONFIG_FILE>", Path(file).name],
-        ]
+        pre_defines = make_pre_defines(file)
 
     # need to copy pre_defines because _handle_includes will
     # add to this list

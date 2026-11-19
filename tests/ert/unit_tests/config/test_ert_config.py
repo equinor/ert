@@ -20,6 +20,7 @@ from ert import ErtScript, ErtScriptWorkflow
 from ert.config import (
     CircleShapeConfig,
     ConfigValidationError,
+    EcosystemPlugin,
     ErtConfig,
     ESSettings,
     HookRuntime,
@@ -31,6 +32,7 @@ from ert.config._create_observation_dataframes import create_observation_datafra
 from ert.config.ert_config import (
     RandomSeedGenerator,
     _split_string_into_sections,
+    _validate_options,
     create_forward_model_json,
     log_observation_keys,
     log_shape_registry,
@@ -404,6 +406,44 @@ def test_that_the_date_magic_string_is_substituted_with_todays_date():
     expected_ens_path = f"{expected_storage}/ensemble"
     assert ert_config.ens_path == expected_ens_path
     assert ert_config.runpath_config.runpath_format_string == expected_run_path
+
+
+def test_that_user_defining_the_user_magic_string_overrides_the_predefined_value():
+    ert_config = ErtConfig.from_file_contents(
+        "NUM_REALIZATIONS 1\nDEFINE <USER> someone_else\n"
+    )
+
+    assert ert_config.substitutions["<USER>"] == "someone_else"
+
+
+def test_that_case_and_scratch_keywords_are_equivalent_to_define():
+    ert_config = ErtConfig.from_file_contents(
+        "NUM_REALIZATIONS 1\nCASE my_case\nSCRATCH /my/scratch\n"
+        "SETENV X <SCRATCH>/<CASE>\n"
+    )
+
+    assert ert_config.substitutions["<CASE>"] == "my_case"
+    assert ert_config.substitutions["<SCRATCH>"] == "/my/scratch"
+    assert ert_config.env_vars["X"] == "/my/scratch/my_case"
+
+
+def test_that_scratch_defaults_to_current_directory_and_is_the_default_runpath_base():
+    ert_config = ErtConfig.from_file_contents("NUM_REALIZATIONS 1")
+
+    assert ert_config.substitutions["<SCRATCH>"] == "simulations"
+    assert ert_config.runpath_config.runpath_format_string == (
+        "simulations/realization-<IENS>/iter-<ITER>"
+    )
+
+
+def test_that_the_default_runpath_is_below_scratch():
+    ert_config = ErtConfig.from_file_contents(
+        "NUM_REALIZATIONS 1\nSCRATCH /my/scratch\n"
+    )
+
+    assert ert_config.runpath_config.runpath_format_string == (
+        "/my/scratch/realization-<IENS>/iter-<ITER>"
+    )
 
 
 def test_that_subst_list_is_given_default_runpath_file():
@@ -2202,9 +2242,9 @@ def test_design_matrix_default_argument(tmp_path):
     config = ErtConfig.from_file_contents(
         f"NUM_REALIZATIONS 1\nDESIGN_MATRIX {design_matrix_file}"
     )
-    assert config.analysis_config.design_matrix
-    assert config.analysis_config.design_matrix.design_sheet == "DesignSheet"
-    assert config.analysis_config.design_matrix.default_sheet is None
+    design_matrix = config.analysis_config.design_matrix
+    assert design_matrix
+    assert design_matrix.design_matrix_df.columns == ["realization", "a", "category"]
 
 
 @pytest.mark.parametrize(
@@ -3492,3 +3532,150 @@ def test_that_workflow_without_explicit_name_is_named_after_its_file():
     ert_config = ErtConfig.from_file("test.ert")
 
     assert ert_config.workflows["wf_file"].name == "wf_file"
+
+
+class _StepAppendingEcosystem(EcosystemPlugin):
+    name: str = "APPENDER"
+
+    def configure(self, config_dict, step="COPY_FILE"):
+        if step.upper() not in {"COPY_FILE", "MAKE_DIRECTORY"}:
+            raise ConfigValidationError.with_context(f"Unknown step {step}", step)
+        config_dict.setdefault("FORWARD_MODEL", []).append(
+            [step.upper(), [["<FROM>", "a"], ["<TO>", "b"]]]
+        )
+
+
+def test_that_ecosystem_keyword_lets_the_plugin_modify_the_config_dict():
+    runtime_plugins = get_site_plugins().model_copy(
+        update={"installed_ecosystem_plugins": {"APPENDER": _StepAppendingEcosystem()}}
+    )
+    ert_config = ErtConfig.with_plugins(runtime_plugins).from_file_contents(
+        dedent(
+            """
+            NUM_REALIZATIONS 1
+            FORWARD_MODEL MAKE_DIRECTORY(<DIRECTORY>=d)
+            ECOSYSTEM APPENDER
+            """
+        )
+    )
+
+    assert ert_config.forward_model_step_name_list() == [
+        "MAKE_DIRECTORY",
+        "COPY_FILE",
+    ]
+    assert ert_config.forward_model_steps[1].private_args == {
+        "<FROM>": "a",
+        "<TO>": "b",
+    }
+    assert ert_config.ecosystem == "APPENDER"
+
+
+def test_that_unknown_ecosystem_name_gives_error_listing_installed_plugins():
+    runtime_plugins = get_site_plugins().model_copy(
+        update={"installed_ecosystem_plugins": {"APPENDER": _StepAppendingEcosystem()}}
+    )
+    with pytest.raises(
+        ConfigValidationError,
+        match=r"Line 3.*Could not find ecosystem plugin 'NOPE'.*\['APPENDER'\]",
+    ):
+        ErtConfig.with_plugins(runtime_plugins).from_file_contents(
+            dedent(
+                """
+                NUM_REALIZATIONS 1
+                ECOSYSTEM NOPE
+                """
+            )
+        )
+
+
+def test_that_ecosystem_options_are_passed_to_configure_as_lowercase_kwargs():
+    runtime_plugins = get_site_plugins().model_copy(
+        update={"installed_ecosystem_plugins": {"APPENDER": _StepAppendingEcosystem()}}
+    )
+    ert_config = ErtConfig.with_plugins(runtime_plugins).from_file_contents(
+        "NUM_REALIZATIONS 1\nECOSYSTEM APPENDER STEP:make_directory\n"
+    )
+    assert ert_config.forward_model_step_name_list() == ["MAKE_DIRECTORY"]
+    assert ert_config.ecosystem == "APPENDER"
+
+
+def test_that_ecosystem_plugins_accepting_var_keyword_get_all_options():
+    received = {}
+
+    class KwargsEcosystem(EcosystemPlugin):
+        name: str = "KWARGS"
+
+        def configure(self, config_dict, **options):
+            received.update(options)
+
+    runtime_plugins = get_site_plugins().model_copy(
+        update={"installed_ecosystem_plugins": {"KWARGS": KwargsEcosystem()}}
+    )
+    ErtConfig.with_plugins(runtime_plugins).from_file_contents(
+        "NUM_REALIZATIONS 1\nECOSYSTEM KWARGS ANY:thing OTHER:value\n"
+    )
+    assert received == {"any": "thing", "other": "value"}
+
+
+def test_that_unknown_ecosystem_option_gives_error_listing_accepted_options():
+    runtime_plugins = get_site_plugins().model_copy(
+        update={"installed_ecosystem_plugins": {"APPENDER": _StepAppendingEcosystem()}}
+    )
+    with pytest.raises(
+        ConfigValidationError,
+        match=r"Line 2.*'APPENDER' does not accept option NOPE.*\['STEP'\]",
+    ):
+        ErtConfig.with_plugins(runtime_plugins).from_file_contents(
+            "NUM_REALIZATIONS 1\nECOSYSTEM APPENDER NOPE:1\n"
+        )
+
+
+class _SignatureEcosystem(EcosystemPlugin):
+    name: str = "SIGNATURE"
+
+    def configure(self, config_dict, *, keyword_only):
+        pass
+
+
+def test_that_validate_options_accepts_keyword_only_arguments_case_insensitively():
+    _validate_options(_SignatureEcosystem(), {"KEYWORD_ONLY": "1"})
+
+
+def test_that_validate_options_rejects_the_config_dict_parameter_as_an_option():
+    with pytest.raises(
+        ConfigValidationError, match="does not accept option CONFIG_DICT"
+    ):
+        _validate_options(_SignatureEcosystem(), {"CONFIG_DICT": "1"})
+
+
+def test_that_validate_options_reports_every_unknown_option_and_the_accepted_ones():
+    with pytest.raises(ConfigValidationError) as err:
+        _validate_options(
+            _SignatureEcosystem(), {"KEYWORD_ONLY": "1", "FOO": "1", "BAR": "2"}
+        )
+
+    messages = [info.message for info in err.value.errors]
+    assert len(messages) == 2
+    assert all("['KEYWORD_ONLY']" in m for m in messages)
+    assert [("FOO" in m, "BAR" in m) for m in messages] == [
+        (True, False),
+        (False, True),
+    ]
+
+
+def test_that_config_errors_raised_by_ecosystem_configure_keep_their_context():
+    runtime_plugins = get_site_plugins().model_copy(
+        update={"installed_ecosystem_plugins": {"APPENDER": _StepAppendingEcosystem()}}
+    )
+    with pytest.raises(ConfigValidationError, match=r"Line 2.*Unknown step bad"):
+        ErtConfig.with_plugins(runtime_plugins).from_file_contents(
+            "NUM_REALIZATIONS 1\nECOSYSTEM APPENDER STEP:bad\n"
+        )
+
+
+def test_that_ecosystem_arguments_must_be_options():
+    with pytest.raises(
+        ConfigValidationError,
+        match=r"Line 2.*Option argument should be of the form 'key':'value', got 'B'",
+    ):
+        ErtConfig.from_file_contents("NUM_REALIZATIONS 1\nECOSYSTEM A B\n")

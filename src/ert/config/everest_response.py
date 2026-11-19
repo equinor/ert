@@ -36,7 +36,7 @@ class EverestResponse(SimulationResponseConfig):
                 raise InvalidResponseFile(str(err)) from err
             return pl.DataFrame(
                 {
-                    "values": pl.Series(data, dtype=pl.Float32),
+                    "values": pl.Series(data, dtype=pl.Float64),
                 }
             )
 
