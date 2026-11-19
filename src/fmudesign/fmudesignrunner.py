@@ -37,6 +37,7 @@ from ert.plugins import setup_site_logging
 from ert.shared import __version__ as ert_version
 from ert.trace import trace, tracer
 from fmudesign.exceptions import FmudesignError
+from fmudesign.quality_report import QualityReporter
 
 from ._excel_to_design import excel_to_config
 from .create_design import DesignMatrix, _normalize_xlsx_filename
@@ -282,14 +283,25 @@ def subcommand_run(args: Namespace, parser: ArgumentParser) -> None:
         default_val_sheet=args.defaultvalues,
     )
 
-    # If destination is 'analysis/generateddesignmatrix.xlsx', then plots
-    # will be saved to 'analysis/generateddesignmatrix/<SENSNAME>/<VARNAME>.png'
-    output_dir = Path(destination).with_suffix("")
-    design = DesignMatrix(
-        config=fmudesign_config, verbosity=args.verbose, output_dir=output_dir
-    )
+    design = DesignMatrix(config=fmudesign_config, verbosity=args.verbose)
+
+    if args.verbose > 0:
+        quality_report(args.verbose > 1, design, destination)
 
     design.to_xlsx(args.destination)
+
+
+def quality_report(save_plot: bool, design: DesignMatrix, destination: str) -> None:
+    # If destination is 'analysis/generateddesignmatrix.xlsx', then plots
+    # will be saved to 'analysis/generateddesignmatrix/<SENSNAME>/<VARNAME>.png'
+    plot_dir = Path(destination).with_suffix("")
+    for sensitivity, variables in design.mc_sensitivities:
+        save_plot_ = save_plot or sensitivity.sensname == "background"
+        reporter = QualityReporter(sensitivity.sensvalues, variables)
+        reporter.report(
+            correlation_dfs=sensitivity.correlation_dfs_,
+            output_dir=plot_dir / sensitivity.sensname if save_plot_ else None,
+        )
 
 
 def subcommand_init(args: Namespace, parser: ArgumentParser) -> None:

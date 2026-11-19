@@ -65,6 +65,29 @@ class QualityReporter:
         self.variables = variables
         assert not self.df.empty
 
+    def report(
+        self,
+        correlation_dfs: dict[str, pd.DataFrame],
+        output_dir: Path | None = None,
+    ) -> None:
+        """Print statistics for the samples and, if `output_dir` is given,
+        save plots of them there.
+        """
+        self.print_numeric()
+        self.print_discrete()
+        for corr_name, df_corr in correlation_dfs.items():
+            self.print_correlation(corr_name, df_corr)
+
+        if output_dir is None:
+            return
+
+        self.plot_columns(output_dir=output_dir)
+        for corr_name, df_corr in correlation_dfs.items():
+            self.plot_correlation_heatmap(corr_name, df_corr, output_dir=output_dir)
+            # Only plot pairgrid for small correlation groups
+            if len(df_corr) <= 6:
+                self.plot_correlation(corr_name, df_corr, output_dir=output_dir)
+
     def print_numeric(self) -> None:
         """Print statistics for all numerical columns."""
         df_numeric = self.df.select_dtypes(include="number")
