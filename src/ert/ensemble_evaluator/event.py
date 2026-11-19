@@ -1,17 +1,22 @@
 from collections.abc import Mapping
 from datetime import datetime
 from typing import Any, Literal
+from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, field_serializer, field_validator
 
 from .snapshot import EnsembleSnapshot
 
 
+class EnsembleEvent(BaseModel):
+    ensemble_id: UUID
+
+
 class ExperimentStatusEvent(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True, extra="forbid")
 
 
-class _UpdateEvent(ExperimentStatusEvent):
+class _UpdateEvent(ExperimentStatusEvent, EnsembleEvent):
     iteration_label: str
     total_iterations: int
     progress: float

@@ -16,6 +16,7 @@ from ert.analysis import (
 from ert.analysis.event import DataSection
 from ert.ensemble_evaluator.event import (
     EndEvent,
+    EnsembleEvent,
     FullSnapshotEvent,
     SnapshotUpdateEvent,
     StartEvent,
@@ -26,10 +27,15 @@ from ert.workflow_runner import WorkflowJobStatus
 logger = logging.getLogger(__name__)
 
 
-class RunModelEvent(BaseModel):
+class RunModelEvent(EnsembleEvent):
+    """Event emitted during an update step.
+
+    `iteration` is the iteration of the prior ensemble being updated.
+    `ensemble_id` is the posterior ensemble produced by the update.
+    """
+
     model_config = ConfigDict(arbitrary_types_allowed=True, extra="forbid")
     iteration: int
-    run_id: UUID
 
 
 class RunModelStatusEvent(RunModelEvent):
@@ -64,6 +70,7 @@ class RunModelTimeEvent(RunModelEvent):
 
 class RunModelUpdateBeginEvent(RunModelEvent):
     event_type: Literal["RunModelUpdateBeginEvent"] = "RunModelUpdateBeginEvent"
+    prior_id: UUID
 
 
 class RunModelDataEvent(RunModelEvent):
@@ -73,7 +80,7 @@ class RunModelDataEvent(RunModelEvent):
 
     def write_as_csv(self, output_path: Path | None) -> None:
         if output_path and self.data:
-            self.data.to_csv(self.name, output_path / str(self.run_id))
+            self.data.to_csv(self.name, output_path / str(self.ensemble_id))
 
 
 class RunModelUpdateEndEvent(RunModelEvent):
@@ -82,7 +89,7 @@ class RunModelUpdateEndEvent(RunModelEvent):
 
     def write_as_csv(self, output_path: Path | None) -> None:
         if output_path and self.data:
-            self.data.to_csv("Report", output_path / str(self.run_id))
+            self.data.to_csv("Report", output_path / str(self.ensemble_id))
 
 
 class RunModelErrorEvent(RunModelEvent):
@@ -92,7 +99,7 @@ class RunModelErrorEvent(RunModelEvent):
 
     def write_as_csv(self, output_path: Path | None) -> None:
         if output_path and self.data:
-            self.data.to_csv("Report", output_path / str(self.run_id))
+            self.data.to_csv("Report", output_path / str(self.ensemble_id))
 
 
 class WorkflowEvent(BaseModel, extra="forbid"):
@@ -114,7 +121,7 @@ class WorkflowEvent(BaseModel, extra="forbid"):
     stopped_workflow: bool = False
 
 
-class RunPathCreationEvent(BaseModel, extra="forbid"):
+class RunPathCreationEvent(EnsembleEvent, extra="forbid"):
     pass
 
 

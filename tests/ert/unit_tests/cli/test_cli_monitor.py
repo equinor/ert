@@ -144,6 +144,7 @@ def test_print_progress():
         realization_count=100,
         status_count={"Finished": 50, "Waiting": 50},
         iteration=0,
+        ensemble_id=uuid4(),
     )
 
     monitor._print_progress(general_event)
@@ -191,6 +192,7 @@ def test_that_print_progress_shows_correct_elapsed_time_beyond_24_hours():
         realization_count=10,
         status_count={"Running": 10},
         iteration=0,
+        ensemble_id=uuid4(),
     )
 
     monitor._print_progress(event)

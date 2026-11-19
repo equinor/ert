@@ -292,6 +292,7 @@ def test_that_failed_realizations_messages_leave_event_snapshots_unchanged():
         "realization_count": 1,
         "status_count": {},
         "iteration": 0,
+        "ensemble_id": uuid.uuid4(),
     }
     events = [
         FullSnapshotEvent(
@@ -693,7 +694,7 @@ async def test_that_started_everest_experiment_passes_status_events_and_id_to_no
         received_events.append((experiment_run_id, event))
 
     events = [
-        RunModelStatusEvent(iteration=0, run_id=uuid.uuid4(), msg="running"),
+        RunModelStatusEvent(iteration=0, ensemble_id=uuid.uuid4(), msg="running"),
         EndEvent(failed=False, msg="done"),
     ]
 
