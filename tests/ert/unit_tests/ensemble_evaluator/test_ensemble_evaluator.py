@@ -426,9 +426,9 @@ def test_that_memory_overspending_warning_suggests_realization_memory_from_peak_
 
     assert evaluator.max_memory_violation.amount == 13_100_000
     message = evaluator.max_memory_violation.message
-    assert "used up to 13M of memory in step 'step_a'" in message
-    assert "only requested 5M" in message
-    assert "REALIZATION_MEMORY 1G" in message
+    assert "used up to 13MB of memory in step 'step_a'" in message
+    assert "only requested 5MB" in message
+    assert "REALIZATION_MEMORY 1GB" in message
 
 
 def test_that_memory_overspending_warning_states_that_default_was_used(
@@ -444,10 +444,10 @@ def test_that_memory_overspending_warning_states_that_default_was_used(
     )
 
     message = evaluator.max_memory_violation.message
-    assert "used up to 7.5G of memory in step 'step_a'" in message
+    assert "used up to 7.5GB of memory in step 'step_a'" in message
     assert "REALIZATION_MEMORY is not set in the Ert config" in message
-    assert "default of 7G" in message
-    assert "REALIZATION_MEMORY 9G" in message
+    assert "default of 7GB" in message
+    assert "REALIZATION_MEMORY 9GB" in message
 
 
 @pytest.mark.parametrize(

@@ -74,12 +74,12 @@ REALIZATION_MEMORY_DOCS_URL = (
 
 def _format_memory(byte_count: int) -> str:
     if byte_count < 1024**3:
-        return f"{ceil(byte_count / 1024**2)}M"
-    return f"{ceil(byte_count * 10 / 1024**3) / 10:g}G"
+        return f"{ceil(byte_count / 1024**2)}MB"
+    return f"{ceil(byte_count * 10 / 1024**3) / 10:g}GB"
 
 
 def _suggest_realization_memory(peak_usage: int) -> str:
-    return f"{ceil(peak_usage * 11 / (10 * 1024**3))}G"
+    return f"{ceil(peak_usage * 11 / (10 * 1024**3))}GB"
 
 
 logger = logging.getLogger(__name__)
