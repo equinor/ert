@@ -24,7 +24,8 @@
       "activate_script": "activate"
     },
     "stop_long_running": false,
-    "max_runtime": null
+    "max_runtime": null,
+    "realization_memory_is_site_default": false
   },
   "forward_model_steps": [
     {
