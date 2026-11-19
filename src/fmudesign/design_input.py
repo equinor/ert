@@ -30,9 +30,9 @@ class DesignInput:
 
     @classmethod
     def from_dataframe(cls, input_filename: str, df: pd.DataFrame) -> Self:
-        # Strip 'sensname'; whitespace-only cells count as empty
-        sensname = df["sensname"].str.strip()
-        df = df.assign(sensname=sensname.mask(sensname.eq(""))).dropna(how="all")
+        # Strip text cells; whitespace-only cells count as empty
+        df = df.map(lambda cell: cell.strip() if isinstance(cell, str) else cell)
+        df = df.mask(df.eq("")).dropna(how="all")
         _check_designinput(df)
         df["sensname"] = df["sensname"].ffill()
 

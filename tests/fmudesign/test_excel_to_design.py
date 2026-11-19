@@ -170,8 +170,12 @@ def test_that_whitespace_only_sensname_continues_the_sensitivity_above(use_tmpdi
     assert list(sensitivities["rms_seed"]["parameters"]) == ["A", "B"]
 
 
-def test_that_rows_holding_only_a_whitespace_sensname_are_ignored(use_tmpdir):
-    blank_row = ["   ", "", "", "", ""]
+@pytest.mark.parametrize(
+    "blank_row",
+    [["   ", "", "", "", ""], ["", "", "   ", "", ""]],
+    ids=["whitespace sensname", "whitespace param_name"],
+)
+def test_that_rows_holding_only_whitespace_are_ignored(use_tmpdir, blank_row):
     design_input = pd.DataFrame(
         data=[
             ["sensname", "type", "param_name", "dist_name", "dist_param1"],
@@ -186,6 +190,34 @@ def test_that_rows_holding_only_a_whitespace_sensname_are_ignored(use_tmpdir):
     sensitivities = excel_to_config(input_path).sensitivities
     assert list(sensitivities) == ["rms_seed"]
     assert list(sensitivities["rms_seed"]["parameters"]) == ["A", "B"]
+
+
+def test_that_whitespace_around_design_input_text_is_stripped(use_tmpdir):
+    design_input = pd.DataFrame(
+        data=[
+            ["sensname", "type", "param_name", "dist_name", "dist_param1"],
+            ["rms_seed", " seed ", " A ", " const ", 1],
+        ]
+    )
+    input_path = _write_config_workbook("designinput.xlsx", design_input=design_input)
+
+    sensitivities = excel_to_config(input_path).sensitivities
+    assert sensitivities["rms_seed"]["parameters"] == {"A": ["const", 1]}
+
+
+def test_that_whitespace_only_cell_in_a_populated_row_counts_as_empty(use_tmpdir):
+    design_input = pd.DataFrame(
+        data=[
+            ["sensname", "type", "param_name", "dist_name", "dist_param1"],
+            ["rms_seed", "seed", "A", "const", "   "],
+            ["", "", "B", "const", "low"],
+            ["", "", "C", "const", 3],
+        ]
+    )
+    input_path = _write_config_workbook("designinput.xlsx", design_input=design_input)
+
+    with pytest.raises(FmudesignError, match='a value in "dist_param1"'):
+        excel_to_config(input_path)
 
 
 def test_that_excel_to_design_strips_sensitivity_and_parameter_name_whitespace(
