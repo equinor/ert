@@ -576,6 +576,37 @@ def test_saving_everest_metadata_to_ensemble(tmp_path):
         assert ensemble.everest_realization_info == realization_info_dict
 
 
+def test_that_everest_batch_success_defaults_to_false_and_is_persisted(tmp_path):
+    with open_storage(tmp_path, mode="w") as storage:
+        experiment = storage.create_experiment()
+        ensemble = storage.create_ensemble(
+            experiment, ensemble_size=1, iteration=0, name="batch_0"
+        )
+
+        assert ensemble.everest_batch_success is False
+        ensemble.save_everest_batch_success(True)
+
+    with open_storage(tmp_path, mode="r") as storage:
+        ensemble = next(storage.ensembles)
+        assert ensemble.everest_batch_success is True
+
+
+def test_that_missing_everest_batch_success_defaults_to_false(tmp_path):
+    with open_storage(tmp_path, mode="w") as storage:
+        experiment = storage.create_experiment()
+        ensemble = storage.create_ensemble(
+            experiment, ensemble_size=1, iteration=0, name="batch_0"
+        )
+        index_path = ensemble.mount_point / "index.json"
+        index = json.loads(index_path.read_text(encoding="utf-8"))
+        index.pop("everest_batch_success")
+        index_path.write_text(json.dumps(index), encoding="utf-8")
+
+    with open_storage(tmp_path, mode="r") as storage:
+        ensemble = next(storage.ensembles)
+        assert ensemble.everest_batch_success is False
+
+
 def test_that_saving_partial_everest_realization_info_raises_error(tmp_path):
     with open_storage(tmp_path, mode="w") as storage:
         experiment = storage.create_experiment()
