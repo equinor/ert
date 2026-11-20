@@ -246,7 +246,7 @@ def _parse_optimization(
             ropt_backend["convergence_tolerance"] = ever_opt.convergence_tolerance
 
         if ever_opt.speculative:
-            ropt_gradient["evaluation_policy"] = "speculative"
+            ropt_optimizer["evaluation_policy"] = "speculative"
 
         options: list[str] | dict[str, Any] = []
         if ever_opt.options is not None:
@@ -339,7 +339,7 @@ def everest2ropt(
         ropt_realization_filters = [cvar_config]
         # For efficiency, function and gradient evaluations should be split
         # so that no unnecessary gradients are calculated:
-        ropt_gradient["evaluation_policy"] = "separate"
+        ropt_optimizer["evaluation_policy"] = "separate"
 
     ropt_config: dict[str, Any] = {
         "variables": ropt_variables,

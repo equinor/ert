@@ -42,21 +42,18 @@ def _rename_ropt_df_columns(df: pl.DataFrame) -> pl.DataFrame:
     renames = {
         "objective": "objective_name",
         "target_objective": "total_objective_value",
-        "target_gradient": "total_objective_value",
         "variable": "control_name",
         "variables": "control_value",
-        "functions.objectives": "objective_value",
-        "functions.constraints": "constraint_value",
-        "gradients.objectives": "objective_value",
-        "gradients.constraints": "constraint_value",
+        "aggregates.objectives": "objective_value",
+        "aggregates.constraints": "constraint_value",
         "constraint_info.bound_violation": "bound_constraint_violation",
         "constraint_info.linear_violation": "input_constraint_violation",
         "constraint_info.nonlinear_violation": "output_constraint_violation",
         "linear_constraint": "input_constraint_index",
         "nonlinear_constraint": "constraint_name",
-        "perturbed_variables": "perturbed_control_value",
-        "evaluations.perturbed_objectives": "perturbed_objective_value",
-        "evaluations.perturbed_constraints": "perturbed_constraint_value",
+        "perturbations.variables": "perturbed_control_value",
+        "perturbations.objectives": "perturbed_objective_value",
+        "perturbations.constraints": "perturbed_constraint_value",
     }
     return df.rename({k: v for k, v in renames.items() if k in df.columns})
 
@@ -115,10 +112,10 @@ def _unpack_function_results(results: FunctionResults) -> UnpackedFunctionResult
     # but we select all to also get the constraint values (if they exist)
     logger.debug("Storing function results")
 
-    if results.functions is not None and results.functions.constraints is not None:
+    if results.aggregates is not None and results.aggregates.constraints is not None:
         batch_constraints = _ropt_to_df(
             results,
-            values=["functions.constraints"],
+            values=["aggregates.constraints"],
             select=["batch_id", "nonlinear_constraint"],
         )
 
@@ -133,7 +130,7 @@ def _unpack_function_results(results: FunctionResults) -> UnpackedFunctionResult
 
     batch_objectives = _ropt_to_df(
         results,
-        values=["functions.objectives", "target_objective"],
+        values=["aggregates.objectives", "target_objective"],
         select=["batch_id", "objective"],
     )
     batch_objectives = batch_objectives.pivot(
@@ -193,14 +190,14 @@ def _unpack_function_results(results: FunctionResults) -> UnpackedFunctionResult
 
 def _unpack_gradient_results(results: GradientResults) -> UnpackedGradientResults:
     logger.debug("Storing gradient results")
-    have_perturbed_constraints = results.evaluations.perturbed_constraints is not None
-    if results.gradients is not None:
-        have_constraints = results.gradients.constraints is not None
+    have_perturbed_constraints = results.perturbations.constraints is not None
+    if results.aggregates is not None:
+        have_constraints = results.aggregates.constraints is not None
         batch_objective_gradient = _ropt_to_df(
             results,
             values=(
-                ["target_gradient", "gradients.objectives"]
-                + (["gradients.constraints"] if have_constraints else [])
+                ["target_objective", "aggregates.objectives"]
+                + (["aggregates.constraints"] if have_constraints else [])
             ),
             select=(
                 ["batch_id", "variable", "objective"]

@@ -10,7 +10,6 @@
     }
   ],
   "gradient": {
-    "evaluation_policy": "speculative",
     "merge_realizations": false,
     "number_of_perturbations": 5,
     "perturbation_min_success": 5
@@ -82,6 +81,7 @@
     ]
   },
   "optimizer": {
+    "evaluation_policy": "speculative",
     "max_batches": 5,
     "output_dir": "not_relevant",
     "stderr": "optimizer.stderr",
