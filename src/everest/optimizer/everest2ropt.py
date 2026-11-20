@@ -231,7 +231,12 @@ def _parse_optimization(
     cvar_config: dict[str, Any] = {}
 
     if ever_opt is not None:
-        ropt_backend["method"] = ever_opt.algorithm
+        # Use the everest-optimizers replacement of the Dakota optpp_q_newton:
+        ropt_backend["method"] = (
+            "optpp_q_newton2"
+            if ever_opt.algorithm in {"optpp_q_newton", "dakota/optpp_q_newton"}
+            else ever_opt.algorithm
+        )
 
         if ever_opt.max_iterations is not None:
             ropt_backend["max_iterations"] = ever_opt.max_iterations
