@@ -687,6 +687,9 @@ ENSPATH is set to "storage".
 
 The ENSPATH keyword is optional.
 
+Only one ERT GUI can use a storage folder at a time, including when several
+configuration files share the same ENSPATH. See :ref:`one_gui_per_storage`.
+
 .. _install_job:
 
 INSTALL_JOB

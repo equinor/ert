@@ -59,6 +59,7 @@ from ert.run_models import (
     SingleTestRun,
 )
 from ert.services import ErtClient, ErtServerController
+from ert.services.ert_server_controller import ServerAlreadyRunningError
 from ert.storage import open_storage
 from tests.ert.conftest import _create_design_matrix
 from tests.ert.handle_runpath_dialog import handle_runpath_dialog
@@ -234,6 +235,26 @@ def test_that_initial_window_does_not_wait_for_storage_server(qapp):
         gui, *_ = ert.gui.main._start_initial_gui_window(args, log_handler)
         assert isinstance(gui, ErtMainWindow)
         get_client.assert_not_called()
+
+
+@pytest.mark.usefixtures("copy_poly_case", "qapp")
+def test_that_run_gui_reports_error_and_exits_when_server_is_already_running(capsys):
+    args = Mock()
+    args.config = "poly.ert"
+    with (
+        patch("ert.gui.main.signal"),
+        # Constructing a second QApplication next to qapp segfaults
+        patch("ert.gui.main.QApplication") as application,
+        patch.object(
+            ErtServerController,
+            "init_service",
+            side_effect=ServerAlreadyRunningError("Server already running for poly"),
+        ),
+    ):
+        assert ert.gui.main.run_gui(args) == -1
+
+    application.return_value.exec.assert_not_called()
+    assert "Server already running for poly" in capsys.readouterr().err
 
 
 @pytest.mark.usefixtures("copy_poly_case")

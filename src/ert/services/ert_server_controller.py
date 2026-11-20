@@ -63,6 +63,10 @@ class ErtServerExit(OSError):
     pass
 
 
+class ServerAlreadyRunningError(RuntimeError):
+    pass
+
+
 def raise_ert_server_exit_on_signal(signum: int, frame: types.FrameType | None) -> None:
     raise ErtServerExit(f"Signal {signum} received.")
 
@@ -329,7 +333,7 @@ class ErtServerController:
     ) -> ErtServerContext:
         conn_info_path = project / _ERT_SERVER_CONNECTION_INFO_FILE
 
-        try:
+        try:  # ruff: ignore[too-many-statements-in-try-clause]
             if conn_info_path.stat().st_size > 0:
                 conn_info = json.loads(conn_info_path.read_text(encoding="utf-8"))
                 controller = ErtServerController(
@@ -338,7 +342,13 @@ class ErtServerController:
                     logging_config=logging_config,
                 )
                 controller.fetch_url()
-                return ErtServerContext(controller)
+                logger.warning(
+                    f"Can not connect to already running server.\n"
+                    f"Connection info file exists and is non-empty at {conn_info_path}"
+                )
+                raise ServerAlreadyRunningError(
+                    f"Server already running for project at {project}"
+                )
         except FileNotFoundError:
             pass
         except (json.JSONDecodeError, KeyError, TimeoutError) as e:
