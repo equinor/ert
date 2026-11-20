@@ -107,7 +107,7 @@ def serialize_dataframe_to_response(
 
 
 def seismic_coordinate_expression() -> pl.Expr:
-    """Build am ``"east,north"`` coordinate label for seismic data points.
+    """Build an ``"east,north"`` coordinate label for seismic data points.
 
     Combines the ``east`` and ``north`` columns into a single comma-separated string
     identifying each seismic point. Used as the x-axis / column key when plotting
