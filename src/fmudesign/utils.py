@@ -2,7 +2,7 @@
 
 import math
 from collections import Counter
-from collections.abc import Callable, Hashable, Iterable
+from collections.abc import Callable, Hashable, Iterable, Mapping
 from pathlib import Path
 from typing import Any
 
@@ -90,15 +90,28 @@ def read_default_values(
     return defaults
 
 
-def read_excel_sheet(filename: str, sheet_name: str | int = 0) -> pd.DataFrame:
+def read_excel_sheet(
+    filename: str,
+    sheet_name: str | int = 0,
+    *,
+    dtype: Mapping[str, type] | None = None,
+) -> pd.DataFrame:
     """Read an Excel sheet, dropping empty rows and unnamed columns, which
     formatting of empty cells can introduce.
     """
     return (
-        pd.read_excel(filename, sheet_name, engine="openpyxl")
+        pd.read_excel(filename, sheet_name, engine="openpyxl", dtype=dtype)
         .dropna(axis=0, how="all")
         .loc[:, lambda df: ~df.columns.astype(str).str.contains("^Unnamed")]
     )
+
+
+def strip_text_cells(df: pd.DataFrame) -> pd.DataFrame:
+    """Strip whitespace around text cells. Whitespace-only cells count as
+    empty, and rows left without any value are dropped.
+    """
+    df = df.map(lambda cell: cell.strip() if isinstance(cell, str) else cell)
+    return df.mask(df.eq("")).dropna(how="all")
 
 
 def parameters_from_extern(filename: str) -> pd.DataFrame:
