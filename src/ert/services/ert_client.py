@@ -70,6 +70,20 @@ def _escape(value: str) -> str:
     return quote(quote(value, safe=""))
 
 
+# Close codes that mean the connection broke rather than that the server ended
+# the stream on purpose: abnormal closure (no close frame, e.g. a TLS or TCP
+# reset), service restart, try again later and bad gateway.
+_TRANSIENT_WEBSOCKET_CLOSE_CODES = frozenset({1006, 1012, 1013, 1014})
+
+
+def _is_transient_closure(error: ConnectionClosedError) -> bool:
+    # No close frame from the server: the transport broke, or the client gave
+    # up on it (e.g. a keepalive timeout). Both are worth a bounded retry.
+    if error.rcvd is None:
+        return True
+    return error.rcvd.code in _TRANSIENT_WEBSOCKET_CLOSE_CODES
+
+
 def _uncached_copy[T](value: T) -> T:
     if isinstance(value, pd.DataFrame):
         return cast("T", value.copy())
@@ -513,10 +527,12 @@ class ErtClient:
         open_timeout: float = 30.0,
         websocket_recv_timeout: float = 1.0,
     ) -> Generator[StatusEvents, None, None]:
-        """Yield events synchronously until the WebSocket disconnects.
+        """Yield events synchronously until the event stream ends.
 
         Each iterator owns a separate connection and blocks only its consuming
-        thread. Close the iterator when stopping consumption early.
+        thread. A connection that breaks mid-stream is reopened a limited number
+        of times, and the events the server replays on the new connection are
+        not yielded again. Close the iterator when stopping consumption early.
         """
         with asyncio.Runner() as runner:
             events = self.iter_events_async(
@@ -559,25 +575,58 @@ class ErtClient:
         credentials = b64encode(f"{username}:{password}".encode()).decode()
 
         logger.info("Connecting to WebSocket event stream at %s", url)
-        websocket = await self._connect_with_retry(url, open_timeout, credentials)
-        if websocket is None:
-            return
-
+        # The server replays the whole event history to every new connection,
+        # so fingerprints of the messages received so far are kept in order to
+        # recognise and skip that replay after reconnecting.
+        received: list[int] = []
         event_count = 0
-        try:  # ruff: ignore[too-many-statements-in-try-clause]
-            logger.info("Connected to WebSocket event stream at %s", url)
+        end_event_received = False
+        reconnects = 0
+        delays: Generator[float] = backoff()
+        try:
             while True:
-                try:
-                    async with asyncio.timeout(websocket_recv_timeout):
-                        message = await websocket.recv()
-                except TimeoutError:
-                    message = None
-                if message:
-                    try:
-                        event = status_event_from_json(message)
-                    except ValidationError as e:
-                        logger.error("Error when processing event %s", exc_info=e)
-                    else:
+                if reconnects:
+                    await asyncio.sleep(next(delays))
+                websocket = await self._connect_with_retry(
+                    url, open_timeout, credentials
+                )
+                if websocket is None:
+                    return
+                replayed = 0
+                try:  # ruff: ignore[too-many-statements-in-try-clause]
+                    logger.info("Connected to WebSocket event stream at %s", url)
+                    while True:
+                        try:
+                            async with asyncio.timeout(websocket_recv_timeout):
+                                message = await websocket.recv()
+                        except TimeoutError:
+                            continue
+                        if not message:
+                            continue
+                        fingerprint = hash(message)
+                        if replayed < len(received):
+                            if received[replayed] == fingerprint:
+                                replayed += 1
+                                continue
+                            # The server clears its event history when failed
+                            # realizations are rerun.
+                            logger.warning(
+                                "WebSocket event stream for experiment %s diverged "
+                                "from the events received before reconnecting, "
+                                "treating the remaining events as new",
+                                experiment_id,
+                            )
+                            del received[replayed:]
+                        received.append(fingerprint)
+                        replayed = len(received)
+                        if reconnects:
+                            reconnects = 0
+                            delays = backoff()
+                        try:
+                            event = status_event_from_json(message)
+                        except ValidationError as e:
+                            logger.error("Error when processing event %s", exc_info=e)
+                            continue
                         event_count += 1
                         if event_count == 1:
                             logger.info(
@@ -585,22 +634,44 @@ class ErtClient:
                                 experiment_id,
                                 type(event).__name__,
                             )
+                        end_event_received |= isinstance(event, EndEvent)
                         yield event
-
-        except ConnectionClosedOK:
-            logger.debug("Connection closed by server")
-        except ConnectionClosedError as error:
-            logger.error(
-                "WebSocket event stream for experiment %s at %s closed abnormally: %s",
-                experiment_id,
-                url,
-                error,
-            )
-        except Exception:
-            logger.error(traceback.format_exc())
+                except ConnectionClosedOK:
+                    logger.debug("Connection closed by server")
+                    return
+                except ConnectionClosedError as error:
+                    if (
+                        end_event_received
+                        or not _is_transient_closure(error)
+                        or reconnects >= _WEBSOCKET_CONNECT_RETRIES
+                    ):
+                        logger.error(
+                            "WebSocket event stream for experiment %s at %s "
+                            "closed abnormally: %s",
+                            experiment_id,
+                            url,
+                            error,
+                        )
+                        return
+                    reconnects += 1
+                    logger.warning(
+                        "WebSocket event stream for experiment %s at %s closed "
+                        "abnormally: %s; reconnecting (attempt %s/%s) and skipping "
+                        "the %s messages already received",
+                        experiment_id,
+                        url,
+                        error,
+                        reconnects,
+                        _WEBSOCKET_CONNECT_RETRIES,
+                        len(received),
+                    )
+                except Exception:
+                    logger.error(traceback.format_exc())
+                    return
+                finally:
+                    with suppress(WebSocketException, OSError):
+                        await websocket.close()
         finally:
-            with suppress(WebSocketException, OSError):
-                await websocket.close()
             logger.info(
                 "WebSocket event stream for experiment %s ended after %s events",
                 experiment_id,
