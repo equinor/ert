@@ -213,14 +213,14 @@ def test_everest2ropt_samplers(ever_config):
         ever_config.optimization_output_dir,
     )
 
-    assert len(ropt_config["samplers"]) == 3
+    assert len(ropt_config["sampler"]) == 3
     assert ropt_config["variables"]["samplers"] == [0, 1, 2, 0, 0, 0]
-    assert ropt_config["samplers"][0]["method"] == "norm"
-    assert not ropt_config["samplers"][0]["shared"]
-    assert ropt_config["samplers"][1]["method"] == "uniform"
-    assert not ropt_config["samplers"][1]["shared"]
-    assert ropt_config["samplers"][2]["method"] == "norm"
-    assert ropt_config["samplers"][2]["shared"]
+    assert ropt_config["sampler"][0]["method"] == "norm"
+    assert not ropt_config["sampler"][0]["shared"]
+    assert ropt_config["sampler"][1]["method"] == "uniform"
+    assert not ropt_config["sampler"][1]["shared"]
+    assert ropt_config["sampler"][2]["method"] == "norm"
+    assert ropt_config["sampler"][2]["shared"]
 
 
 def test_everest2ropt_cvar(ever_config):
@@ -247,11 +247,11 @@ def test_everest2ropt_cvar(ever_config):
         config.optimization_output_dir,
     )
     assert ropt_config["objectives"]["realization_filters"] == [0]
-    assert len(ropt_config["realization_filters"]) == 1
-    assert ropt_config["realization_filters"][0]["method"] == "cvar-objective"
-    assert ropt_config["realization_filters"][0]["options"]["sort"] == [0]
+    assert len(ropt_config["realization_filter"]) == 1
+    assert ropt_config["realization_filter"][0]["method"] == "cvar-objective"
+    assert ropt_config["realization_filter"][0]["options"]["sort"] == [0]
     assert math.isclose(
-        ropt_config["realization_filters"][0]["options"]["percentile"], 0.3
+        ropt_config["realization_filter"][0]["options"]["percentile"], 0.3
     )
 
 

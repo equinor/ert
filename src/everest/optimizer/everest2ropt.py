@@ -363,10 +363,10 @@ def everest2ropt(
     if ropt_gradient:
         ropt_config["gradient"] = ropt_gradient
     if ropt_realization_filters:
-        ropt_config["realization_filters"] = ropt_realization_filters
+        ropt_config["realization_filter"] = ropt_realization_filters
     if ropt_function_estimators:
-        ropt_config["function_estimators"] = ropt_function_estimators
+        ropt_config["function_estimator"] = ropt_function_estimators
     if ropt_samplers:
-        ropt_config["samplers"] = ropt_samplers
+        ropt_config["sampler"] = ropt_samplers
 
     return ropt_config, [control.initial_guess for control in controls]

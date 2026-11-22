@@ -5,7 +5,7 @@
     "parallel": true,
     "verbose": true
   },
-  "function_estimators": [
+  "function_estimator": [
     {
       "method": "mean"
     }
@@ -65,7 +65,7 @@
       1.0
     ]
   },
-  "samplers": [
+  "sampler": [
     {}
   ],
   "variables": {
