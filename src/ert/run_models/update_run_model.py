@@ -61,7 +61,6 @@ class UpdateRunModel(RunModel, UpdateRunModelConfig):
         """
         progress_callback = functools.partial(
             self.send_smoother_event,
-            prior.iteration,
             posterior,
         )
 
@@ -116,7 +115,7 @@ class UpdateRunModel(RunModel, UpdateRunModelConfig):
 
         self.send_event(
             RunModelUpdateBeginEvent(
-                iteration=prior.iteration,
+                iteration=posterior.iteration,
                 ensemble_id=posterior.id,
                 prior_ensemble_id=prior.id,
             )
@@ -154,7 +153,6 @@ class UpdateRunModel(RunModel, UpdateRunModelConfig):
 
     def send_smoother_event(
         self,
-        iteration: int,
         posterior: Ensemble,
         event: AnalysisEvent,
     ) -> None:
@@ -162,7 +160,7 @@ class UpdateRunModel(RunModel, UpdateRunModelConfig):
             case AnalysisStatusEvent():
                 self.send_event(
                     RunModelStatusEvent(
-                        iteration=iteration,
+                        iteration=posterior.iteration,
                         ensemble_id=posterior.id,
                         msg=event.msg,
                         detail=event.detail,
@@ -171,7 +169,7 @@ class UpdateRunModel(RunModel, UpdateRunModelConfig):
             case AnalysisTimeEvent():
                 self.send_event(
                     RunModelTimeEvent(
-                        iteration=iteration,
+                        iteration=posterior.iteration,
                         ensemble_id=posterior.id,
                         elapsed_time=event.elapsed_time,
                         remaining_time=event.remaining_time,
@@ -187,7 +185,7 @@ class UpdateRunModel(RunModel, UpdateRunModelConfig):
                     )
                 self.send_event(
                     RunModelErrorEvent(
-                        iteration=iteration,
+                        iteration=posterior.iteration,
                         ensemble_id=posterior.id,
                         error_msg=event.error_msg,
                         data=event.data,
@@ -197,7 +195,7 @@ class UpdateRunModel(RunModel, UpdateRunModelConfig):
                 posterior.save_blob(event)
                 self.send_event(
                     RunModelDataEvent(
-                        iteration=iteration,
+                        iteration=posterior.iteration,
                         ensemble_id=posterior.id,
                         name=event.name,
                         data=event.data,
@@ -213,7 +211,7 @@ class UpdateRunModel(RunModel, UpdateRunModelConfig):
                 posterior.save_blob(event)
                 self.send_event(
                     RunModelUpdateEndEvent(
-                        iteration=iteration,
+                        iteration=posterior.iteration,
                         ensemble_id=posterior.id,
                         data=event.data,
                     )

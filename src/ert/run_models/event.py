@@ -30,7 +30,7 @@ logger = logging.getLogger(__name__)
 class RunModelEvent(EnsembleEvent):
     """Event emitted during an update step.
 
-    `iteration` is the iteration of the prior ensemble being updated.
+    `iteration` is the iteration of the posterior ensemble that was created from update.
     `ensemble_id` is the posterior ensemble produced by the update.
     """
 

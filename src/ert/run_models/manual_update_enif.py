@@ -31,7 +31,6 @@ class ManualUpdateEnIF(ManualUpdate):
             random_seed=self.random_seed,
             progress_callback=functools.partial(
                 self.send_smoother_event,
-                prior.iteration,
                 posterior,
             ),
         )

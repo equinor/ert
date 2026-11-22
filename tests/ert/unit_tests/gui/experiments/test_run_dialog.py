@@ -44,6 +44,7 @@ from ert.gui.experiments.multiple_data_assimilation_panel import (
 )
 from ert.gui.experiments.view.realization import RealizationWidget
 from ert.gui.experiments.view.runpath_progress_widget import RunpathProgressWidget
+from ert.gui.experiments.view.update import UpdateWidget
 from ert.gui.experiments.view.workflow_log import WorkflowLogWidget
 from ert.gui.main import GUILogHandler, _setup_main_window
 from ert.gui.tools.file import FileDialog
@@ -54,6 +55,8 @@ from ert.run_models import (
 from ert.run_models.event import (
     EverestBatchResultEvent,
     FinishedTotalRunPathCreationEvent,
+    RunModelStatusEvent,
+    RunModelUpdateBeginEvent,
     RunPathCreatedEvent,
     StartingTotalRunPathCreationEvent,
 )
@@ -1429,6 +1432,44 @@ def test_that_workflow_events_are_collected_in_single_workflows_tab(qtbot: QtBot
     assert dialog._tab_widget.count() == 1
     assert widget._table.item(0, 2).text() == "first"
     assert widget._table.item(1, 2).text() == "second"
+
+    _stop_event_monitoring(qtbot, dialog, queue)
+
+
+@pytest.mark.timeout(10)
+def test_that_update_tab_is_labeled_with_prior_iteration_and_receives_posterior_events(
+    qtbot: QtBot,
+):
+    queue: SimpleQueue = SimpleQueue()
+    mock_api = MagicMock()
+    mock_api.experiment_name = "test"
+
+    dialog = RunDialog("Test", mock_api, queue, MagicMock())
+    qtbot.addWidget(dialog)
+    dialog.setup_event_monitoring()
+
+    posterior_id = uuid4()
+    queue.put(
+        RunModelUpdateBeginEvent(
+            iteration=1, ensemble_id=posterior_id, prior_ensemble_id=uuid4()
+        )
+    )
+    qtbot.waitUntil(lambda: dialog._tab_widget.count() == 1, timeout=2000)
+
+    assert dialog._tab_widget.tabText(0) == "Update 0"
+    update_widget = dialog._tab_widget.widget(0)
+    assert isinstance(update_widget, UpdateWidget)
+    assert update_widget.iteration == 1
+
+    queue.put(
+        RunModelStatusEvent(
+            iteration=1, ensemble_id=posterior_id, msg="posterior status message"
+        )
+    )
+    qtbot.waitUntil(
+        lambda: "posterior status message" in update_widget._msg_list.toPlainText(),
+        timeout=2000,
+    )
 
     _stop_event_monitoring(qtbot, dialog, queue)
 

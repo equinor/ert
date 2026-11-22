@@ -637,7 +637,7 @@ class RunDialog(QFrame):
                 self.progress_update_event.emit(status_count, realization_count)
             case RunModelUpdateBeginEvent(iteration=iteration):
                 widget = UpdateWidget(iteration)
-                self._add_dynamic_tab(widget, f"Update {iteration}")
+                self._add_dynamic_tab(widget, f"Update {iteration - 1}")
                 widget.begin(event)
             case RunModelUpdateEndEvent():
                 self._progress_widget.stop_waiting_progress_bar()

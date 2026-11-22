@@ -111,7 +111,7 @@ def test_that_update_begin_event_refers_to_posterior_and_links_prior(
 
     update_model.send_event.assert_called_once_with(
         RunModelUpdateBeginEvent(
-            iteration=prior.iteration,
+            iteration=posterior.iteration,
             ensemble_id=posterior.id,
             prior_ensemble_id=prior.id,
         )
@@ -149,11 +149,10 @@ _DATA_SECTION = DataSection(
 )
 def test_that_send_smoother_event_persists_update_tables_on_posterior_ensemble(event):
     model = MagicMock(spec=UpdateRunModel)
-    posterior = MagicMock(id=uuid.uuid4())
+    posterior = MagicMock(id=uuid.uuid4(), iteration=1)
 
     UpdateRunModel.send_smoother_event(
         model,
-        iteration=0,
         posterior=posterior,
         event=event,
     )
@@ -161,3 +160,4 @@ def test_that_send_smoother_event_persists_update_tables_on_posterior_ensemble(e
     posterior.save_blob.assert_called_once_with(event)
     (sent_event,) = model.send_event.call_args.args
     assert sent_event.ensemble_id == posterior.id
+    assert sent_event.iteration == posterior.iteration
