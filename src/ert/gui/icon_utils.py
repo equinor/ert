@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from importlib.resources import files
 
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import QRectF, Qt
 from PyQt6.QtGui import QIcon, QPainter, QPixmap
 from PyQt6.QtSvg import QSvgRenderer
 
@@ -26,28 +26,41 @@ def load_icon(name: str, color: str | None = None) -> QIcon:
     return QIcon(_render_pixmap(name, color))
 
 
-def _render_pixmap(name: str, color: str) -> QPixmap:
+def _render_pixmap(name: str, color: str, trailing_gap: float = 0.0) -> QPixmap:
     path = files("ert.gui").joinpath(f"resources/gui/img/{name}")
     data = path.read_bytes().replace(b"currentColor", color.encode())
 
     renderer = QSvgRenderer(bytes(data))
-    pixmap = QPixmap(_RENDER_SIZE, _RENDER_SIZE)
+    pixmap = QPixmap(round(_RENDER_SIZE * (1 + trailing_gap)), _RENDER_SIZE)
     pixmap.fill(Qt.GlobalColor.transparent)
     painter = QPainter(pixmap)
-    renderer.render(painter)
+    renderer.render(painter, QRectF(0, 0, _RENDER_SIZE, _RENDER_SIZE))
     painter.end()
     return pixmap
 
 
-def load_sidebar_icon(name: str, resting: str, active: str, disabled: str) -> QIcon:
-    """Load an SVG icon tinted per state, matching the EDS SideBar.Link.
+def load_stateful_icon(
+    name: str,
+    resting: str,
+    active: str,
+    disabled: str,
+    trailing_gap: float = 0.0,
+) -> QIcon:
+    """Load an SVG icon tinted per state (resting, active and disabled).
 
-    The On state is used by checked (active) buttons.
+    The On state is used by checked (active) buttons. ``trailing_gap`` adds
+    transparent space to the right of the glyph, as a fraction of its width,
+    to widen the gap to a label drawn beside the icon; set the widget's icon
+    size to the matching aspect ratio.
     """
     icon = QIcon()
     for mode in (QIcon.Mode.Normal, QIcon.Mode.Active, QIcon.Mode.Selected):
-        icon.addPixmap(_render_pixmap(name, resting), mode, QIcon.State.Off)
-        icon.addPixmap(_render_pixmap(name, active), mode, QIcon.State.On)
+        icon.addPixmap(
+            _render_pixmap(name, resting, trailing_gap), mode, QIcon.State.Off
+        )
+        icon.addPixmap(_render_pixmap(name, active, trailing_gap), mode, QIcon.State.On)
     for state in (QIcon.State.Off, QIcon.State.On):
-        icon.addPixmap(_render_pixmap(name, disabled), QIcon.Mode.Disabled, state)
+        icon.addPixmap(
+            _render_pixmap(name, disabled, trailing_gap), QIcon.Mode.Disabled, state
+        )
     return icon

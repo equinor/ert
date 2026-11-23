@@ -26,8 +26,15 @@ from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.gui.detect_mode import is_dark_mode
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import wait_cursor
+from ert.gui.ertwidgets.suggestor.suggestor import (
+    DARK_GREEN,
+    DARK_GREY,
+    MEDIUM_GREEN,
+    MEDIUM_GREY,
+    WHITE,
+)
 from ert.gui.find_ert_info import find_ert_info
-from ert.gui.icon_utils import load_icon
+from ert.gui.icon_utils import load_icon, load_stateful_icon
 from ert.gui.summarypanel import SummaryPanel
 from ert.run_models import RunModel
 from ert.run_models.run_model import RunModelAPI
@@ -110,51 +117,72 @@ class ExperimentPanel(QWidget):
         self._experiment_done: bool = True
         self.run_button = QToolButton()
         self.run_button.setObjectName("run_experiment")
-        self.run_button.setIcon(
-            load_icon("play_circle.svg")
-            if is_dark_mode()
-            else load_icon("play_circle.svg", "#007079")
-        )
+        self.run_button.setText("Start")
         self.run_button.setToolTip(EXPERIMENT_IS_MANUAL_UPDATE_MESSAGE)
-        self.run_button.setIconSize(QSize(32, 32))
         self.run_button.clicked.connect(self.run_experiment)
-        self.run_button.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonIconOnly)
-        self.run_button.setMinimumWidth(60)
-        self.run_button.setMinimumHeight(40)
-        self.run_button.setStyleSheet(
-            """
-            QToolButton {
-            border-radius: 10px;
-            background-color: qlineargradient(
-                x1:0, y1:0, x2:0, y2:1,
-                stop:0 #484848,
-                stop:1 #323232
-            );
-            border: 1px solid #1e1e1e;
-            padding: 5px;
-            }
-            QToolButton:hover {
+        self.run_button.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+        if is_dark_mode():
+            self.run_button.setIcon(load_icon("play_circle.svg"))
+            self.run_button.setIconSize(QSize(32, 32))
+            self.run_button.setMinimumWidth(60)
+            self.run_button.setMinimumHeight(40)
+            self.run_button.setStyleSheet(
+                """
+                QToolButton {
+                border-radius: 10px;
                 background-color: qlineargradient(
-                x1:0, y1:0, x2:0, y2:1,
-                stop:0 #575757,
-                stop:1 #424242
-            );
-            }
-        """
-            if is_dark_mode()
-            else """
-            QToolButton {
-            border-radius: 4px;
-            background-color: #ffffff;
-            border: 2px solid #007079;
-            padding: 5px;
-            }
-            QToolButton:hover {
-                background-color: #deedee;
-                border-color: #004f55;
-            }
-        """
-        )
+                    x1:0, y1:0, x2:0, y2:1,
+                    stop:0 #484848,
+                    stop:1 #323232
+                );
+                border: 1px solid #1e1e1e;
+                padding: 5px;
+                }
+                QToolButton:hover {
+                    background-color: qlineargradient(
+                    x1:0, y1:0, x2:0, y2:1,
+                    stop:0 #575757,
+                    stop:1 #424242
+                );
+                }
+                """
+            )
+        else:
+            # EDS contained (primary) button
+            icon_size = 24
+            # Qt draws 4px between icon and text; pad to the 8px EDS button gap.
+            extra_gap = 4
+            self.run_button.setIcon(
+                load_stateful_icon(
+                    "play_circle.svg",
+                    resting=WHITE,
+                    active=WHITE,
+                    disabled=DARK_GREY,
+                    trailing_gap=extra_gap / icon_size,
+                )
+            )
+            self.run_button.setIconSize(QSize(icon_size + extra_gap, icon_size))
+            self.run_button.setFixedHeight(36)
+            self.run_button.setStyleSheet(
+                f"""
+                QToolButton {{
+                    background-color: {MEDIUM_GREEN};
+                    color: {WHITE};
+                    border: none;
+                    border-radius: 4px;
+                    padding: 0px 16px 0px 12px;
+                    font-size: 14px;
+                    font-weight: 500;
+                }}
+                QToolButton:hover {{
+                    background-color: {DARK_GREEN};
+                }}
+                QToolButton:disabled {{
+                    background-color: {MEDIUM_GREY};
+                    color: {DARK_GREY};
+                }}
+                """
+            )
 
         experiment_type_layout.addWidget(self.run_button)
         experiment_type_layout.addStretch(1)

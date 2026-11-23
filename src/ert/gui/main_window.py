@@ -55,7 +55,7 @@ from .ertwidgets.suggestor.suggestor import (
     WHITE,
 )
 from .experiments import ExperimentPanel, RunDialog
-from .icon_utils import load_icon, load_sidebar_icon
+from .icon_utils import load_icon, load_stateful_icon
 
 logger = logging.getLogger(__name__)
 BUTTON_STYLE_SHEET: str = """
@@ -446,7 +446,7 @@ class ErtMainWindow(QMainWindow):
     def _sidebar_icon(name: str) -> QIcon:
         if is_dark_mode():
             return load_icon(name)
-        return load_sidebar_icon(
+        return load_stateful_icon(
             name, resting=TEXT_DEFAULT, active=MEDIUM_GREEN, disabled=DARK_GREY
         )
 
