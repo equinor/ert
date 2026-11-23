@@ -177,7 +177,7 @@ def test_init_prior(qtbot):
     )
     assert notifier.current_ensemble.load_parameters_numpy(
         "COEFFS", np.arange(ensemble.ensemble_size)
-    ).mean() == pytest.approx(-0.002065154158532)
+    ).mean() == pytest.approx(-0.01035298860762638)
 
 
 @pytest.mark.usefixtures("copy_poly_case")

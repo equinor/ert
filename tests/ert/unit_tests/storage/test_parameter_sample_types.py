@@ -226,7 +226,7 @@ async def test_that_first_three_parameters_sampled_snapshot(tmpdir, storage):
         Path("prior.txt").write_text("MY_KEYWORD NORMAL 0 1", encoding="utf-8")
         _, fs = await create_runpath(storage, "config.ert", [True] * 3)
         prior = fs.load_parameters_numpy("KW_NAME", np.arange(3)).flatten()
-        expected = np.array([-0.3922276, -1.4083002, -0.7613266])
+        expected = np.array([-0.0168677, -0.7320052, -0.4781337])
         np.testing.assert_almost_equal(prior, expected)
 
 
@@ -307,7 +307,7 @@ def test_that_sampling_is_fixed_from_name(
             num_realizations=num_realisations,
         )
 
-        key_hash = sha256(b"1234" + b"KW_NAME:MY_KEYWORD")
+        key_hash = sha256(b"1234" + b"MY_KEYWORD")
         seed = np.frombuffer(key_hash.digest(), dtype="uint32")
         rng = np.random.default_rng(seed)
         sampler = sp.stats.qmc.LatinHypercube(d=1, rng=rng)
@@ -324,17 +324,17 @@ def test_that_sampling_is_fixed_from_name(
         pytest.param(
             [True] * 5,
             [
-                -1.311229963813986,
-                -0.3610201471513453,
-                -0.13460521040053444,
-                0.5506531521053208,
-                1.0523866446764671,
+                -0.28834280938542467,
+                -1.5207172079933131,
+                0.33862815760896897,
+                -0.018571831703042954,
+                1.0884302332132918,
             ],
             id="Sampling all values, checking that we get length of 5",
         ),
         pytest.param(
             [False, True, False, True],
-            [-0.3610201471513453, 0.5506531521053208],
+            [-1.5207172079933131, -0.018571831703042954],
             id=(
                 "Sampling a subset of parameters (at index 1 and 4), checking"
                 "that those values match the corresponding values from the full"
@@ -393,7 +393,7 @@ def test_that_sub_sample_maintains_order(tmpdir, storage, mask, expected):
     [
         (
             "GEN_KW KW_NAME prior.txt\nRANDOM_SEED 1234",
-            -0.064087682,
+            1.4962892,
         ),
     ],
 )
@@ -427,7 +427,7 @@ def write_file(fname, contents):
     [
         (
             "GEN_KW KW_NAME template.txt kw.txt prior.txt\nRANDOM_SEED 1234",
-            "MY_KEYWORD -0.0640877",
+            "MY_KEYWORD 1.49629",
             [],
             does_not_raise(),
         ),
@@ -497,19 +497,19 @@ async def test_gen_kw_missing_in_storage(storage, tmpdir, active_reals, expectat
     [
         pytest.param(
             "GEN_KW KW_NAME template.txt kw.txt prior.txt",
-            "MY_KEYWORD -0.0640877\nNOT KEYWORD <DONT_REPLACE>",
+            "MY_KEYWORD 1.49629\nNOT KEYWORD <DONT_REPLACE>",
             [["template.txt", "MY_KEYWORD <MY_KEYWORD>\nNOT KEYWORD <DONT_REPLACE>"]],
             id="Second magic string that should not be replaced",
         ),
         pytest.param(
             "GEN_KW KW_NAME template.txt kw.txt prior.txt",
-            "MY_KEYWORD -0.0640877\n-- if K<=28 then blah blah",
+            "MY_KEYWORD 1.49629\n-- if K<=28 then blah blah",
             [["template.txt", "MY_KEYWORD <MY_KEYWORD>\n-- if K<=28 then blah blah"]],
             id="Comment in file with <",
         ),
         pytest.param(
             "GEN_KW KW_NAME template.txt kw.txt prior.txt",
-            "MY_KEYWORD -0.0640877\nNR_TWO -1.14073",
+            "MY_KEYWORD 1.49629\nNR_TWO 0.17582",
             [
                 ["template.txt", "MY_KEYWORD <MY_KEYWORD>\nNR_TWO <NR_TWO>"],
                 ["prior.txt", "MY_KEYWORD NORMAL 0 1\nNR_TWO NORMAL 0 1"],

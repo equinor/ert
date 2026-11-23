@@ -162,7 +162,7 @@ class ParameterConfig(BaseModel, extra="forbid"):
         """
         Generate reproducible standard-normal samples for active realizations.
 
-        For this parameter (identified by self.group_name and self.name), a stratified
+        For this parameter (identified by self.name), a stratified
         sampling of size `num_realizations` is constructed using an RNG
         seeded from `global_seed` and the parameter name. The entries at the
         indices specified by `active_realizations` are then mapped through the
