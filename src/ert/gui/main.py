@@ -29,6 +29,7 @@ from ert.gui.tools.event_viewer import (
 from ert.namespace import Namespace
 from ert.plugins import ErtRuntimePlugins, get_site_plugins
 from ert.services import ErtServerController
+from ert.services.ert_server_controller import ServerAlreadyRunningError
 from ert.storage import (
     ErtStorageException,
     LocalStorage,
@@ -146,7 +147,13 @@ def run_gui(args: Namespace, plugins: ErtRuntimePlugins | None = None) -> int:
                 "with this storage.",
                 file=sys.stderr,
             )
-    return -1
+        except ServerAlreadyRunningError as e:
+            print(f"Error: {e}", file=sys.stderr)
+            print(
+                "Cannot connect to storage service because it is already running.",
+                file=sys.stderr,
+            )
+        return -1
 
 
 def _start_initial_gui_window(

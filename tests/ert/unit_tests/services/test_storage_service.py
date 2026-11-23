@@ -11,7 +11,10 @@ import pytest
 
 from ert.services import ErtServerController
 from ert.services._ert_server_main import _create_connection_info, _generate_certificate
-from ert.services.ert_server_controller import create_ert_server_controller
+from ert.services.ert_server_controller import (
+    ServerAlreadyRunningError,
+    create_ert_server_controller,
+)
 from ert.shared import find_available_socket
 from ert.shared.constants import LOCALHOST_IP
 
@@ -160,6 +163,32 @@ def test_that_stale_connection_info_file_is_removed_before_starting_new_service(
 
     ErtServerController.init_service(project=Path().absolute())
     start_server_mock.assert_called_once()
+
+
+@patch("ert.services.ErtServerController.start_server")
+@patch("ert.services.ert_server_controller.ErtServerController.fetch_url")
+def test_that_init_service_raises_and_keeps_the_connection_file_of_a_reachable_server(
+    fetch_url_mock, start_server_mock, change_to_tmpdir
+):
+    connection_info_file = Path("ert_server_connection.json")
+    connection_info_json = json.dumps(
+        {
+            "urls": [f"http://{LOCALHOST_IP}:51839"],
+            "authtoken": "dummytoken",
+            "cert": "",
+            "host": LOCALHOST_IP,
+            "port": "51839",
+            "auth": "",
+        }
+    )
+    connection_info_file.write_text(connection_info_json, encoding="utf-8")
+    fetch_url_mock.return_value = f"http://{LOCALHOST_IP}:51839"
+
+    with pytest.raises(ServerAlreadyRunningError, match="Server already running"):
+        ErtServerController.init_service(project=Path().absolute())
+
+    start_server_mock.assert_not_called()
+    assert connection_info_file.read_text(encoding="utf-8") == connection_info_json
 
 
 @patch("ert.services.ErtServerController.start_server")
