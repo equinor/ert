@@ -87,6 +87,8 @@ class SummaryPanel(QFrame):
 
         widget = QWidget(self)
         self._layout = QHBoxLayout()
+        self._layout.setContentsMargins(12, 12, 12, 12)
+        self._layout.setSpacing(12)
         widget.setLayout(self._layout)
 
         scroll = QScrollArea(self)
@@ -140,14 +142,17 @@ class SummaryPanel(QFrame):
         self.addColumn(text.getText())
 
     def addColumn(self, text: str) -> None:
-        layout = QVBoxLayout()
+        card = QFrame()
+        card.setObjectName("summary_card")
+        layout = QVBoxLayout(card)
+        layout.setContentsMargins(16, 12, 16, 12)
         text_widget = QLabel(text)
         text_widget.setWordWrap(True)
         text_widget.setTextFormat(Qt.TextFormat.RichText)
         layout.addWidget(text_widget)
         layout.addStretch(1)
 
-        self._layout.addLayout(layout)
+        self._layout.addWidget(card)
 
     def log_summary(self, run_model: str, num_realizations: int) -> None:
         summary = ErtSummary(self.config)

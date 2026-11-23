@@ -52,6 +52,11 @@ DARK_GREY = "#bebebe"
 LIGHT_GREEN = "#deedee"
 MEDIUM_GREEN = "#007079"
 DARK_GREEN = "#004f55"
+SELECTED_HIGHLIGHT = "#e6faec"
+SELECTED_HOVER = "#c3f3d2"
+TEXT_DEFAULT = "#3d3d3d"
+WHITE = "#ffffff"
+TEXT_TERTIARY = "#6f6f6f"
 
 BUTTON_STYLE = f"""
 QPushButton {{

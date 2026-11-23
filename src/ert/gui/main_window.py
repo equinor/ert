@@ -9,7 +9,15 @@ from typing import override
 from PyQt6.QtCore import QCoreApplication, QEvent, QSize, Qt
 from PyQt6.QtCore import pyqtSignal as Signal
 from PyQt6.QtCore import pyqtSlot as Slot
-from PyQt6.QtGui import QAction, QCloseEvent, QCursor, QIcon, QMouseEvent
+from PyQt6.QtGui import (
+    QAction,
+    QCloseEvent,
+    QColor,
+    QCursor,
+    QIcon,
+    QMouseEvent,
+    QPalette,
+)
 from PyQt6.QtWidgets import (
     QButtonGroup,
     QFrame,
@@ -35,8 +43,19 @@ from ert.plugins import ErtRuntimePlugins
 from ert.trace import get_trace_id
 
 from .detect_mode import is_dark_mode
+from .ertwidgets.suggestor.suggestor import (
+    DARK_GREY,
+    HEAVY_GREY,
+    LIGHT_GREEN,
+    LIGHT_GREY,
+    MEDIUM_GREEN,
+    MEDIUM_GREY,
+    TEXT_DEFAULT,
+    TEXT_TERTIARY,
+    WHITE,
+)
 from .experiments import ExperimentPanel, RunDialog
-from .icon_utils import load_icon
+from .icon_utils import load_badge_icon
 
 logger = logging.getLogger(__name__)
 BUTTON_STYLE_SHEET: str = """
@@ -53,9 +72,8 @@ BUTTON_STYLE_SHEET: str = """
 
 BUTTON_STYLE_SHEET_LIGHT: str = (
     BUTTON_STYLE_SHEET
-    + """
-    QToolButton:hover {background-color: rgba(50, 50, 50, 50);}
-    QToolButton:checked {background-color: rgba(50, 50, 50, 120);}
+    + f"""
+    QToolButton:hover {{background-color: {LIGHT_GREEN};}}
     """
 )
 
@@ -117,7 +135,94 @@ class ErtMainWindow(QMainWindow):
             self.side_frame.setStyleSheet("background-color: rgb(64, 64, 64);")
             logger.info("Running Ert with dark mode")
         else:
-            self.side_frame.setStyleSheet("background-color: lightgray;")
+            self.central_widget.setObjectName("central_widget")
+            palette = self.palette()
+            for role in (
+                QPalette.ColorRole.WindowText,
+                QPalette.ColorRole.Text,
+                QPalette.ColorRole.ButtonText,
+            ):
+                palette.setColor(QPalette.ColorGroup.Active, role, QColor(TEXT_DEFAULT))
+                palette.setColor(
+                    QPalette.ColorGroup.Inactive, role, QColor(TEXT_DEFAULT)
+                )
+                palette.setColor(QPalette.ColorGroup.Disabled, role, QColor(DARK_GREY))
+            self.setPalette(palette)
+            self.side_frame.setObjectName("side_frame")
+            self.setStyleSheet(
+                f"""
+                QFrame#central_widget {{ background: {LIGHT_GREY}; }}
+                QFrame#side_frame {{
+                    background-color: {WHITE};
+                }}
+                QStackedWidget#experiment_stack {{
+                    background: {MEDIUM_GREY};
+                    border: none;
+                    border-radius: 4px;
+                }}
+                SummaryPanel {{
+                    background: {MEDIUM_GREY};
+                    border-radius: 4px;
+                }}
+                SummaryPanel QScrollArea {{
+                    border: none;
+                    background: transparent;
+                }}
+                SummaryPanel QScrollArea > QWidget > QWidget {{
+                    background: transparent;
+                }}
+                QFrame#summary_card {{
+                    background: {WHITE};
+                    border: none;
+                    border-radius: 4px;
+                }}
+                QComboBoxWithDescription {{
+                    background-color: {MEDIUM_GREY};
+                    color: {TEXT_DEFAULT};
+                    border: none;
+                    border-bottom: 1px solid {TEXT_TERTIARY};
+                    border-radius: 0px;
+                    padding: 0px 8px;
+                    min-height: 36px;
+                }}
+                QComboBoxWithDescription:hover {{
+                    background-color: {HEAVY_GREY};
+                }}
+                QComboBoxWithDescription:focus, QComboBoxWithDescription:on {{
+                    border-bottom: 2px solid {MEDIUM_GREEN};
+                }}
+                QComboBoxWithDescription::drop-down {{
+                    border: none;
+                    width: 32px;
+                }}
+                QComboBoxWithDescription::down-arrow {{
+                    image: url(img:arrow_drop_down.svg);
+                    width: 24px;
+                    height: 24px;
+                }}
+                QComboBoxWithDescription QAbstractItemView {{
+                    background-color: {WHITE};
+                    border: none;
+                    outline: none;
+                }}
+                QFrame#central_widget QPushButton {{
+                    background-color: transparent;
+                    color: {TEXT_DEFAULT};
+                    border: 1px solid {TEXT_TERTIARY};
+                    border-radius: 4px;
+                    padding: 4px 12px;
+                }}
+                QFrame#central_widget QPushButton:hover {{
+                    background-color: {MEDIUM_GREY};
+                    border-color: {TEXT_DEFAULT};
+                }}
+                QFrame#central_widget QPushButton:disabled {{
+                    background-color: transparent;
+                    color: {DARK_GREY};
+                    border-color: {HEAVY_GREY};
+                }}
+                """
+            )
             logger.info("Running Ert with light mode")
 
         self.vbox_layout = QVBoxLayout(self.side_frame)
@@ -128,13 +233,17 @@ class ErtMainWindow(QMainWindow):
         self._plot_window: PlotWindow | None = None
         self._manage_experiments_panel: ManageExperimentsPanel | None = None
         self.experiment_button = self._add_sidebar_button(
-            "Start experiment", load_icon("library_add.svg")
+            "Start experiment", load_badge_icon("library_add.svg")
         )
-        plot_button = self._add_sidebar_button("Create plot", load_icon("timeline.svg"))
+        plot_button = self._add_sidebar_button(
+            "Create plot", load_badge_icon("timeline.svg")
+        )
         plot_button.setToolTip("Right click to open external window")
-        self._add_sidebar_button("Manage experiments", load_icon("build_wrench.svg"))
+        self._add_sidebar_button(
+            "Manage experiments", load_badge_icon("build_wrench.svg")
+        )
         self.results_button = self._add_sidebar_button(
-            "Experiment status", load_icon("in_progress.svg")
+            "Experiment status", load_badge_icon("in_progress.svg")
         )
         self.results_button.setEnabled(False)
         self.experiment_button.click()

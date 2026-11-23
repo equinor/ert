@@ -110,7 +110,11 @@ class ExperimentPanel(QWidget):
         self._experiment_done: bool = True
         self.run_button = QToolButton()
         self.run_button.setObjectName("run_experiment")
-        self.run_button.setIcon(load_icon("play_circle.svg"))
+        self.run_button.setIcon(
+            load_icon("play_circle.svg")
+            if is_dark_mode()
+            else load_icon("play_circle.svg", "#007079")
+        )
         self.run_button.setToolTip(EXPERIMENT_IS_MANUAL_UPDATE_MESSAGE)
         self.run_button.setIconSize(QSize(32, 32))
         self.run_button.clicked.connect(self.run_experiment)
@@ -140,21 +144,14 @@ class ExperimentPanel(QWidget):
             if is_dark_mode()
             else """
             QToolButton {
-            border-radius: 10px;
-            background-color: qlineargradient(
-                x1:0, y1:0, x2:0, y2:1,
-                stop:0 #f0f0f0,
-                stop:1 #d9d9d9
-            );
-            border: 1px solid #bfbfbf;
+            border-radius: 4px;
+            background-color: #ffffff;
+            border: 2px solid #007079;
             padding: 5px;
             }
             QToolButton:hover {
-                background-color: qlineargradient(
-                x1:0, y1:0, x2:0, y2:1,
-                stop:0 #d8d8d8,
-                stop:1 #c3c3c3
-            );
+                background-color: #deedee;
+                border-color: #004f55;
             }
         """
         )
@@ -166,6 +163,7 @@ class ExperimentPanel(QWidget):
         layout.addLayout(experiment_type_layout)
 
         self._experiment_stack = QStackedWidget()
+        self._experiment_stack.setObjectName("experiment_stack")
         self._experiment_stack.setLineWidth(1)
         self._experiment_stack.setFrameStyle(QFrame.Shape.StyledPanel)
 
