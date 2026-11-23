@@ -22,7 +22,7 @@ from ert.config.distribution import RawSettings
 from ert.config.parameter_config import LocalizationType, ParameterConfig
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import EnsembleSelector, StringBox
-from ert.gui.ertwidgets.parameterviewer import ParametersViewer
+from ert.gui.ertwidgets.parameterviewer import ParameterTree
 from ert.gui.experiments._update_strategy_summary_widget import (
     UpdateStrategySummaryWidget,
 )
@@ -679,29 +679,21 @@ def test_that_show_parameters_uses_updated_design_matrix_parameter_strategy(
         for parameter in parameter_configuration
     )
 
-    def verify_parameter_strategy() -> None:
-        dialog = QApplication.activeModalWidget()
-        assert isinstance(dialog, ParametersViewer)
-        parameter_type_node = dialog.tree_widget.topLevelItem(0)
-        assert parameter_type_node is not None
-        for parameter_index in range(parameter_type_node.childCount()):
-            parameter_node = parameter_type_node.child(parameter_index)
-            assert parameter_node is not None
-            parameter_details = []
-            for detail_index in range(parameter_node.childCount()):
-                detail_node = parameter_node.child(detail_index)
-                assert detail_node is not None
-                parameter_details.append(detail_node.text(0))
-            assert f"Update: {LocalizationType.ADAPTIVE}" in parameter_details
-        dialog.accept()
-
-    QTimer.singleShot(0, verify_parameter_strategy)
-    show_parameters_button = next(
-        button
-        for button in panel.findChildren(QPushButton)
-        if button.text() == "Show parameters"
-    )
-    qtbot.mouseClick(show_parameters_button, Qt.MouseButton.LeftButton)
+    tree = ParameterTree()
+    qtbot.addWidget(tree)
+    tree.set_parameters(panel.get_parameter_configuration())
+    group_node = tree.topLevelItem(0)
+    assert group_node is not None
+    tree.expandItem(group_node)
+    assert group_node.childCount() > 0
+    for parameter_index in range(group_node.childCount()):
+        parameter_node = group_node.child(parameter_index)
+        assert parameter_node is not None
+        tree.expandItem(parameter_node)
+        parameter_details = [
+            parameter_node.child(i).text(0) for i in range(parameter_node.childCount())
+        ]
+        assert f"Update: {LocalizationType.ADAPTIVE}" in parameter_details
 
 
 def test_that_prior_selection_disables_parameter_update_strategy_changes(

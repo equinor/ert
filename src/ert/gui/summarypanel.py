@@ -14,10 +14,10 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from ert.gui.ertwidgets import ErtSummary
+from ert.gui.ertwidgets import ErtSummary, ParametersSummary
 
 if TYPE_CHECKING:
-    from ert.config import ErtConfig
+    from ert.config import ErtConfig, ParameterConfig
 
 logger = logging.getLogger(__name__)
 
@@ -120,17 +120,11 @@ class SummaryPanel(QFrame):
 
         self.addColumn(text.getText())
 
-        parameter_list_updatable, parameter_list_not_updatable, parameter_count = (
-            summary.get_parameters()
+        self.parameters_summary = ParametersSummary()
+        self.parameters_summary.set_parameters(
+            self.config.parameter_configurations_with_design_matrix
         )
-        text = SummaryTemplate(f"Parameters ({parameter_count:,})", width=320)
-
-        text.startColumns()
-        text.addColumn("Updatable", parameter_list_updatable)
-        text.addColumn("Non-updatable", parameter_list_not_updatable)
-        text.endColumns()
-
-        self.addColumn(text.getText())
+        self._add_card(self.parameters_summary)
 
         observation_counts = summary.getObservations()
         text = SummaryTemplate(
@@ -141,18 +135,27 @@ class SummaryPanel(QFrame):
 
         self.addColumn(text.getText())
 
+    def set_parameter_configuration(
+        self, parameter_configuration: list[ParameterConfig]
+    ) -> None:
+        self.parameters_summary.set_parameters(parameter_configuration)
+
     def addColumn(self, text: str) -> None:
+        text_widget = QLabel(text)
+        text_widget.setWordWrap(True)
+        text_widget.setTextFormat(Qt.TextFormat.RichText)
+        self._add_card(text_widget, stretch=False)
+
+    def _add_card(self, widget: QWidget, *, stretch: bool = True) -> None:
         card = QFrame()
         card.setObjectName("summary_card")
         layout = QVBoxLayout(card)
         layout.setContentsMargins(16, 12, 16, 12)
-        text_widget = QLabel(text)
-        text_widget.setWordWrap(True)
-        text_widget.setTextFormat(Qt.TextFormat.RichText)
-        layout.addWidget(text_widget)
-        layout.addStretch(1)
+        layout.addWidget(widget, 1 if stretch else 0)
+        if not stretch:
+            layout.addStretch(1)
 
-        self._layout.addWidget(card)
+        self._layout.addWidget(card, 1)
 
     def log_summary(self, run_model: str, num_realizations: int) -> None:
         summary = ErtSummary(self.config)

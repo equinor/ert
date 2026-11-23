@@ -279,6 +279,7 @@ class ExperimentPanel(QWidget):
 
         self.configuration_summary = SummaryPanel(config)
         layout.addWidget(self.configuration_summary)
+        self._update_parameter_summary()
 
         self.setLayout(layout)
 
@@ -312,6 +313,7 @@ class ExperimentPanel(QWidget):
             )
 
         panel.experiment_configuration_changed.connect(self.validationStatusChanged)
+        panel.experiment_configuration_changed.connect(self._update_parameter_summary)
         self.experiment_type_changed.connect(panel.experimentTypeChanged)
 
     @property
@@ -538,7 +540,22 @@ class ExperimentPanel(QWidget):
             widget = self._experiment_widgets[self.get_current_experiment_type()]
             self._experiment_stack.setCurrentWidget(widget)
             self.validationStatusChanged()
+            self._update_parameter_summary()
             self.experiment_type_changed.emit(widget)
+
+    def _update_parameter_summary(self) -> None:
+        # Experiment panels are added before the summary is created.
+        if not hasattr(self, "configuration_summary"):
+            return
+        current_model = self.get_current_experiment_type()
+        if current_model is None:
+            return
+        parameters = self._experiment_widgets[
+            current_model
+        ].get_parameter_configuration()
+        if parameters is None:
+            parameters = self.config.parameter_configurations_with_design_matrix
+        self.configuration_summary.set_parameter_configuration(parameters)
 
     def validationStatusChanged(self) -> None:
         widget = self._experiment_widgets[self.get_current_experiment_type()]

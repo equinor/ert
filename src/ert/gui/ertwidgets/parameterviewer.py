@@ -1,148 +1,177 @@
-from collections.abc import Callable
+from __future__ import annotations
 
-from PyQt6.QtCore import Qt
+from collections import defaultdict
+from collections.abc import Callable, Sequence
+
 from PyQt6.QtWidgets import (
-    QComboBox,
-    QDialog,
+    QFrame,
     QHBoxLayout,
     QLabel,
-    QPushButton,
-    QSizePolicy,
-    QSpacerItem,
     QTreeWidget,
     QTreeWidgetItem,
     QVBoxLayout,
     QWidget,
 )
 
-from ert.config import ParameterConfig
+from ert.config import Field, GenKwConfig, ParameterConfig, SurfaceConfig
 
 
-class ParametersViewer(QDialog):
+class _LazyItem(QTreeWidgetItem):
+    """Tree item whose children are only created on first expansion."""
+
     def __init__(
         self,
-        parameter_configurations: list[ParameterConfig],
-        parent: QWidget | None = None,
+        parent: QTreeWidget | QTreeWidgetItem,
+        label: str,
+        populate: Callable[[QTreeWidgetItem], None] | None = None,
     ) -> None:
-        super().__init__(parent)
-        self._parameter_configurations = parameter_configurations
-        self.setWindowTitle("Parameter viewer")
-
-        main_layout = QVBoxLayout(self)
-        # Add a horizontal layout for the collapse/expand and update filter buttons
-        menu_layout = QHBoxLayout()
-        self.toggle_button = QPushButton("Collapse parameters")
-        self.toggle_button.clicked.connect(self.toggle_parameters)
-        self.parameters_collapsed = False  # Track state
-        menu_layout.addWidget(self.toggle_button, alignment=Qt.AlignmentFlag.AlignLeft)
-        menu_layout.addSpacerItem(
-            QSpacerItem(0, 0, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
-        )
-
-        # Add Update parameter label and dropdown
-        self.update_filter_combo = QComboBox()
-        self.update_filter_combo.addItems(
-            ["All parameters", "Updatable", "Non-updatable"]
-        )
-        self.update_filter_combo.currentIndexChanged.connect(self.filter_parameters)
-        menu_layout.addWidget(QLabel("Show parameters:"))
-        menu_layout.addWidget(
-            self.update_filter_combo, alignment=Qt.AlignmentFlag.AlignRight
-        )
-
-        main_layout.addLayout(menu_layout)
-
-        self.tree_widget = self._create_parameter_tree()
-        main_layout.addWidget(self.tree_widget)
-        self.setLayout(main_layout)
-        self.resize(400, 500)
-
-    def _create_parameter_tree(self) -> QTreeWidget:
-        """Create a tree widget showing parameters grouped by their type."""
-        tree = QTreeWidget()
-        tree.setHeaderLabel("Parameters")
-
-        self.type_nodes: dict[
-            str, QTreeWidgetItem
-        ] = {}  # Store type nodes for later use
-        self.parameter_nodes = []  # Store parameter nodes for filtering
-        for parameter in self._parameter_configurations:
-            if parameter.type not in self.type_nodes:
-                self.type_nodes[parameter.type] = QTreeWidgetItem(
-                    tree, [parameter.type.upper()]
-                )
-
-            parameter_node = QTreeWidgetItem(
-                self.type_nodes[parameter.type], [parameter.name]
+        super().__init__(parent, [label])
+        self._populate = populate
+        if populate is not None:
+            self.setChildIndicatorPolicy(
+                QTreeWidgetItem.ChildIndicatorPolicy.ShowIndicator
             )
-            parameter_node.setData(
-                0, Qt.ItemDataRole.UserRole, parameter.update_strategy
-            )  # Store update value for filtering
-            self.parameter_nodes.append(parameter_node)
-            QTreeWidgetItem(parameter_node, [f"Update: {parameter.update_strategy}"])
-            QTreeWidgetItem(parameter_node, [f"Forward Init: {parameter.forward_init}"])
-            if parameter.group_name:
-                QTreeWidgetItem(
-                    parameter_node, [f"Group: {parameter.group_name.upper()}"]
+
+    def ensure_populated(self) -> None:
+        if self._populate is not None:
+            populate, self._populate = self._populate, None
+            populate(self)
+            self.setChildIndicatorPolicy(
+                QTreeWidgetItem.ChildIndicatorPolicy.DontShowIndicatorWhenChildless
+            )
+
+
+def _add_details(item: QTreeWidgetItem, parameter: ParameterConfig) -> None:
+    _LazyItem(item, f"Update: {parameter.update_strategy}")
+    _LazyItem(item, f"Forward Init: {parameter.forward_init}")
+    if parameter.group_name:
+        _LazyItem(item, f"Group: {parameter.group_name.upper()}")
+    if hasattr(parameter, "input_source"):
+        _LazyItem(item, f"Source: {parameter.input_source}")
+
+
+def _add_parameters(item: QTreeWidgetItem, parameters: list[ParameterConfig]) -> None:
+    for parameter in sorted(parameters, key=lambda p: p.name.lower()):
+        _LazyItem(item, parameter.name, lambda i, p=parameter: _add_details(i, p))
+
+
+def _top_level_nodes(
+    parameters: Sequence[ParameterConfig],
+) -> list[tuple[str, Callable[[QTreeWidgetItem], None]]]:
+    """Group parameters the same way as the summary has always listed them:
+    GEN_KW parameters per group with a count, and fields and surfaces with
+    their dimensions.
+    """
+    nodes: list[tuple[str, Callable[[QTreeWidgetItem], None]]] = []
+    gen_kw_groups: dict[str, list[ParameterConfig]] = defaultdict(list)
+    for parameter in parameters:
+        match parameter:
+            case GenKwConfig():
+                gen_kw_groups[parameter.group_name or "gen_kw"].append(parameter)
+            case Field(name=name, nx=nx, ny=ny, nz=nz):
+                nodes.append(
+                    (
+                        f"{name} ({nx}, {ny}, {nz})",
+                        lambda i, p=parameter: _add_details(i, p),
+                    )
                 )
-            if hasattr(parameter, "input_source"):
-                QTreeWidgetItem(parameter_node, [f"Source: {parameter.input_source}"])
-
-        tree.expandAll()
-        return tree
-
-    def toggle_parameters(self) -> None:
-        """Toggle collapse/expand details of parameter nodes."""
-        if not self.parameters_collapsed:
-            for type_node in self.type_nodes.values():
-                self.tree_widget.expandItem(type_node)
-                for i in range(type_node.childCount()):
-                    parameter_node = type_node.child(i)
-                    self.tree_widget.collapseItem(parameter_node)
-            self.toggle_button.setText("Expand parameters")
-            self.parameters_collapsed = True
-        else:
-            # Expand all parameter nodes (second level), keep type nodes expanded
-            for type_node in self.type_nodes.values():
-                self.tree_widget.expandItem(type_node)
-                for i in range(type_node.childCount()):
-                    parameter_node = type_node.child(i)
-                    self.tree_widget.expandItem(parameter_node)
-            self.toggle_button.setText("Collapse parameters")
-            self.parameters_collapsed = False
-
-    def filter_parameters(self) -> None:
-        """Filter parameters based on their "updatability"."""
-        selected = self.update_filter_combo.currentText()
-        for parameter_node in self.parameter_nodes:
-            update_val = parameter_node.data(0, Qt.ItemDataRole.UserRole)
-            if selected == "All parameters":
-                show = True
-            elif selected == "Updatable":
-                show = update_val
-            else:  # "Non-updatable"
-                show = not update_val
-            parameter_node.setHidden(not show)
+            case SurfaceConfig(name=name, ncol=ncol, nrow=nrow):
+                nodes.append(
+                    (
+                        f"{name} ({ncol}, {nrow})",
+                        lambda i, p=parameter: _add_details(i, p),
+                    )
+                )
+            case _:
+                nodes.append(
+                    (parameter.name, lambda i, p=parameter: _add_details(i, p))
+                )
+    nodes.extend(
+        (
+            f"{group} ({len(group_parameters)})",
+            lambda i, g=group_parameters: _add_parameters(i, g),
+        )
+        for group, group_parameters in gen_kw_groups.items()
+    )
+    return sorted(nodes, key=lambda node: node[0].lower())
 
 
-def get_parameters_button(
-    get_parameter_configurations: Callable[[], list[ParameterConfig]],
-    parent: QWidget,
-) -> QHBoxLayout:
-    parameter_viewer_button = QPushButton("Show parameters")
-    parameter_viewer_button.setMinimumWidth(50)
-    parameter_viewer_button.clicked.connect(
-        lambda: _show_parameter_viewer(get_parameter_configurations(), parent)
+def parameter_count(parameters: Sequence[ParameterConfig]) -> int:
+    return sum(
+        len(parameter) if isinstance(parameter, Field | SurfaceConfig) else 1
+        for parameter in parameters
     )
 
-    button_layout = QHBoxLayout()
-    button_layout.addWidget(parameter_viewer_button)
-    button_layout.addStretch()  # Add stretch to push the button to the left
-    return button_layout
+
+class ParameterTree(QTreeWidget):
+    """Parameters grouped like the summary, collapsed by default.
+
+    Children are created on first expansion so that large parameter sets
+    do not slow down building the tree.
+    """
+
+    def __init__(self, parent: QWidget | None = None) -> None:
+        super().__init__(parent)
+        self.setHeaderHidden(True)
+        self.setFrameShape(QFrame.Shape.NoFrame)
+        self.itemExpanded.connect(self._on_item_expanded)
+
+    def set_parameters(self, parameters: Sequence[ParameterConfig]) -> None:
+        self.clear()
+        for label, populate in _top_level_nodes(parameters):
+            _LazyItem(self, label, populate)
+
+    @staticmethod
+    def _on_item_expanded(item: QTreeWidgetItem) -> None:
+        if isinstance(item, _LazyItem):
+            item.ensure_populated()
 
 
-def _show_parameter_viewer(
-    parameter_configurations: list[ParameterConfig], parent: QWidget
-) -> None:
-    parameter_dialog = ParametersViewer(parameter_configurations, parent)
-    parameter_dialog.exec()
+class ParametersSummary(QWidget):
+    """Parameter count with expandable trees of updatable and
+    non-updatable parameters.
+    """
+
+    def __init__(self, parent: QWidget | None = None) -> None:
+        super().__init__(parent)
+        self._signature: tuple[tuple[str, str, object], ...] | None = None
+
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        self.title = QLabel()
+        self.title.setStyleSheet("font-size: 16px; font-weight: bold;")
+        layout.addWidget(self.title)
+
+        columns = QHBoxLayout()
+        columns.setContentsMargins(0, 0, 0, 0)
+        self.updatable_tree = ParameterTree()
+        self.updatable_tree.setObjectName("updatable_parameters")
+        self.non_updatable_tree = ParameterTree()
+        self.non_updatable_tree.setObjectName("non_updatable_parameters")
+        for header, tree in (
+            ("Updatable", self.updatable_tree),
+            ("Non-updatable", self.non_updatable_tree),
+        ):
+            column = QVBoxLayout()
+            label = QLabel(header)
+            label.setStyleSheet("font-weight: bold;")
+            column.addWidget(label)
+            column.addWidget(tree)
+            columns.addLayout(column)
+        layout.addLayout(columns)
+
+    def set_parameters(self, parameters: Sequence[ParameterConfig]) -> None:
+        signature = tuple((p.type, p.name, p.update_strategy) for p in parameters)
+        # Panels report configuration changes on every edit, so only rebuild
+        # (and lose the expansion state) when the parameters actually change.
+        if signature == self._signature:
+            return
+        self._signature = signature
+
+        self.title.setText(f"Parameters ({parameter_count(parameters):,})")
+        self.updatable_tree.set_parameters(
+            [p for p in parameters if p.update_strategy is not None]
+        )
+        self.non_updatable_tree.set_parameters(
+            [p for p in parameters if p.update_strategy is None]
+        )
