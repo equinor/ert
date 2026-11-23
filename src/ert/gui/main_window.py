@@ -46,16 +46,16 @@ from .detect_mode import is_dark_mode
 from .ertwidgets.suggestor.suggestor import (
     DARK_GREY,
     HEAVY_GREY,
-    LIGHT_GREEN,
     LIGHT_GREY,
     MEDIUM_GREEN,
     MEDIUM_GREY,
+    SELECTED_HIGHLIGHT,
     TEXT_DEFAULT,
     TEXT_TERTIARY,
     WHITE,
 )
 from .experiments import ExperimentPanel, RunDialog
-from .icon_utils import load_badge_icon
+from .icon_utils import load_icon, load_sidebar_icon
 
 logger = logging.getLogger(__name__)
 BUTTON_STYLE_SHEET: str = """
@@ -70,12 +70,31 @@ BUTTON_STYLE_SHEET: str = """
     }
 """
 
-BUTTON_STYLE_SHEET_LIGHT: str = (
-    BUTTON_STYLE_SHEET
-    + f"""
-    QToolButton:hover {{background-color: {LIGHT_GREEN};}}
-    """
-)
+# Mirrors the EDS SideBar.Link states (resting, hover, active, focus, disabled).
+BUTTON_STYLE_SHEET_LIGHT: str = f"""
+    QToolButton {{
+        background-color: transparent;
+        color: {TEXT_DEFAULT};
+        border: 2px solid transparent;
+        border-bottom-color: {LIGHT_GREY};
+        border-radius: 0px;
+        padding-top: 5px;
+        padding-bottom: 10px;
+    }}
+    QToolButton:hover {{background-color: {HEAVY_GREY};}}
+    QToolButton:checked, QToolButton:checked:hover {{
+        background-color: {SELECTED_HIGHLIGHT};
+        color: {MEDIUM_GREEN};
+    }}
+    QToolButton:focus {{border: 2px dashed {MEDIUM_GREEN};}}
+    QToolButton:disabled {{
+        background-color: {MEDIUM_GREY};
+        color: {DARK_GREY};
+    }}
+    QToolButton::menu-indicator {{
+        right: 10px; bottom: 5px;
+    }}
+"""
 
 BUTTON_STYLE_SHEET_DARK: str = (
     BUTTON_STYLE_SHEET
@@ -154,6 +173,7 @@ class ErtMainWindow(QMainWindow):
                 QFrame#central_widget {{ background: {LIGHT_GREY}; }}
                 QFrame#side_frame {{
                     background-color: {WHITE};
+                    border-right: 2px solid {LIGHT_GREY};
                 }}
                 QStackedWidget#experiment_stack {{
                     background: {MEDIUM_GREY};
@@ -226,6 +246,10 @@ class ErtMainWindow(QMainWindow):
             logger.info("Running Ert with light mode")
 
         self.vbox_layout = QVBoxLayout(self.side_frame)
+        if not is_dark_mode():
+            # EDS sidebar items span the full width with no gaps between them.
+            self.vbox_layout.setContentsMargins(0, 0, 2, 0)
+            self.vbox_layout.setSpacing(0)
         self.side_frame.setLayout(self.vbox_layout)
 
         self.central_panels_map: dict[str, QWidget] = {}
@@ -233,17 +257,17 @@ class ErtMainWindow(QMainWindow):
         self._plot_window: PlotWindow | None = None
         self._manage_experiments_panel: ManageExperimentsPanel | None = None
         self.experiment_button = self._add_sidebar_button(
-            "Start experiment", load_badge_icon("library_add.svg")
+            "Start experiment", self._sidebar_icon("library_add.svg")
         )
         plot_button = self._add_sidebar_button(
-            "Create plot", load_badge_icon("timeline.svg")
+            "Create plot", self._sidebar_icon("timeline.svg")
         )
         plot_button.setToolTip("Right click to open external window")
         self._add_sidebar_button(
-            "Manage experiments", load_badge_icon("build_wrench.svg")
+            "Manage experiments", self._sidebar_icon("build_wrench.svg")
         )
         self.results_button = self._add_sidebar_button(
-            "Experiment status", load_badge_icon("in_progress.svg")
+            "Experiment status", self._sidebar_icon("in_progress.svg")
         )
         self.results_button.setEnabled(False)
         self.experiment_button.click()
@@ -394,6 +418,9 @@ class ErtMainWindow(QMainWindow):
         self.central_layout.addWidget(experiment_panel)
         self._experiment_panel = experiment_panel
         self.central_panels_map["Start experiment"] = self._experiment_panel
+        # Start with focus on the panel so no sidebar button shows its
+        # keyboard focus outline on startup.
+        experiment_panel.setFocus()
 
         experiment_panel.experiment_started.connect(self.slot_add_widget)
 
@@ -415,18 +442,32 @@ class ErtMainWindow(QMainWindow):
                     self.help_menu.menuAction(), self.plugins_tool.get_menu()
                 )
 
+    @staticmethod
+    def _sidebar_icon(name: str) -> QIcon:
+        if is_dark_mode():
+            return load_icon(name)
+        return load_sidebar_icon(
+            name, resting=TEXT_DEFAULT, active=MEDIUM_GREEN, disabled=DARK_GREY
+        )
+
     def _add_sidebar_button(self, name: str, icon: QIcon) -> SidebarToolButton:
         button = SidebarToolButton(self.side_frame)
         button.setCheckable(True)
         button.setFixedSize(85, 95)
         button.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
 
-        button.setStyleSheet(
-            BUTTON_STYLE_SHEET_DARK
-        ) if is_dark_mode() else button.setStyleSheet(BUTTON_STYLE_SHEET_LIGHT)
+        if is_dark_mode():
+            button.setStyleSheet(BUTTON_STYLE_SHEET_DARK)
+        else:
+            button.setStyleSheet(BUTTON_STYLE_SHEET_LIGHT)
+            # Only show the focus outline for keyboard focus, like :focus-visible.
+            button.setFocusPolicy(Qt.FocusPolicy.TabFocus)
 
-        pad = 45
-        icon_size = QSize(button.size().width() - pad, button.size().height() - pad)
+        if is_dark_mode():
+            pad = 45
+            icon_size = QSize(button.size().width() - pad, button.size().height() - pad)
+        else:
+            icon_size = QSize(32, 32)
         button.setIconSize(icon_size)
         button.setIcon(icon)
         button.setToolTip(name)
