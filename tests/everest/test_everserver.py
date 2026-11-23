@@ -370,7 +370,9 @@ def test_websocket_multiple_connections(setup_client):
     assert event == event_2
 
 
-def test_websocket_multiple_connections_one_fails(setup_client):
+def test_websocket_multiple_connections_one_fails(
+    setup_client, mock_experiment_status_event_timestamp
+):
     client, subscribers, experiment_id = setup_client()
     credentials = b64encode(b"username:password").decode()
     with (
@@ -386,7 +388,12 @@ def test_websocket_multiple_connections_one_fails(setup_client):
     ) as websocket:
         event = websocket.receive_json()
     assert len(subscribers) == 1
-    assert event == {"event_type": "EndEvent", "failed": False, "msg": "Complete"}
+    assert event == {
+        "event_type": "EndEvent",
+        "failed": False,
+        "msg": "Complete",
+        "timestamp": "2026-01-01T00:00:00Z",
+    }
 
 
 def test_that_each_event_stream_closes_normally_after_end_event(setup_client):
@@ -500,7 +507,10 @@ def site_plugins():
 
 
 async def test_that_model_creation_failure_publishes_a_failed_end_event(
-    monkeypatch, everest_run_state, site_plugins
+    monkeypatch,
+    everest_run_state,
+    site_plugins,
+    mock_experiment_status_event_timestamp,
 ):
     monkeypatch.setattr(
         "ert.server.endpoints.experiment_runs.EverestRunModel.create",
@@ -518,7 +528,10 @@ async def test_that_model_creation_failure_publishes_a_failed_end_event(
 
 
 async def test_that_cancelling_a_running_experiment_publishes_a_failed_end_event(
-    monkeypatch, everest_run_state, site_plugins
+    monkeypatch,
+    everest_run_state,
+    site_plugins,
+    mock_experiment_status_event_timestamp,
 ):
     cancelled = threading.Event()
     model = Mock()
@@ -750,7 +763,10 @@ async def test_that_everest_experiment_started_without_notifier_has_no_forwarder
 
 
 async def test_that_stopped_run_everest_delivers_its_end_event_to_listener(
-    monkeypatch, everest_run_state, site_plugins
+    monkeypatch,
+    everest_run_state,
+    site_plugins,
+    mock_experiment_status_event_timestamp,
 ):
     received_events = []
 

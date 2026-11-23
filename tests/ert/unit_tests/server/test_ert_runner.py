@@ -229,7 +229,10 @@ async def test_that_status_event_notifier_passes_events_to_listening_plugin():
 @pytest.mark.parametrize("outcome", ["completed", "failed", "exception"])
 @pytest.mark.parametrize("rerun_failed_realizations", [False, True])
 async def test_that_execution_retains_its_model_after_termination(
-    monkeypatch: pytest.MonkeyPatch, outcome: str, rerun_failed_realizations: bool
+    monkeypatch: pytest.MonkeyPatch,
+    outcome: str,
+    rerun_failed_realizations: bool,
+    mock_experiment_status_event_timestamp,
 ):
     experiment_id = str(uuid4())
     model = Mock(spec=RunModel)
@@ -351,7 +354,7 @@ async def test_that_failed_registration_releases_partially_initialized_storage(
 
 @pytest.mark.asyncio
 async def test_that_cancellation_before_start_does_not_start_simulations(
-    monkeypatch: pytest.MonkeyPatch,
+    monkeypatch: pytest.MonkeyPatch, mock_experiment_status_event_timestamp
 ):
     experiment_id = str(uuid4())
     model = Mock(spec=RunModel)
@@ -377,7 +380,7 @@ async def test_that_cancellation_before_start_does_not_start_simulations(
 
 @pytest.mark.asyncio
 async def test_that_run_cancelled_before_start_delivers_its_end_event_to_listener(
-    monkeypatch: pytest.MonkeyPatch,
+    monkeypatch: pytest.MonkeyPatch, mock_experiment_status_event_timestamp
 ):
     received_events = []
 
@@ -405,7 +408,7 @@ async def test_that_run_cancelled_before_start_delivers_its_end_event_to_listene
 
 @pytest.mark.asyncio
 async def test_that_rerun_forwards_events_of_both_runs_to_listener(
-    monkeypatch: pytest.MonkeyPatch,
+    monkeypatch: pytest.MonkeyPatch, mock_experiment_status_event_timestamp
 ):
     received_events = []
 
@@ -442,7 +445,7 @@ async def test_that_rerun_forwards_events_of_both_runs_to_listener(
 
 @pytest.mark.asyncio
 async def test_that_setup_failure_closes_storage_and_publishes_one_failed_end_event(
-    monkeypatch: pytest.MonkeyPatch,
+    monkeypatch: pytest.MonkeyPatch, mock_experiment_status_event_timestamp
 ):
     model = Mock(spec=RunModel)
     model._storage = Mock(spec=LocalStorage)

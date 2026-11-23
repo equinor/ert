@@ -1,9 +1,9 @@
 from collections.abc import Mapping
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any, Literal
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, field_serializer, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_serializer, field_validator
 
 from .snapshot import EnsembleSnapshot
 
@@ -14,6 +14,7 @@ class EnsembleEvent(BaseModel):
 
 class ExperimentStatusEvent(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True, extra="forbid")
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(tz=UTC))
 
 
 class _UpdateEvent(ExperimentStatusEvent, EnsembleEvent):
@@ -53,7 +54,6 @@ class SnapshotUpdateEvent(_UpdateEvent):
 
 class StartEvent(ExperimentStatusEvent):
     event_type: Literal["StartEvent"] = "StartEvent"
-    timestamp: datetime
 
 
 class EndEvent(ExperimentStatusEvent):
