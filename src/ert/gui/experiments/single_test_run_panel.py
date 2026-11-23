@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import override
 
 from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QFormLayout, QLabel
+from PyQt6.QtWidgets import QLabel
 
 from ert.config import AnalysisConfig, ParameterConfig
 from ert.gui.ertnotifier import ErtNotifier
@@ -36,13 +36,13 @@ class SingleTestRunPanel(ExperimentConfigPanel):
         self.notifier = notifier
         self.setObjectName("Single_test_run_panel")
 
-        layout = QFormLayout()
+        layout = self.options_layout
         lab = QLabel(" ".join(SingleTestRun.__doc__.split()))  # type: ignore
         lab.setWordWrap(True)
         lab.setAlignment(Qt.AlignmentFlag.AlignLeft)
         layout.addRow(lab)
 
-        runpath_label = CopyableLabel(text=runpath)
+        runpath_label = CopyableLabel(text=runpath, wrap=True)
         layout.addRow("Runpath:", runpath_label)
 
         parameter_configuration = merge_design_matrix_parameters(
@@ -54,7 +54,7 @@ class SingleTestRunPanel(ExperimentConfigPanel):
             design_matrix=analysis_config.design_matrix,
             get_parameter_configuration=lambda: parameter_configuration,
         )
-        self.setLayout(layout)
+        self.build_layout(accordions=False)
 
     @override
     def get_experiment_arguments(self) -> Arguments:

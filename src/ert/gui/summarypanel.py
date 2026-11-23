@@ -15,6 +15,7 @@ from PyQt6.QtWidgets import (
 )
 
 from ert.gui.ertwidgets import ErtSummary, ParametersSummary
+from ert.gui.ertwidgets.card import CARD_SPACING, create_card
 
 if TYPE_CHECKING:
     from ert.config import ErtConfig, ParameterConfig
@@ -87,12 +88,16 @@ class SummaryPanel(QFrame):
 
         widget = QWidget(self)
         self._layout = QHBoxLayout()
-        self._layout.setContentsMargins(12, 12, 12, 12)
-        self._layout.setSpacing(12)
+        self._layout.setContentsMargins(0, 0, 0, 0)
+        self._layout.setSpacing(CARD_SPACING)
         widget.setLayout(self._layout)
 
         scroll = QScrollArea(self)
         scroll.setWidgetResizable(True)
+        # A scroll bar would narrow the last card so that it no longer lines up
+        # with the settings above; the cards' contents scroll on their own.
+        scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         scroll.setWidget(widget)
 
         layout = QGridLayout()
@@ -147,8 +152,7 @@ class SummaryPanel(QFrame):
         self._add_card(text_widget, stretch=False)
 
     def _add_card(self, widget: QWidget, *, stretch: bool = True) -> None:
-        card = QFrame()
-        card.setObjectName("summary_card")
+        card = create_card()
         layout = QVBoxLayout(card)
         layout.setContentsMargins(16, 12, 16, 12)
         layout.addWidget(widget, 1 if stretch else 0)

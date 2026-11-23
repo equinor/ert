@@ -175,14 +175,9 @@ class ErtMainWindow(QMainWindow):
                     background-color: {WHITE};
                     border-right: 2px solid {LIGHT_GREY};
                 }}
-                QStackedWidget#experiment_stack {{
-                    background: {MEDIUM_GREY};
-                    border: none;
-                    border-radius: 4px;
-                }}
                 SummaryPanel {{
-                    background: {MEDIUM_GREY};
-                    border-radius: 4px;
+                    background: transparent;
+                    border: none;
                 }}
                 SummaryPanel QScrollArea {{
                     border: none;
@@ -191,7 +186,7 @@ class ErtMainWindow(QMainWindow):
                 SummaryPanel QScrollArea > QWidget > QWidget {{
                     background: transparent;
                 }}
-                QFrame#summary_card {{
+                QFrame#card {{
                     background: {WHITE};
                     border: none;
                     border-radius: 4px;

@@ -5,13 +5,10 @@ from typing import TYPE_CHECKING, override
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtCore import pyqtSlot as Slot
-from PyQt6.QtWidgets import QFormLayout, QLabel, QWidget
+from PyQt6.QtWidgets import QLabel, QWidget
 
 from ert.config.parameter_config import has_updatable_parameters
 from ert.gui.ertnotifier import ErtNotifier
-from ert.gui.ertwidgets import (
-    CopyableLabel,
-)
 from ert.mode_definitions import ENIF_MODE
 from ert.run_models import EnsembleInformationFilter
 
@@ -50,8 +47,7 @@ class EnsembleInformationFilterPanel(ExperimentConfigPanel):
         super().__init__(EnsembleInformationFilter)
         self.notifier = notifier
 
-        layout = QFormLayout()
-        layout.setFormAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
+        layout = self.options_layout
         self.setObjectName("enif_panel")
 
         if analysis_config.parameter_type_update_strategies:
@@ -87,15 +83,8 @@ class EnsembleInformationFilterPanel(ExperimentConfigPanel):
         )
         layout.addRow("Experiment name:", self._experiment_name_field)
 
-        runpath_label = CopyableLabel(text=runpath)
-        layout.addRow("Runpath:", runpath_label)
-
         number_of_realizations_container, number_of_realizations_label = (
             create_number_of_realizations_container(len(active_realizations))
-        )
-
-        layout.addRow(
-            QLabel("Number of realizations:"), number_of_realizations_container
         )
 
         (
@@ -107,7 +96,9 @@ class EnsembleInformationFilterPanel(ExperimentConfigPanel):
         self._active_realizations_field, _ = create_active_realizations_field(
             active_realizations
         )
-        layout.addRow("Active realizations", self._active_realizations_field)
+        self.add_common_settings(
+            runpath, number_of_realizations_container, self._active_realizations_field
+        )
 
         self._parameter_configuration = merge_design_matrix_parameters(
             analysis_config.design_matrix, parameter_configuration
@@ -120,7 +111,7 @@ class EnsembleInformationFilterPanel(ExperimentConfigPanel):
             number_of_realizations_label=number_of_realizations_label,
             config_num_realization=config_num_realization,
         )
-        self.setLayout(layout)
+        self.build_layout()
         self._connect_signals()
 
     def _connect_signals(self) -> None:

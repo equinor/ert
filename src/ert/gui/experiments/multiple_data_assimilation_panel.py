@@ -23,7 +23,6 @@ from ert.config.parameter_config import has_updatable_parameters
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import (
     AnalysisModuleEdit,
-    CopyableLabel,
     EnsembleSelector,
     StringBox,
     Suggestor,
@@ -134,8 +133,7 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
         self._configured_weights = analysis_config.es_settings.weights
         self._weights_source = self._configured_weights
 
-        layout = QFormLayout()
-        layout.setFormAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
+        layout = self.options_layout
         self.setObjectName("ES_MDA_panel")
 
         self._experiment_name_field = create_experiment_name_field(
@@ -143,15 +141,18 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
         )
         layout.addRow("Experiment name:", self._experiment_name_field)
 
-        layout.addRow("Runpath:", CopyableLabel(text=runpath))
-
-        number_of_realizations_container, number_of_realizations_label = (
-            create_number_of_realizations_container(len(active_realizations))
+        self._ensemble_selector = create_prior_ensemble_selector(notifier)
+        self._previous_ensemble_realizations_validator = EnsembleRealizationsArgument(
+            lambda: self._ensemble_selector.selected_ensemble,
+            required_realization_storage_states=[
+                RealizationStorageState.RESPONSES_LOADED
+            ],
         )
-        layout.addRow(
-            QLabel("Number of realizations:"),
-            number_of_realizations_container,
+        self._select_prior_ensemble_box = create_select_prior_ensemble_box(
+            self._ensemble_selector
         )
+        layout.addRow("Select prior ensemble:", self._select_prior_ensemble_box)
+        layout.addRow("Run from prior ensemble:", self._ensemble_selector)
 
         (
             self._target_ensemble_format_model,
@@ -181,7 +182,7 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
             ),  # only use active realizations for setting threshold
             can_edit_update_strategies=lambda: not self._param_state.has_prior,
         )
-        layout.addRow("Update settings:", self._analysis_module_edit)
+        self.update_settings_layout.addRow(self._analysis_module_edit)
 
         self._update_strategy_label = QLabel("Parameter Localizations")
         self._update_strategy_label.setObjectName("update_strategy_label")
@@ -191,28 +192,22 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
         self._update_strategy_label.setToolTip(
             self._update_strategy_summary_widget.toolTip()
         )
-        layout.addRow(self._update_strategy_label, self._update_strategy_summary_widget)
+        self.update_settings_layout.addRow(
+            self._update_strategy_label, self._update_strategy_summary_widget
+        )
 
+        number_of_realizations_container, number_of_realizations_label = (
+            create_number_of_realizations_container(len(active_realizations))
+        )
         (
             self._active_realizations_field,
             self._new_ensemble_realizations_validator,
         ) = create_active_realizations_field(active_realizations)
         self._active_realizations_field.setObjectName("active_realizations_box")
         self._initial_active_realizations = active_realizations
-        layout.addRow("Active realizations:", self._active_realizations_field)
-
-        self._ensemble_selector = create_prior_ensemble_selector(notifier)
-        self._previous_ensemble_realizations_validator = EnsembleRealizationsArgument(
-            lambda: self._ensemble_selector.selected_ensemble,
-            required_realization_storage_states=[
-                RealizationStorageState.RESPONSES_LOADED
-            ],
+        self.add_common_settings(
+            runpath, number_of_realizations_container, self._active_realizations_field
         )
-        self._select_prior_ensemble_box = create_select_prior_ensemble_box(
-            self._ensemble_selector
-        )
-        layout.addRow("Select prior ensemble:", self._select_prior_ensemble_box)
-        layout.addRow("Run from prior ensemble:", self._ensemble_selector)
 
         self._connect_signals()
         add_parameter_configuration_rows(
@@ -223,13 +218,14 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
             number_of_realizations_label=number_of_realizations_label,
             config_num_realization=config_num_realization,
         )
-        self.setLayout(layout)
+        self.build_layout()
 
     def _connect_signals(self) -> None:
         self._analysis_module_edit.update_strategies_changed.connect(
             self._param_state.apply_update_strategies
         )
         self._param_state.changed.connect(self.experiment_configuration_changed)
+        self._param_state.changed.connect(self._analysis_module_edit.refresh)
         self._select_prior_ensemble_box.toggled.connect(self.select_prior_toggled)
         self._select_prior_ensemble_box.toggled.connect(self.update_experiment_edit)
         self._ensemble_selector.ensemble_populated.connect(self.select_prior_toggled)

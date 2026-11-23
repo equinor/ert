@@ -10,10 +10,9 @@ from PyQt6.QtCore import pyqtSignal as Signal
 from PyQt6.QtGui import QAction, QStandardItemModel
 from PyQt6.QtWidgets import (
     QCheckBox,
-    QFrame,
     QHBoxLayout,
     QMessageBox,
-    QStackedWidget,
+    QSizePolicy,
     QStyle,
     QToolButton,
     QVBoxLayout,
@@ -26,6 +25,7 @@ from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.gui.detect_mode import is_dark_mode
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import wait_cursor
+from ert.gui.ertwidgets.card import CARD_SPACING
 from ert.gui.ertwidgets.suggestor.suggestor import (
     DARK_GREEN,
     DARK_GREY,
@@ -80,6 +80,37 @@ def get_simulation_thread(
         )
 
     return ErtThread(name="ert_gui_simulation_thread", target=run, daemon=True)
+
+
+class _CurrentPageStack(QWidget):
+    """Shows one page at a time, sized after that page.
+
+    Unlike QStackedWidget, hidden pages do not affect the size, so the
+    summary below can use the space a smaller page leaves.
+    """
+
+    def __init__(self) -> None:
+        super().__init__()
+        self._layout = QVBoxLayout(self)
+        self._layout.setContentsMargins(0, 0, 0, 0)
+        self._current: QWidget | None = None
+
+    def addWidget(self, widget: QWidget) -> None:
+        widget.setVisible(self._current is None)
+        if self._current is None:
+            self._current = widget
+        self._layout.addWidget(widget)
+
+    def setCurrentWidget(self, widget: QWidget) -> None:
+        if widget is self._current:
+            return
+        if self._current is not None:
+            self._current.hide()
+        self._current = widget
+        widget.show()
+
+    def currentWidget(self) -> QWidget | None:
+        return self._current
 
 
 class ExperimentPanel(QWidget):
@@ -188,12 +219,14 @@ class ExperimentPanel(QWidget):
         experiment_type_layout.addStretch(1)
 
         layout.setContentsMargins(10, 10, 10, 10)
+        layout.setSpacing(CARD_SPACING)
         layout.addLayout(experiment_type_layout)
 
-        self._experiment_stack = QStackedWidget()
+        self._experiment_stack = _CurrentPageStack()
         self._experiment_stack.setObjectName("experiment_stack")
-        self._experiment_stack.setLineWidth(1)
-        self._experiment_stack.setFrameStyle(QFrame.Shape.StyledPanel)
+        self._experiment_stack.setSizePolicy(
+            QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Maximum
+        )
 
         layout.addWidget(self._experiment_stack)
 
@@ -278,7 +311,7 @@ class ExperimentPanel(QWidget):
         )
 
         self.configuration_summary = SummaryPanel(config)
-        layout.addWidget(self.configuration_summary)
+        layout.addWidget(self.configuration_summary, 1)
         self._update_parameter_summary()
 
         self.setLayout(layout)

@@ -4,7 +4,8 @@ from collections.abc import Iterable
 from typing import cast
 
 from annotated_types import Ge, Gt, Le
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import QSignalBlocker, Qt
+from PyQt6.QtCore import pyqtSignal as Signal
 from PyQt6.QtGui import QStandardItem, QStandardItemModel
 from PyQt6.QtWidgets import (
     QComboBox,
@@ -28,6 +29,10 @@ class _LocalizationTypeModel(QStandardItemModel):
 
 
 class AnalysisModuleVariablesPanel(QWidget):
+    update_strategies_changed = Signal(dict)
+    correlation_threshold_changed = Signal(float)
+    enkf_truncation_changed = Signal(float)
+
     def __init__(
         self,
         update_strategies: dict[ParameterType, LocalizationType],
@@ -41,8 +46,10 @@ class AnalysisModuleVariablesPanel(QWidget):
         self._update_strategies = update_strategies
         self._correlation_threshold = correlation_threshold
         self._enkf_truncation = enkf_truncation
+        self._strategy_comboboxes: dict[ParameterType, QComboBox] = {}
 
         layout = QFormLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
         self.blockSignals(True)
 
         layout.addRow(
@@ -69,9 +76,7 @@ class AnalysisModuleVariablesPanel(QWidget):
             cast(float, next(v for v in metadata.metadata if isinstance(v, Le)).le),
             0.01,
         )
-        self.truncation_spinner.valueChanged.connect(
-            lambda value: setattr(self, "_enkf_truncation", value)
-        )
+        self.truncation_spinner.valueChanged.connect(self._on_truncation_changed)
 
         layout.addRow("Singular value truncation", self.truncation_spinner)
 
@@ -85,9 +90,7 @@ class AnalysisModuleVariablesPanel(QWidget):
             0.1,
         )
         self.threshold_spinner.setObjectName("localization_correlation_threshold")
-        self.threshold_spinner.valueChanged.connect(
-            lambda value: setattr(self, "_correlation_threshold", value)
-        )
+        self.threshold_spinner.valueChanged.connect(self._on_threshold_changed)
 
         layout.addRow(
             "Adaptive localization correlation threshold", self.threshold_spinner
@@ -95,6 +98,54 @@ class AnalysisModuleVariablesPanel(QWidget):
 
         self.setLayout(layout)
         self.blockSignals(False)
+
+    def _on_truncation_changed(self, value: float) -> None:
+        self._enkf_truncation = value
+        self.enkf_truncation_changed.emit(value)
+
+    def _on_threshold_changed(self, value: float) -> None:
+        self._correlation_threshold = value
+        self.correlation_threshold_changed.emit(value)
+
+    def _on_strategy_changed(self, parameter_type: ParameterType, index: int) -> None:
+        combobox = self._strategy_comboboxes[parameter_type]
+        self._update_strategies[parameter_type] = combobox.itemData(
+            index, Qt.ItemDataRole.UserRole
+        )
+        self.update_strategies_changed.emit(dict(self._update_strategies))
+
+    def set_values(
+        self,
+        update_strategies: dict[ParameterType, LocalizationType],
+        correlation_threshold: float,
+        enkf_truncation: float,
+        *,
+        strategies_editable: bool,
+    ) -> None:
+        """Show new values without emitting change signals.
+
+        The parameter types must be the same as the panel was created with.
+        """
+        self._update_strategies = update_strategies
+        for parameter_type, combobox in self._strategy_comboboxes.items():
+            with QSignalBlocker(combobox):
+                combobox.setCurrentIndex(
+                    self._find_correct_index(combobox, parameter_type)
+                )
+            self._set_strategy_editable(combobox, strategies_editable)
+        self._correlation_threshold = correlation_threshold
+        with QSignalBlocker(self.threshold_spinner):
+            self.threshold_spinner.setValue(correlation_threshold)
+        self._enkf_truncation = enkf_truncation
+        with QSignalBlocker(self.truncation_spinner):
+            self.truncation_spinner.setValue(enkf_truncation)
+
+    @staticmethod
+    def _set_strategy_editable(combobox: QComboBox, editable: bool) -> None:
+        combobox.setEnabled(editable)
+        combobox.setToolTip(
+            "" if editable else "Update strategy is defined by the selected ensemble"
+        )
 
     @property
     def update_strategies(self) -> dict[ParameterType, LocalizationType]:
@@ -118,13 +169,10 @@ class AnalysisModuleVariablesPanel(QWidget):
         )
         combobox.setCurrentIndex(self._find_correct_index(combobox, parameter_type))
         combobox.currentIndexChanged.connect(
-            lambda index: self._update_strategies.__setitem__(
-                parameter_type, combobox.itemData(index, Qt.ItemDataRole.UserRole)
-            )
+            lambda index: self._on_strategy_changed(parameter_type, index)
         )
-        combobox.setEnabled(editable)
-        if not editable:
-            combobox.setToolTip("Update strategy is defined by the selected ensemble")
+        self._set_strategy_editable(combobox, editable)
+        self._strategy_comboboxes[parameter_type] = combobox
         return combobox
 
     def _find_correct_index(

@@ -5,6 +5,9 @@ from PyQt6.QtWidgets import QHBoxLayout, QLabel
 
 from .copy_button import CopyButton
 
+# Zero-width space, lets a long path wrap after each "/".
+_BREAK_OPPORTUNITY = "\u200b"
+
 
 def escape_string(string: str) -> str:
     """
@@ -32,7 +35,8 @@ def unescape_string(string: str) -> str:
     '<some>&<thing>'
     """
     return (
-        string.replace("&amp;", "&")
+        string.replace(_BREAK_OPPORTUNITY, "")
+        .replace("&amp;", "&")
         .replace("&lt;", "<")
         .replace("&gt;", ">")
         .replace("<b>", "")
@@ -69,15 +73,32 @@ class CopyableLabel(QHBoxLayout):
     selection or clicking of a copy button
     """
 
-    def __init__(self, text: str) -> None:
+    def __init__(self, text: str, *, wrap: bool = False) -> None:
         super().__init__()
 
-        self.label = QLabel(f"<b>{escape_string(text)}</b>")
-        self.label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+        escaped = escape_string(text)
+        if wrap:
+            escaped = escaped.replace("/", "/" + _BREAK_OPPORTUNITY)
+        self.label = QLabel(f"<b>{escaped}</b>")
+        if wrap:
+            self.label.setWordWrap(True)
+            # Selecting wrapped text would include the zero-width spaces, so
+            # copying is left to the copy button.
+            self.label.setToolTip(text)
+        else:
+            self.label.setTextInteractionFlags(
+                Qt.TextInteractionFlag.TextSelectableByMouse
+            )
 
         self.copy_button = _CopyButton(self.label)
 
         self.addWidget(self.label)
-        self.addWidget(self.copy_button, alignment=Qt.AlignmentFlag.AlignLeft)
+        self.addWidget(
+            self.copy_button,
+            alignment=Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop
+            if wrap
+            else Qt.AlignmentFlag.AlignLeft,
+        )
 
-        self.setStretch(1, 1)
+        # A wrapping label needs the width, otherwise it wraps more than needed.
+        self.setStretch(0 if wrap else 1, 1)
