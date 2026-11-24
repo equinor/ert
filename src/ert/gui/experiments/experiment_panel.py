@@ -606,14 +606,17 @@ class ExperimentPanel(QWidget):
         if parameters is None:
             parameters = list(experiment.parameter_configuration.values())
         source = DataSource.SELECTED_ENSEMBLE
-        summary.set_parameter_configuration(parameters, source, ensemble.name)
+        # Ensemble names are often generic (e.g. "iter-0"), so include the
+        # experiment name like the ensemble selectors do.
+        ensemble_name = f"{experiment.name} : {ensemble.name}"
+        summary.set_parameter_configuration(parameters, source, ensemble_name)
         summary.set_observations(
             count_observations(
                 (obs["name"], obs["type"])
                 for obs in experiment.experiment_config.get("observations", [])
             ),
             source,
-            ensemble.name,
+            ensemble_name,
         )
 
     def validationStatusChanged(self) -> None:

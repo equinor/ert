@@ -12,6 +12,9 @@ _WARNING_HIGHLIGHT = "#ffe7d6"
 _WARNING_TEXT = "#ad6200"
 
 
+_MAX_TEXT_WIDTH = 240
+
+
 class DataSource(StrEnum):
     CONFIG = "config"
     SELECTED_ENSEMBLE = "selected_ensemble"
@@ -49,14 +52,11 @@ class SourceChip(QLabel):
         self.set_source(DataSource.CONFIG)
 
     def set_source(self, source: DataSource, ensemble_name: str | None = None) -> None:
+        """Show the source; for a selected ensemble, show its name if given."""
         self.source = source
         text, background, color = _SOURCE_STYLES[source]
-        self.setText(text)
-        self.setToolTip(
-            f"Shown from ensemble {ensemble_name}"
-            if source == DataSource.SELECTED_ENSEMBLE and ensemble_name
-            else ""
-        )
+        if source == DataSource.SELECTED_ENSEMBLE and ensemble_name:
+            text = f"From {ensemble_name}"
         if is_dark_mode():
             background, color = color, "white"
         self.setStyleSheet(
@@ -71,4 +71,12 @@ class SourceChip(QLabel):
             }}
             """
         )
+        # Keep long ensemble names from covering the card title; the full
+        # text is in the tooltip.
+        self.ensurePolished()
+        elided = self.fontMetrics().elidedText(
+            text, Qt.TextElideMode.ElideMiddle, _MAX_TEXT_WIDTH
+        )
+        self.setText(elided)
+        self.setToolTip(text if elided != text else "")
         self.adjustSize()

@@ -6,15 +6,18 @@ from typing import TYPE_CHECKING, Any
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (
     QFrame,
+    QGridLayout,
     QHBoxLayout,
     QLabel,
     QScrollArea,
+    QSizePolicy,
+    QSpacerItem,
     QVBoxLayout,
     QWidget,
 )
 
 from ert.gui.ertwidgets import ErtSummary, ParametersSummary
-from ert.gui.ertwidgets.card import CARD_SPACING, create_card, create_card_title
+from ert.gui.ertwidgets.card import CARD_SPACING, create_card
 from ert.gui.ertwidgets.chip import DataSource, SourceChip
 from ert.gui.ertwidgets.models.ertsummary import ObservationCount
 
@@ -43,7 +46,8 @@ class SummaryTemplate:
 
     def addTitle(self, title: str) -> None:
         if not self.__finished:
-            style = "font-size: 16px; font-weight: bold;"
+            # 8px is the EDS small spacing.
+            style = "font-size: 16px; font-weight: bold; margin-bottom: 8px;"
             self.text += f'<div style="{style}">{title}</div>'
 
     def addRow(self, value: Any) -> None:
@@ -82,8 +86,9 @@ class SummaryTemplate:
 class SummaryPanel(QFrame):
     """Model summary: forward model, parameters and observations.
 
-    Each card has a chip telling whether its content comes from the config
-    file or from the ensemble selected in the experiment panel.
+    Each card has a chip in its upper right corner telling whether its
+    content comes from the config file or from the ensemble selected in the
+    experiment panel.
     """
 
     def __init__(self, config: ErtConfig) -> None:
@@ -109,10 +114,6 @@ class SummaryPanel(QFrame):
 
         layout = QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(8)
-        title = create_card_title("Model summary")
-        title.setObjectName("model_summary_title")
-        layout.addWidget(title)
         layout.addWidget(scroll, 1)
 
         self.setLayout(layout)
@@ -183,13 +184,26 @@ class SummaryPanel(QFrame):
 
     def _add_card(self, widget: QWidget, *, stretch: bool = True) -> SourceChip:
         card = create_card()
-        layout = QVBoxLayout(card)
+        layout = QGridLayout(card)
         layout.setContentsMargins(16, 12, 16, 12)
-        layout.addWidget(widget, 1 if stretch else 0)
-        if not stretch:
-            layout.addStretch(1)
+        layout.addWidget(widget, 0, 0)
+        if stretch:
+            layout.setRowStretch(0, 1)
+        else:
+            layout.addItem(
+                QSpacerItem(
+                    0, 0, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding
+                ),
+                1,
+                0,
+            )
+            layout.setRowStretch(1, 1)
+        # The chip shares the first cell with the content, in the upper right
+        # corner next to the card title.
         chip = SourceChip()
-        layout.addWidget(chip, 0, Qt.AlignmentFlag.AlignLeft)
+        layout.addWidget(
+            chip, 0, 0, Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignRight
+        )
 
         self._layout.addWidget(card, 1)
         return chip
