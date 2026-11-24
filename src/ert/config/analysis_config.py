@@ -12,6 +12,8 @@ from pydantic import Field, PositiveFloat, ValidationError
 from pydantic.dataclasses import dataclass
 
 from ert.config.parameter_config import LocalizationType, ParameterType
+from fmudesign import DesignMatrix as FmudesignDesignMatrix
+from fmudesign import excel_to_config
 
 from .analysis_module import ESSettings
 from .design_matrix import DesignMatrix, DesignMatrixConfig
@@ -319,6 +321,20 @@ class AnalysisConfig:
             )
             for dm_config in design_matrix_configs
         ]
+
+        fmu_design_configuration = config_dict.get(ConfigKeys.FMU_DESIGN, [])
+        if fmu_design_configuration:
+            fmu_design_file = fmu_design_configuration[0]
+            design_matrices.append(
+                DesignMatrix.from_design(
+                    FmudesignDesignMatrix(excel_to_config(fmu_design_file)),
+                    origin=Path(fmu_design_file).name,
+                    gen_kw_update_strategy=parameter_type_update_strategies.get(
+                        ParameterType.GEN_KW
+                    ),
+                )
+            )
+
         design_matrix: DesignMatrix | None = None
 
         if design_matrices:

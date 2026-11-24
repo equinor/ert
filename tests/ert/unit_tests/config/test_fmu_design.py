@@ -51,3 +51,14 @@ def parse_ert_config_with_fmu_design(fmu_design_line: str) -> ErtConfig:
         encoding="utf-8",
     )
     return ErtConfig.from_file("config.ert")
+
+
+def test_that_a_fmu_design_config_workbook_is_parsed_to_design_matrix(use_tmpdir):
+    design_file = "design.xlsx"
+    write_fmu_design_workbook(design_file)
+
+    ert_config = parse_ert_config_with_fmu_design("FMU_DESIGN design.xlsx")
+
+    design_matrix = ert_config.analysis_config.design_matrix
+    assert design_matrix is not None
+    assert design_matrix.origin == design_file
