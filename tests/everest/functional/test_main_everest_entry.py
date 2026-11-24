@@ -94,7 +94,7 @@ def test_everest_entry_run(cached_example):
     config = EverestConfig.load_file(config_file)
     experiment_status = get_experiment_status(config.storage_dir)
     assert experiment_status is not None
-    assert experiment_status.status == ExperimentState.completed
+    assert experiment_status.state == ExperimentState.completed
 
 
 @pytest.mark.slow
@@ -163,7 +163,7 @@ def test_that_keyboard_interrupt_stops_optimization_with_a_graceful_shutdown(
         def wait_and_kill():
             while True:
                 status = get_experiment_status(config.storage_dir)
-                if status and status.status == ExperimentState.running:
+                if status and status.state == ExperimentState.running:
                     import _thread  # ruff: ignore[import-outside-top-level]
 
                     _thread.interrupt_main()
@@ -187,7 +187,7 @@ def test_that_keyboard_interrupt_stops_optimization_with_a_graceful_shutdown(
 
         status = get_experiment_status(config.storage_dir)
         assert status is not None
-        assert status.status == ExperimentState.stopped
+        assert status.state == ExperimentState.stopped
 
 
 @pytest.mark.skip_mac_ci
@@ -209,7 +209,7 @@ def test_that_everest_kill_stops_a_running_optimization_and_the_server(
         wait_until(
             lambda: (
                 (status := get_experiment_status(config.storage_dir)) is not None
-                and status.status == ExperimentState.running
+                and status.state == ExperimentState.running
             ),
             interval=1,
             timeout=120,
@@ -222,7 +222,7 @@ def test_that_everest_kill_stops_a_running_optimization_and_the_server(
         assert "Waiting for server to stop ..." in out
         assert "Server stopped." in out
         assert not run_thread.is_alive()
-        assert get_experiment_status(config.storage_dir).status == (
+        assert get_experiment_status(config.storage_dir).state == (
             ExperimentState.stopped
         )
 

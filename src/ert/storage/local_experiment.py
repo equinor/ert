@@ -154,7 +154,7 @@ class ExperimentConfig(TypedDict, total=False):
 
 class ExperimentStatus(BaseModel, extra="forbid"):
     message: str = Field(default="")
-    status: ExperimentState = Field(default=ExperimentState.pending)
+    state: ExperimentState = Field(default=ExperimentState.pending)
 
 
 class _Index(BaseModel, extra="forbid"):
