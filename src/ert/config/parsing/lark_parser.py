@@ -511,7 +511,6 @@ def make_pre_defines(file: str = "no_config") -> Defines:
         ["<DATE>", dt.datetime.now().astimezone().date().isoformat()],
         ["<CWD>", config_dir],
         ["<CONFIG_FILE>", filepath.name],
-        ["<USER>", os.environ.get("USER", "$USER")],
         ["<SCRATCH>", "simulations"],
     ]
 
