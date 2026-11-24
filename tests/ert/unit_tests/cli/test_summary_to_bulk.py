@@ -21,6 +21,7 @@ from ert.plugins import ErtRuntimePlugins, get_site_plugins
 
 
 @pytest.mark.usefixtures("snake_oil_case")
+@pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key but no forward")
 def test_that_happy_path_on_snake_oil_produces_csv_and_stdout(capsys):
     """This tests that the produced stdout and csv file from the
     gather_summary_observations command is what we expect.

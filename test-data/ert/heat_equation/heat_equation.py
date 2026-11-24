@@ -21,62 +21,71 @@ from definition import (
     summary_names,
     u_init,
 )
-from resfo_utilities.testing import (
-    Date,
-    Simulator,
-    Smspec,
-    SmspecIntehead,
-    SummaryMiniStep,
-    SummaryStep,
-    UnitSystem,
-    Unsmry,
-)
 
 
-def create_summary_smspec_unsmry(
+def write_summary(
     summary_vectors: dict[str, list[float]],
-    start_date: dt.date,
+    start_date: dt.datetime,
+    eclbase: str,
     time_step_in_days: float = 30,
-):
-    summary_keys = list(summary_vectors.keys())
+) -> None:
+    """Write the summary vectors as an ECLIPSE-style .SMSPEC/.UNSMRY pair.
+
+    The layout is that of `resfo_utilities.testing.Smspec`/`Unsmry`, ref the opm
+    manual, tables F.44ff.
+    """
+    summary_keys = list(summary_vectors)
     num_time_steps = len(summary_vectors[summary_keys[0]])
+    int32 = np.int32
 
-    unsmry = Unsmry(
-        steps=[
-            SummaryStep(
-                seqnum=0,
-                ministeps=[
-                    SummaryMiniStep(
-                        mini_step=0,
-                        params=[
-                            24 * time_step_in_days * step,
-                            *[summary_vectors[key][step] for key in summary_vectors],
-                        ],
-                    )
-                ],
-            )
+    resfo.write(
+        f"{eclbase}.SMSPEC",
+        [
+            # Unit system METRIC, simulator ECLIPSE 100
+            ("INTEHEAD", np.array([1, 100], dtype=int32)),
+            ("RESTART ", [" " * 8] * 9),
+            ("DIMENS  ", np.array([1 + len(summary_keys), nx, nx, 1, 0, 0], int32)),
+            ("KEYWORDS", ["TIME    ", *[key.ljust(8) for key in summary_keys]]),
+            ("WGNAMES ", [":+:+:+:+"] * (1 + len(summary_keys))),
+            ("NUMS    ", np.array([-32676, *([0] * len(summary_keys))], dtype=int32)),
+            ("UNITS   ", ["HOURS   ", *(["SM3     "] * len(summary_keys))]),
+            (
+                "STARTDAT",
+                np.array(
+                    [
+                        start_date.day,
+                        start_date.month,
+                        start_date.year,
+                        start_date.hour,
+                        start_date.minute,
+                        0,
+                    ],
+                    dtype=int32,
+                ),
+            ),
+        ],
+    )
+    resfo.write(
+        f"{eclbase}.UNSMRY",
+        [
+            record
             for step in range(num_time_steps)
-        ]
+            for record in (
+                ("SEQHDR  ", np.array([0], dtype=int32)),
+                ("MINISTEP", np.array([0], dtype=int32)),
+                (
+                    "PARAMS  ",
+                    np.array(
+                        [
+                            24 * time_step_in_days * step,
+                            *[summary_vectors[key][step] for key in summary_keys],
+                        ],
+                        dtype=np.float32,
+                    ),
+                ),
+            )
+        ],
     )
-    smspec = Smspec(
-        nx=nx,
-        ny=nx,
-        nz=1,
-        restarted_from_step=0,
-        num_keywords=1 + len(summary_keys),
-        restart="        ",
-        keywords=["TIME    ", *summary_keys],
-        well_names=[":+:+:+:+", *([":+:+:+:+"] * len(summary_keys))],
-        region_numbers=[-32676, *([0] * len(summary_keys))],
-        units=["HOURS   ", *(["SM3"] * len(summary_keys))],
-        start_date=Date.from_datetime(start_date),
-        intehead=SmspecIntehead(
-            unit=UnitSystem.METRIC,
-            simulator=Simulator.ECLIPSE_100,
-        ),
-    )
-
-    return smspec, unsmry
 
 
 def heat_equation(
@@ -195,11 +204,9 @@ if __name__ == "__main__":
                 response[time_step][obs.x, obs.y]
             )
 
-    smspec, unsmry = create_summary_smspec_unsmry(
+    write_summary(
         summary_vectors=summary_values,
         start_date=dt.datetime(2010, 1, 1),  # ruff: ignore[call-datetime-without-tzinfo]
+        eclbase="HEAT",
         time_step_in_days=1,
     )
-
-    smspec.to_file("HEAT.SMSPEC")
-    unsmry.to_file("HEAT.UNSMRY")

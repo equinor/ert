@@ -3,7 +3,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 from PyQt6.QtCore import Qt, QTimer
-from PyQt6.QtWidgets import QComboBox, QToolButton, QWidget
+from PyQt6.QtWidgets import QComboBox, QMessageBox, QToolButton, QWidget
 from pytestqt.qtbot import QtBot
 
 from ert.config import ErtConfig
@@ -12,12 +12,30 @@ from ert.gui.experiments.ensemble_experiment_panel import EnsembleExperimentPane
 from ert.gui.main import _setup_main_window
 from ert.gui.tools.event_viewer.panel import GUILogHandler
 from ert.run_models.ensemble_experiment import EnsembleExperiment
+from ert.services import ErtClient, ErtServerController, SharedClient
 from tests.ert.handle_runpath_dialog import handle_runpath_dialog
 
 
+@pytest.fixture
+def runpath_case(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    config_path = tmp_path / "config.ert"
+    config_path.write_text("NUM_REALIZATIONS 1\nRUNPATH simulations/<IENS>/<ITER>\n")
+    config = ErtConfig.from_file(config_path)
+    (tmp_path / "simulations" / "0" / "0").mkdir(parents=True)
+    SharedClient.close_client()
+    with ErtServerController.init_service(project=Path(config.ens_path)):
+        try:
+            yield config
+        finally:
+            SharedClient.close_client()
+
+
 @pytest.mark.slow
-def test_runpath_deleted_error(snake_oil_case_storage: ErtConfig, qtbot: QtBot):
-    snake_oil_case = snake_oil_case_storage
+def test_that_runpaths_are_preserved_when_deletion_fails(
+    runpath_case: ErtConfig, qtbot: QtBot
+):
+    snake_oil_case = runpath_case
     args_mock = Mock()
     args_mock.config = "snake_oil.ert"
 
@@ -50,10 +68,18 @@ def test_runpath_deleted_error(snake_oil_case_storage: ErtConfig, qtbot: QtBot):
     QTimer.singleShot(
         1000, lambda: handle_runpath_dialog(gui, qtbot, expect_error=True)
     )
-    with patch("shutil.rmtree", side_effect=PermissionError("Not allowed!")):
+    with (
+        patch.object(
+            ErtClient, "runpath_delete", side_effect=PermissionError("Denied")
+        ) as delete,
+        patch.object(QMessageBox, "warning") as deletion_failed_warning,
+    ):
         qtbot.mouseClick(run_experiment, Qt.MouseButton.LeftButton)
 
         qtbot.waitUntil(lambda: gui.findChild(RunDialog) is not None)
+        delete.assert_called_once()
+        deletion_failed_warning.assert_called_once()
+        assert deletion_failed_warning.call_args.args[2] == "Denied"
     run_dialog = gui.findChild(RunDialog)
     qtbot.waitUntil(lambda: run_dialog.is_experiment_done() is True, timeout=100000)
     qtbot.waitUntil(lambda: run_dialog._tab_widget.currentWidget() is not None)
@@ -61,8 +87,10 @@ def test_runpath_deleted_error(snake_oil_case_storage: ErtConfig, qtbot: QtBot):
 
 
 @pytest.mark.slow
-def test_runpath_is_deleted(snake_oil_case_storage: ErtConfig, qtbot: QtBot):
-    snake_oil_case = snake_oil_case_storage
+def test_that_runpaths_are_deleted_when_confirmed(
+    runpath_case: ErtConfig, qtbot: QtBot
+):
+    snake_oil_case = runpath_case
     args_mock = Mock()
     args_mock.config = "snake_oil.ert"
 
@@ -104,8 +132,10 @@ def test_runpath_is_deleted(snake_oil_case_storage: ErtConfig, qtbot: QtBot):
 
 
 @pytest.mark.slow
-def test_runpath_is_not_deleted(snake_oil_case_storage: ErtConfig, qtbot: QtBot):
-    snake_oil_case = snake_oil_case_storage
+def test_that_runpaths_are_preserved_when_deletion_is_unchecked(
+    runpath_case: ErtConfig, qtbot: QtBot
+):
+    snake_oil_case = runpath_case
     args_mock = Mock()
     args_mock.config = "snake_oil.ert"
 

@@ -306,7 +306,15 @@ def test_run_poly_example_with_multiple_design_matrix_instances():
         "realizations. The merged design matrix will only contain the "
         "realizations that are active in all instances."
     ) in warning_messages
-    storage_path = ErtConfig.from_file("poly.ert").ens_path
+    with pytest.warns(
+        ConfigWarning,
+        match=(
+            "do not have the same active realizations. The merged design "
+            "matrix will only contain the realizations that are active "
+            "in all instances."
+        ),
+    ):
+        storage_path = ErtConfig.from_file("poly.ert").ens_path
     with open_storage(storage_path) as storage:
         experiment = storage.get_experiment_by_name("test-experiment")
         params = experiment.get_ensemble_by_name("default").load_parameters(
@@ -628,8 +636,8 @@ def test_design_matrix_on_esmda_fail_without_updateable_parameters(
             5,
             (
                 r"NUM_REALIZATIONS \({num_realizations_in_user_config}\) is "
-                "greater than the number of realizations in DESIGN_MATRIX "
-                r"\({realizations_in_design_matrix}\)\. Using the realizations from "
+                "greater than the number of realizations implied by DESIGN_MATRIX "
+                r"\({realizations_in_design_matrix}\)\. Using the ensemble size from "
                 r"DESIGN_MATRIX \({realizations_in_design_matrix}\)"
             ),
             id="num_reals_greater_than_design_matrix",
@@ -638,8 +646,8 @@ def test_design_matrix_on_esmda_fail_without_updateable_parameters(
             15,
             (
                 r"NUM_REALIZATIONS \({num_realizations_in_user_config}\) is "
-                "less than the number of realizations in DESIGN_MATRIX "
-                r"\({realizations_in_design_matrix}\). Using the realizations from "
+                "less than the number of realizations implied by DESIGN_MATRIX "
+                r"\({realizations_in_design_matrix}\)\. Using the ensemble size from "
                 r"NUM_REALIZATIONS \({num_realizations_in_user_config}\)"
             ),
             id="num_reals_less_than_design_matrix",

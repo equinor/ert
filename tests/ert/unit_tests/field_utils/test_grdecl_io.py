@@ -98,6 +98,5 @@ def test_that_text_export_and_import_are_inverses(array, name, tmp_path):
         result,
         masked_array,
         rtol=1e-6,
-        atol=1e-6,
     )
     assert not np.isnan(result).any()

@@ -1,4 +1,5 @@
 import logging
+import stat
 import threading
 import time
 from pathlib import Path
@@ -7,13 +8,20 @@ from unittest.mock import patch
 
 import pytest
 
+from ert import ErtScript
 from ert.config import ConfigWarning, Workflow
 from ert.config.workflow_job import (
+    ErtScriptWorkflow,
     ExecutableWorkflow,
     UserInstalledErtScriptWorkflow,
     workflow_job_from_file,
 )
-from ert.workflow_runner import WorkflowJobRunner, WorkflowJobStatus, WorkflowRunner
+from ert.workflow_runner import (
+    WorkflowJobFailedError,
+    WorkflowJobRunner,
+    WorkflowJobStatus,
+    WorkflowRunner,
+)
 from tests.ert.utils import wait_until
 
 from .workflow_common import WorkflowCommon
@@ -234,6 +242,24 @@ def test_that_job_results_contain_one_entry_per_job_invocation():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
+def test_that_job_result_of_failed_job_holds_error_separately_from_stderr():
+    WorkflowCommon.createExternalDumpJob()
+    Path("failing_workflow").write_text("DUMP_FAILING\n", encoding="utf-8")
+    failing_job = workflow_job_from_file(
+        "dump_failing_job", name="DUMP_FAILING", origin="user"
+    )
+    workflow = Workflow.from_file("failing_workflow", {}, {"DUMP_FAILING": failing_job})
+
+    runner = WorkflowRunner(workflow, fixtures={})
+    runner.run_blocking()
+
+    [result] = runner.workflow_job_results()
+    assert result.status is WorkflowJobStatus.FAILED
+    assert result.error.endswith("dump_failing.py failed with exit code 1")
+    assert result.stderr.startswith("Traceback")
+
+
+@pytest.mark.usefixtures("use_tmpdir")
 def test_that_output_of_workflow_job_is_written_to_ert_log(caplog):
     WorkflowCommon.createExternalDumpJob()
 
@@ -319,12 +345,80 @@ def test_that_output_of_job_that_stops_workflow_is_still_logged(caplog):
 
     with (
         caplog.at_level(logging.INFO, logger="ert.workflow_runner"),
-        pytest.raises(RuntimeError, match="failed with error"),
+        pytest.raises(WorkflowJobFailedError, match=r"Workflow job .* failed: "),
     ):
         WorkflowRunner(workflow, fixtures={}).run_blocking()
 
     assert "status=failed" in caplog.text
     assert "--- stdout ---\nHello Failing" in caplog.text
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_job_interrupted_by_ctrl_c_cancels_workflow_without_logging_errors(caplog):
+    class InterruptedScript(ErtScript):
+        def run(self):
+            raise KeyboardInterrupt
+
+    class NextScript(ErtScript):
+        def run(self):
+            Path("next_job_ran").touch()
+
+    interrupted_job = ErtScriptWorkflow(
+        name="INTERRUPTED", ert_script=InterruptedScript
+    )
+    next_job = ErtScriptWorkflow(name="NEXT", ert_script=NextScript)
+    workflow = Workflow(
+        src_file="workflow", cmd_list=[(interrupted_job, []), (next_job, [])]
+    )
+    runner = WorkflowRunner(workflow, fixtures={})
+
+    with caplog.at_level(logging.INFO):
+        runner.run_blocking()
+
+    assert runner.isCancelled()
+    assert not Path("next_job_ran").exists()
+    interrupted, skipped = runner.workflow_job_results()
+    assert interrupted.status is WorkflowJobStatus.CANCELLED
+    assert skipped.status is WorkflowJobStatus.CANCELLED
+    assert "Script cancelled (CTRL+C)" in interrupted.stderr
+    assert "job=INTERRUPTED#0 status=cancelled" in caplog.text
+    error_records = [
+        record for record in caplog.records if record.levelno >= logging.ERROR
+    ]
+    assert error_records == []
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_external_job_killed_by_cancel_is_logged_as_cancelled_without_errors(
+    caplog,
+):
+    sleep_script = Path("sleep.sh")
+    sleep_script.write_text(
+        "#!/bin/sh\ntouch started\nexec sleep 30\n", encoding="utf-8"
+    )
+    sleep_script.chmod(sleep_script.stat().st_mode | stat.S_IEXEC)
+    job = ExecutableWorkflow(
+        name="SLEEP",
+        executable=str(sleep_script.absolute()),
+        stop_on_fail=True,
+    )
+    workflow = Workflow(src_file="workflow", cmd_list=[(job, [])])
+    runner = WorkflowRunner(workflow, fixtures={})
+
+    with caplog.at_level(logging.INFO):
+        runner.run()
+        wait_until(lambda: Path("started").exists())
+        runner.cancel()
+        runner.wait()
+
+    assert runner.exception() is None
+    [result] = runner.workflow_job_results()
+    assert result.status is WorkflowJobStatus.CANCELLED
+    assert "job=SLEEP#0 status=cancelled" in caplog.text
+    error_records = [
+        record for record in caplog.records if record.levelno >= logging.ERROR
+    ]
+    assert error_records == []
 
 
 @pytest.mark.slow
@@ -520,6 +614,19 @@ def test_that_job_runner_stops_reporting_it_is_running_when_arguments_are_reject
         runner.run([1])
 
     assert not runner.isRunning()
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.parametrize(
+    "method_name", ["isCancelled", "hasFailed", "stdoutdata", "stderrdata", "error"]
+)
+def test_that_job_runner_rejects_reading_result_before_job_has_run(method_name):
+    WorkflowCommon.createExternalDumpJob()
+    job = workflow_job_from_file(name="DUMP", config_file="dump_job", origin="user")
+    runner = WorkflowJobRunner(job)
+
+    with pytest.raises(ValueError, match="The job must be run before"):
+        getattr(runner, method_name)()
 
 
 @pytest.mark.slow

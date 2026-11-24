@@ -1,4 +1,5 @@
 import logging
+import re
 from pathlib import Path
 from textwrap import dedent
 
@@ -12,6 +13,8 @@ from ert.config import (
     ConfigValidationError,
     ErtConfig,
     ESSettings,
+    LocalizationType,
+    ParameterType,
 )
 from ert.config.parsing import ConfigKeys, ConfigWarning
 
@@ -110,8 +113,75 @@ def test_merging_ignores_identical_design_matrices(tmp_path, monkeypatch, caplog
             ],
         }
     )
-    assert "Duplicate DESIGN_MATRIX entries DesignMatrix(filename=" in caplog.text
-    assert "only reading once." in caplog.text
+    assert (
+        "Duplicate DESIGN_MATRIX entries "
+        "'my_design_matrix.xlsx (my_sheet my_default_sheet)', only reading once."
+    ) in caplog.text
+
+
+def test_that_a_repeated_design_matrix_that_is_not_listed_first_is_read_once(
+    tmp_path, caplog
+):
+    caplog.set_level(logging.WARNING)
+    for name, parameter in [("first", "a"), ("second", "b")]:
+        pd.DataFrame({"REAL": [0, 1], parameter: [1, 2]}).to_excel(
+            tmp_path / f"{name}.xlsx", index=False, sheet_name="DesignSheet"
+        )
+
+    analysis_config = AnalysisConfig.from_dict(
+        {
+            ConfigKeys.DESIGN_MATRIX: [
+                [str(tmp_path / f"{name}.xlsx"), {}]
+                for name in ["first", "second", "second"]
+            ]
+        }
+    )
+
+    design_matrix = analysis_config.design_matrix
+    assert design_matrix is not None
+    assert design_matrix.design_matrix_df.columns == ["realization", "a", "b"]
+    assert "Duplicate DESIGN_MATRIX entries" in caplog.text
+
+
+def test_that_same_named_design_matrix_files_in_different_directories_conflict(
+    tmp_path,
+):
+    for directory, values in [("a", [1, 2]), ("b", [3, 4])]:
+        (tmp_path / directory).mkdir()
+        pd.DataFrame({"REAL": [0, 1], "x": values}).to_excel(
+            tmp_path / directory / "design.xlsx", index=False, sheet_name="DesignSheet"
+        )
+    with pytest.raises(ConfigValidationError, match="same name"):
+        AnalysisConfig.from_dict(
+            {
+                ConfigKeys.DESIGN_MATRIX: [
+                    [str(tmp_path / "a" / "design.xlsx"), {}],
+                    [str(tmp_path / "b" / "design.xlsx"), {}],
+                ]
+            }
+        )
+
+
+def test_that_design_matrix_merge_errors_name_all_previously_merged_files(tmp_path):
+    for name, parameter in [("first", "a"), ("second", "b"), ("third", "b")]:
+        pd.DataFrame({"REAL": [0, 1], parameter: [1, 2]}).to_excel(
+            tmp_path / f"{name}.xlsx", index=False, sheet_name="DesignSheet"
+        )
+    with pytest.raises(
+        ConfigValidationError,
+        match=re.escape(
+            "'first.xlsx (DesignSheet), second.xlsx (DesignSheet)' and "
+            "'third.xlsx (DesignSheet)'"
+        ),
+    ):
+        AnalysisConfig.from_dict(
+            {
+                ConfigKeys.DESIGN_MATRIX: [
+                    [str(tmp_path / f"{name}.xlsx"), {}]
+                    for name in ["first", "second", "third"]
+                ]
+            }
+        )
 
 
 @pytest.mark.filterwarnings(
@@ -250,11 +320,15 @@ def test_unknown_variable_raises_validation_error():
         )
 
 
-def test_default_alpha_is_set():
-    default_alpha = 3.0
+def test_default_alpha_is_three():
+    """This test is testing that missing alpha in OutlierSettings
+    defaults to some value, but also that the value should be the same as the
+    documented value, guarding against unintentional changes.
+    """
+    DEFAULT_ALPHA = 3.0
     assert (
         AnalysisConfig.from_dict({}).observation_settings.outlier_settings.alpha
-        == default_alpha
+        == DEFAULT_ALPHA
     )
 
 
@@ -268,11 +342,15 @@ def test_alpha_is_set_from_corresponding_key(value):
     )
 
 
-def test_default_std_cutoff_is_set():
-    default_std_cutoff = 1e-6
+def test_default_std_cutoff_is_one_millionth():
+    """This test is testing that missing std_cutoff in OutlierSettings
+    defaults to some value, but also that the value should be the same as the
+    documented value, guarding against unintentional changes.
+    """
+    DEFAULT_STD_CUTOFF = 1e-6
     assert (
         AnalysisConfig.from_dict({}).observation_settings.outlier_settings.std_cutoff
-        == default_std_cutoff
+        == DEFAULT_STD_CUTOFF
     )
 
 
@@ -365,19 +443,12 @@ def test_that_inversion_keyword_is_deprecated(config, expected_truncation):
 
 @pytest.mark.parametrize(
     "config",
-    [
-        ("2"),
-        ("3"),
-        ("SUBSPACE_RE"),
-        ("SUBSPACE_EE_R"),
-        ("subspace_re"),
-        ("subspace_ee_r"),
-    ],
+    ["2", "3", "SUBSPACE_RE", "SUBSPACE_EE_R", "subspace_re", "subspace_ee_r"],
 )
 def test_that_invalid_inversion_value_gives_error(config):
-    with pytest.raises(
-        ConfigValidationError,
-        match="Invalid INVERSION value",
+    with (
+        pytest.warns(ConfigWarning, match="The INVERSION keyword is deprecated"),
+        pytest.raises(ConfigValidationError, match="Invalid INVERSION value"),
     ):
         AnalysisConfig.from_dict(
             {
@@ -442,7 +513,7 @@ def test_config_wrong_module(config, expectation):
         )
 
 
-def test_that_parameter_type_update_strategies_is_set_correctly():
+def test_that_parameters_analysis_set_var_sets_strategy_per_parameter_type():
 
     strategies = AnalysisConfig.from_dict(
         {
@@ -453,9 +524,34 @@ def test_that_parameter_type_update_strategies_is_set_correctly():
         }
     ).parameter_type_update_strategies
 
-    assert len(strategies) == 2
-    assert strategies["FIELD"] == "distance"
-    assert strategies["GEN_KW"] == "adaptive"
+    assert strategies == {
+        ParameterType.FIELD: LocalizationType.DISTANCE,
+        ParameterType.GEN_KW: LocalizationType.ADAPTIVE,
+    }
+    assert all(isinstance(key, ParameterType) for key in strategies)
+
+
+@pytest.mark.parametrize(
+    ("parameter_type", "localization_type"),
+    [(ParameterType.GEN_KW, LocalizationType.DISTANCE)],
+)
+def test_that_unsupported_strategy_for_parameter_type_raises_validation_error(
+    parameter_type: ParameterType, localization_type: LocalizationType
+):
+    with pytest.raises(
+        ConfigValidationError,
+        match=(
+            f"{localization_type.name} strategy is not supported for "
+            f"{parameter_type.name} parameters"
+        ),
+    ):
+        AnalysisConfig.from_dict(
+            {
+                ConfigKeys.ANALYSIS_SET_VAR: [
+                    ["PARAMETERS", parameter_type.name, localization_type.name],
+                ],
+            }
+        )
 
 
 def test_that_parameter_strategy_with_unknown_strategy_raises_validation_error():

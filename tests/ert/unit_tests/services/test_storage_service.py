@@ -2,6 +2,8 @@ import json
 import os
 import socket
 import ssl
+import subprocess
+import sys
 from pathlib import Path
 from unittest.mock import patch
 
@@ -9,11 +11,14 @@ import pytest
 
 from ert.services import ErtServerController
 from ert.services._ert_server_main import _create_connection_info, _generate_certificate
-from ert.services.ert_server_controller import create_ert_server_controller
+from ert.services.ert_server_controller import (
+    ServerAlreadyRunningError,
+    create_ert_server_controller,
+)
 from ert.shared import find_available_socket
+from ert.shared.constants import LOCALHOST_IP
 
 
-@pytest.mark.skip_mac_ci  # Slow/failing - fqdn issue?
 @pytest.mark.slow
 def test_create_connection_string(monkeypatch):
     authtoken = "very_secret_token"
@@ -35,6 +40,25 @@ def test_create_connection_string(monkeypatch):
     )  # all unique
 
 
+@pytest.mark.slow
+def test_that_storage_log_config_keeps_loggers_created_before_it_is_applied(
+    change_to_tmpdir, monkeypatch
+):
+    monkeypatch.delenv("ERT_LOG_DIR", raising=False)
+    script = (
+        "import logging, logging.config, yaml\n"
+        "from ert.logging import STORAGE_LOG_CONFIG\n"
+        "logger = logging.getLogger('ert.storage.local_storage')\n"
+        "logging.config.dictConfig("
+        "yaml.safe_load(STORAGE_LOG_CONFIG.read_text(encoding='utf-8')))\n"
+        "print(logger.disabled)\n"
+    )
+    result = subprocess.run(
+        [sys.executable, "-c", script], capture_output=True, text=True, check=True
+    )
+    assert result.stdout.strip() == "False"
+
+
 def test_that_service_can_be_started_with_existing_conn_info_json(change_to_tmpdir):
     """
     This is a regression test for a bug with the following reproduction steps:
@@ -48,7 +72,7 @@ def test_that_service_can_be_started_with_existing_conn_info_json(change_to_tmpd
         "urls": [
             f"http://{host}:51839"
             for host in (
-                "127.0.0.1",
+                LOCALHOST_IP,
                 socket.gethostname(),
                 socket.getfqdn(),
             )
@@ -61,7 +85,6 @@ def test_that_service_can_be_started_with_existing_conn_info_json(change_to_tmpd
     create_ert_server_controller(project=Path().absolute())
 
 
-@pytest.mark.skip_mac_ci  # Slow/failing - fqdn issue?
 @patch("ert.services.ErtServerController.start_server")
 def test_that_service_can_be_started_with_missing_cert_in_conn_info_json(
     start_server_mock, change_to_tmpdir
@@ -78,7 +101,7 @@ def test_that_service_can_be_started_with_missing_cert_in_conn_info_json(
         "urls": [
             f"http://{host}:51839"
             for host in (
-                "127.0.0.1",
+                LOCALHOST_IP,
                 socket.gethostname(),
                 socket.getfqdn(),
             )
@@ -118,10 +141,10 @@ def test_that_stale_connection_info_file_is_removed_before_starting_new_service(
     """
     stale_file = Path("ert_server_connection.json")
     connection_info = {
-        "urls": ["http://127.0.0.1:1"],
+        "urls": [f"http://{LOCALHOST_IP}:1"],
         "authtoken": "stale_token",
         "cert": "",
-        "host": "127.0.0.1",
+        "host": LOCALHOST_IP,
         "port": "1",
         "auth": "",
     }
@@ -143,6 +166,32 @@ def test_that_stale_connection_info_file_is_removed_before_starting_new_service(
 
 
 @patch("ert.services.ErtServerController.start_server")
+@patch("ert.services.ert_server_controller.ErtServerController.fetch_url")
+def test_that_init_service_raises_and_keeps_the_connection_file_of_a_reachable_server(
+    fetch_url_mock, start_server_mock, change_to_tmpdir
+):
+    connection_info_file = Path("ert_server_connection.json")
+    connection_info_json = json.dumps(
+        {
+            "urls": [f"http://{LOCALHOST_IP}:51839"],
+            "authtoken": "dummytoken",
+            "cert": "",
+            "host": LOCALHOST_IP,
+            "port": "51839",
+            "auth": "",
+        }
+    )
+    connection_info_file.write_text(connection_info_json, encoding="utf-8")
+    fetch_url_mock.return_value = f"http://{LOCALHOST_IP}:51839"
+
+    with pytest.raises(ServerAlreadyRunningError, match="Server already running"):
+        ErtServerController.init_service(project=Path().absolute())
+
+    start_server_mock.assert_not_called()
+    assert connection_info_file.read_text(encoding="utf-8") == connection_info_json
+
+
+@patch("ert.services.ErtServerController.start_server")
 def test_that_service_can_be_started_with_empty_json_content(
     start_server_mock, change_to_tmpdir
 ):
@@ -154,7 +203,6 @@ def test_that_service_can_be_started_with_empty_json_content(
     start_server_mock.assert_called_once()
 
 
-@pytest.mark.skip_mac_ci  # Slow/failing - fqdn issue?
 @pytest.mark.slow
 def test_storage_logging(change_to_tmpdir):
     """
@@ -182,7 +230,6 @@ def test_storage_logging(change_to_tmpdir):
     ), "Found duplicated log entries"
 
 
-@pytest.mark.skip_mac_ci  # Slow/failing - fqdn issue?
 @pytest.mark.slow
 def test_certificate_generation(change_to_tmpdir):
     cert, key, pw = _generate_certificate(Path())
@@ -196,7 +243,6 @@ def test_certificate_generation(change_to_tmpdir):
     ctx.load_cert_chain(cert, key, pw)  # raise on error
 
 
-@pytest.mark.skip_mac_ci  # Slow/failing - fqdn issue?
 @pytest.mark.slow
 def test_certificate_generation_handles_long_machine_names(change_to_tmpdir):
     with patch(
@@ -214,22 +260,23 @@ def test_certificate_generation_handles_long_machine_names(change_to_tmpdir):
     ctx.load_cert_chain(cert, key, pw)  # raise on error
 
 
-@pytest.mark.skip_mac_ci  # Slow/failing - fqdn issue?
 @pytest.mark.slow
-def test_that_server_hosts_exists_as_san_in_certificate(change_to_tmpdir, monkeypatch):
+def test_that_server_hosts_and_localhost_ip_exists_as_san_in_certificate(
+    change_to_tmpdir, monkeypatch
+):
     auth_token = "very_secret_token"
     sock = find_available_socket()
     cert_path, _, _ = _generate_certificate(Path())
-    monkeypatch.setenv("ERT_SERVER_CONNECTION_STRING", "")
 
     conn_info = _create_connection_info(sock, auth_token, cert_path)
     # check certificate is readable
     x509 = ssl._ssl._test_decode_cert(conn_info["cert"])  # type: ignore[attr-defined]
-    sans = [san[1] for san in x509["subjectAltName"]]
+    dns_sans = [value for kind, value in x509["subjectAltName"] if kind == "DNS"]
 
     # extract hostname from the url strings "https://<hostname>:<port>/..."
     hosts_from_urls = [u.split("https://")[1].split(":")[0] for u in conn_info["urls"]]
-    assert set(sans) == set(hosts_from_urls)
+    assert set(dns_sans) == set(hosts_from_urls)
+    assert ("IP Address", LOCALHOST_IP) in x509["subjectAltName"]
 
 
 def test_that_an_exception_is_raised_if_storage_server_file_has_no_permissions(

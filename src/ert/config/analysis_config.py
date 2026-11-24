@@ -11,10 +11,10 @@ from typing import Any, Final
 from pydantic import Field, PositiveFloat, ValidationError
 from pydantic.dataclasses import dataclass
 
-from ert.config.parameter_config import LocalizationType
+from ert.config.parameter_config import LocalizationType, ParameterType
 
 from .analysis_module import ESSettings
-from .design_matrix import DesignMatrix
+from .design_matrix import DesignMatrix, DesignMatrixConfig
 from .parsing import (
     ConfigDict,
     ConfigKeys,
@@ -51,7 +51,7 @@ class AnalysisConfig:
     )
     num_iterations: int = 1
     design_matrix: DesignMatrix | None = None
-    parameter_type_update_strategies: dict[str, LocalizationType] = field(
+    parameter_type_update_strategies: dict[ParameterType, LocalizationType] = field(
         default_factory=dict
     )
 
@@ -93,8 +93,6 @@ class AnalysisConfig:
 
         min_realization = min(min_realization, num_realization)
 
-        design_matrix_config_lists = config_dict.get(ConfigKeys.DESIGN_MATRIX, [])
-
         options: dict[str, dict[str, Any]] = {"STD_ENKF": {}}
 
         auto_scale_observations: list[ObservationGroups] = []
@@ -111,14 +109,20 @@ class AnalysisConfig:
         deprecated_keys = ["ENKF_NCOMP", "ENKF_SUBSPACE_DIMENSION"]
         errors = []
         all_errors = []
-        parameter_type_update_strategies: dict[str, LocalizationType] = {}
+        parameter_type_update_strategies: dict[ParameterType, LocalizationType] = {}
         es_mda_weights: str | None = None
 
         for module_name, var_name, value in analysis_set_var:
             if var_name == "DISTANCE_LOCALIZATION" and value.upper() == "TRUE":
-                parameter_type_update_strategies["FIELD"] = LocalizationType.DISTANCE
-                parameter_type_update_strategies["SURFACE"] = LocalizationType.DISTANCE
-                parameter_type_update_strategies["GEN_KW"] = LocalizationType.ADAPTIVE
+                parameter_type_update_strategies[ParameterType.FIELD] = (
+                    LocalizationType.DISTANCE
+                )
+                parameter_type_update_strategies[ParameterType.SURFACE] = (
+                    LocalizationType.DISTANCE
+                )
+                parameter_type_update_strategies[ParameterType.GEN_KW] = (
+                    LocalizationType.ADAPTIVE
+                )
 
                 ConfigWarning.deprecation_warn(
                     "DISTANCE_LOCALIZATION is deprecated and will be removed in a "
@@ -127,9 +131,15 @@ class AnalysisConfig:
                 )
 
             if var_name == "LOCALIZATION" and value.upper() == "TRUE":
-                parameter_type_update_strategies["FIELD"] = LocalizationType.ADAPTIVE
-                parameter_type_update_strategies["SURFACE"] = LocalizationType.ADAPTIVE
-                parameter_type_update_strategies["GEN_KW"] = LocalizationType.ADAPTIVE
+                parameter_type_update_strategies[ParameterType.FIELD] = (
+                    LocalizationType.ADAPTIVE
+                )
+                parameter_type_update_strategies[ParameterType.SURFACE] = (
+                    LocalizationType.ADAPTIVE
+                )
+                parameter_type_update_strategies[ParameterType.GEN_KW] = (
+                    LocalizationType.ADAPTIVE
+                )
 
                 ConfigWarning.deprecation_warn(
                     "LOCALIZATION has been removed, and is equivalent to:\n"
@@ -142,24 +152,15 @@ class AnalysisConfig:
                 )
 
             if module_name == "PARAMETERS":
-                parameter_type = var_name
+                parameter_type_name = var_name
                 strategy_name = value
 
-                if parameter_type == "GEN_KW" and strategy_name == "DISTANCE":
+                if parameter_type_name not in ParameterType.__members__:
                     all_errors.append(
                         ConfigValidationError(
-                            "DISTANCE strategy is not supported for GEN_KW parameters. "
-                            "Valid strategies for GEN_KW are: GLOBAL, ADAPTIVE"
-                        )
-                    )
-                    continue
-
-                if parameter_type not in {"FIELD", "SURFACE", "GEN_KW"}:
-                    all_errors.append(
-                        ConfigValidationError(
-                            f"Invalid parameter type {parameter_type!r} for "
+                            f"Invalid parameter type {parameter_type_name!r} for "
                             "ANALYSIS_SET_VAR PARAMETERS TYPE\nValid options are: "
-                            "{'FIELD', 'SURFACE', 'GEN_KW'}"
+                            f"{tuple(ParameterType.__members__)}"
                         )
                     )
                     continue
@@ -174,9 +175,21 @@ class AnalysisConfig:
                     )
                     continue
 
-                parameter_type_update_strategies[parameter_type] = LocalizationType[
-                    strategy_name
-                ]
+                parameter_type = ParameterType[parameter_type_name]
+                localization_type = LocalizationType[strategy_name]
+                supported = parameter_type.supported_localization_types
+                if localization_type not in supported:
+                    all_errors.append(
+                        ConfigValidationError(
+                            f"{localization_type.name} strategy is not supported for "
+                            f"{parameter_type.name} parameters. Valid strategies for "
+                            f"{parameter_type.name} are: "
+                            f"{', '.join(lt.name for lt in supported)}"
+                        )
+                    )
+                    continue
+
+                parameter_type_update_strategies[parameter_type] = localization_type
                 continue
 
             if module_name == "IES_ENKF":
@@ -264,12 +277,14 @@ class AnalysisConfig:
         try:
             es_settings = ESSettings(**options["STD_ENKF"])
             outlier_settings: dict[str, Any] = {
-                "alpha": config_dict.get(ConfigKeys.ENKF_ALPHA, 3.0),
-                "std_cutoff": config_dict.get(ConfigKeys.STD_CUTOFF, 1e-6),
+                "alpha": config_dict.get(ConfigKeys.ENKF_ALPHA),
+                "std_cutoff": config_dict.get(ConfigKeys.STD_CUTOFF),
             }
 
             obs_settings = ObservationSettings(
-                outlier_settings=OutlierSettings(**outlier_settings),
+                outlier_settings=OutlierSettings(
+                    **{k: v for k, v in outlier_settings.items() if v is not None}
+                ),
                 auto_scale_observations=auto_scale_observations,
             )
         except ValidationError as err:
@@ -285,25 +300,28 @@ class AnalysisConfig:
         if es_mda_weights is not None and es_settings is not None:
             es_settings.weights = es_mda_weights
 
+        design_matrix_configs: list[DesignMatrixConfig] = []
+        for design_matrix_config_list in config_dict.get(ConfigKeys.DESIGN_MATRIX, []):
+            dm_config = DesignMatrixConfig.from_config_list(design_matrix_config_list)
+            if dm_config in design_matrix_configs:
+                logger.warning(
+                    "Duplicate DESIGN_MATRIX entries "
+                    f"'{dm_config.file_and_sheets}', only reading once."
+                )
+            else:
+                design_matrix_configs.append(dm_config)
         design_matrices = [
-            DesignMatrix.from_config_list(
-                design_matrix_config_list,
-                parameter_type_update_strategies.get("GEN_KW"),
+            DesignMatrix.from_config(
+                dm_config, parameter_type_update_strategies.get(ParameterType.GEN_KW)
             )
-            for design_matrix_config_list in design_matrix_config_lists
+            for dm_config in design_matrix_configs
         ]
         design_matrix: DesignMatrix | None = None
 
         if design_matrices:
             design_matrix = design_matrices[0]
             for dm_other in design_matrices[1:]:
-                if design_matrix != dm_other:
-                    design_matrix.merge_with_other(dm_other)
-                else:
-                    logger.warning(
-                        f"Duplicate DESIGN_MATRIX entries {dm_other}, "
-                        "only reading once."
-                    )
+                design_matrix.merge_with_other(dm_other)
             logger.info("Running ERT with DESIGN_MATRIX")
         return cls(
             minimum_required_realizations=min_realization,

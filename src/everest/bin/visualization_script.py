@@ -14,7 +14,7 @@ from PyQt6.QtWidgets import QApplication
 from ert.gui.plotting.plot_window import PlotWindow
 from ert.services import ErtServerController
 from ert.storage import LocalStorage
-from everest.bin.utils import setup_logging
+from everest.bin.utils import log_enabled_flags, setup_logging
 from everest.config import EverestConfig
 from everest.util._utils import get_everest_experiment
 
@@ -40,6 +40,7 @@ def visualization_entry(args: list[str] | None = None) -> None:
     options = parser.parse_args(args)
     logger = logging.getLogger(__name__)
     with setup_logging(options):
+        log_enabled_flags("results", options)
         logger.info(
             f"Starting everest results entrypoint with args {args} in {Path.cwd()}"
         )

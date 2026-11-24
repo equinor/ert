@@ -1,7 +1,8 @@
 """Module for utility functions that do not belong elsewhere."""
 
+import math
 from collections import Counter
-from collections.abc import Callable, Hashable, Iterable
+from collections.abc import Callable, Hashable, Iterable, Mapping
 from pathlib import Path
 from typing import Any
 
@@ -9,9 +10,11 @@ import numpy as np
 import pandas as pd
 import polars as pl
 from polars.exceptions import NoDataError
-from python_calamine import CalamineWorkbook
+from python_calamine import CalamineError, CalamineWorkbook
 
 from fmudesign.exceptions import FmudesignError
+
+DISALLOWED_CELL_VALUES = ["nan", "null", "none", ""]
 
 
 def excel_sheet_names(filename: Path | str) -> list[str]:
@@ -19,15 +22,96 @@ def excel_sheet_names(filename: Path | str) -> list[str]:
         return workbook.sheet_names
 
 
-def read_excel_sheet(filename: str, sheet_name: str | int = 0) -> pd.DataFrame:
+def convert_to_numeric(x: str) -> str | float | int:
+    try:
+        return int(x)
+    except ValueError:
+        try:
+            return float(x)
+
+        except ValueError:
+            return x
+
+
+def read_default_values(
+    filename: Path, sheet_name: str, *, has_header: bool
+) -> dict[str, str | float | int | bool]:
+    """
+    Construct a dict of keys and values to be used as defaults from the
+    first two columns in a spreadsheet.
+    """
+    try:
+        with CalamineWorkbook.from_path(filename) as workbook:
+            rows = workbook.get_sheet_by_name(sheet_name).to_python(
+                skip_empty_area=False
+            )
+    except CalamineError as err:
+        raise ValueError(
+            f"The default sheet '{sheet_name}' in '{filename}' could not be read: {err}"
+        ) from err
+
+    defaults: dict[str, str | float | int | bool] = {}
+    empty_cells: list[str] = []
+    duplicate_names: set[str] = set()
+    for row_number, row in enumerate(
+        rows[int(has_header) :], start=1 + int(has_header)
+    ):
+        if all(isinstance(cell, str) and not cell.strip() for cell in row):
+            continue
+        if len(row) < 2:
+            raise ValueError("Defaults sheet must have at least two columns")
+
+        name = str(row[0]).strip()
+        value = row[1]
+        if isinstance(value, float) and value.is_integer():
+            value = int(value)
+        elif not isinstance(value, (int, float)):
+            value = convert_to_numeric(str(value).strip())
+        empty_cells.extend(
+            f"Row {row_number}, column {column}"
+            for column, cell in enumerate((name, value))
+            if str(cell).lower() in DISALLOWED_CELL_VALUES
+            or (isinstance(cell, float) and not math.isfinite(cell))
+        )
+        if name in defaults:
+            duplicate_names.add(name)
+        defaults[name] = value
+
+    if empty_cells:
+        raise ValueError(
+            "Default sheet contains empty cells or cells with a "
+            f"disallowed value {empty_cells}"
+        )
+    if duplicate_names:
+        raise ValueError(
+            f"Default sheet '{sheet_name}' contains duplicate parameter names: "
+            f"{', '.join(sorted(duplicate_names))}"
+        )
+    return defaults
+
+
+def read_excel_sheet(
+    filename: str,
+    sheet_name: str | int = 0,
+    *,
+    dtype: Mapping[str, type] | None = None,
+) -> pd.DataFrame:
     """Read an Excel sheet, dropping empty rows and unnamed columns, which
     formatting of empty cells can introduce.
     """
     return (
-        pd.read_excel(filename, sheet_name, engine="openpyxl")
+        pd.read_excel(filename, sheet_name, engine="openpyxl", dtype=dtype)
         .dropna(axis=0, how="all")
         .loc[:, lambda df: ~df.columns.astype(str).str.contains("^Unnamed")]
     )
+
+
+def strip_text_cells(df: pd.DataFrame) -> pd.DataFrame:
+    """Strip whitespace around text cells. Whitespace-only cells count as
+    empty, and rows left without any value are dropped.
+    """
+    df = df.map(lambda cell: cell.strip() if isinstance(cell, str) else cell)
+    return df.mask(df.eq("")).dropna(how="all")
 
 
 def parameters_from_extern(filename: str) -> pd.DataFrame:
@@ -256,7 +340,11 @@ def find_sheet(name: str, names: list[str]) -> str:
     >>> find_sheet('variable_input', ['generalinput', 'designinput', 'defaultinput'])
     Traceback (most recent call last):
       ...
-    fmudesign.exceptions.FmudesignError: No match for variable_input: ['generalinput', 'designinput', 'defaultinput']
+    fmudesign.exceptions.FmudesignError: Sheet 'variable_input' was not found. Sheets in workbook: ['generalinput', 'designinput', 'defaultinput']
+    >>> find_sheet('design_input', ['designinput', 'Design_Input'])
+    Traceback (most recent call last):
+      ...
+    fmudesign.exceptions.FmudesignError: Sheet 'design_input' matches several sheets: ['designinput', 'Design_Input']
     """  # ruff: ignore[line-too-long]
 
     def sanitize(inputstring: str) -> str:
@@ -264,9 +352,11 @@ def find_sheet(name: str, names: list[str]) -> str:
 
     found = [name_i for name_i in names if sanitize(name) == sanitize(name_i)]
     if not found:
-        raise FmudesignError(f"No match for {name}: {names}")
+        raise FmudesignError(
+            f"Sheet {name!r} was not found. Sheets in workbook: {names}"
+        )
     if len(found) > 1:
-        raise FmudesignError(f"More than one match for {name}: {found}")
+        raise FmudesignError(f"Sheet {name!r} matches several sheets: {found}")
     return found[0]
 
 

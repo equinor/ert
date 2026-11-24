@@ -221,6 +221,15 @@ class ErtMainWindow(QMainWindow):
 
         run_dialog.setParent(self)
         experiment_name = run_dialog.property("experiment_name")
+
+        # add a suffix when experiment name is not unqiue
+        if experiment_name in self.central_panels_map:
+            suffix = 2
+            while f"{experiment_name} ({suffix})" in self.central_panels_map:
+                suffix += 1
+            experiment_name = f"{experiment_name} ({suffix})"
+            run_dialog.set_experiment_name(experiment_name)
+
         self.central_panels_map[experiment_name] = run_dialog
         self.run_dialog_counter += 1
         self.central_layout.addWidget(run_dialog)

@@ -1,4 +1,6 @@
 import json
+import logging
+from argparse import Namespace
 from pathlib import Path
 
 import pytest
@@ -7,6 +9,7 @@ from ert.storage import open_storage
 from ert.storage.local_experiment import ExperimentState, ExperimentStatus
 from everest.bin.utils import (
     get_experiment_status,
+    log_enabled_flags,
     remove_show_scaling_warning_setting,
 )
 from everest.strings import EVEREST
@@ -91,3 +94,17 @@ def test_that_removes_show_scaling_warning_key_or_deletes_empty_file(
         assert not Path(".ert").exists()
     else:
         assert json.loads(Path(".ert").read_text(encoding="utf-8")) == expected
+
+
+def test_that_log_enabled_flags_logs_the_command_and_one_line_per_true_flag(caplog):
+    options = Namespace(
+        config="config.yml", batch=3, show_all_jobs=True, debug=True, verbose=False
+    )
+    with caplog.at_level(logging.INFO):
+        log_enabled_flags("monitor", options)
+
+    assert caplog.messages == [
+        "everest command used: monitor",
+        "everest flag used: monitor --debug",
+        "everest flag used: monitor --show-all-jobs",
+    ]

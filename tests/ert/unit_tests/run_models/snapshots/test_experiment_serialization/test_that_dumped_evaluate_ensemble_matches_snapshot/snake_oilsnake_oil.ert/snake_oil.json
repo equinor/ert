@@ -24,7 +24,8 @@
       "activate_script": "activate"
     },
     "stop_long_running": false,
-    "max_runtime": null
+    "max_runtime": null,
+    "realization_memory_is_site_default": false
   },
   "forward_model_steps": [
     {
@@ -109,6 +110,8 @@
     "<DATE>": "2000-01-01",
     "<CWD>": "test-data/ert/snake_oil.snake_oil.ert",
     "<CONFIG_FILE>": "snake_oil.ert",
+    "<USER>": "user",
+    "<SCRATCH>": "simulations",
     "<STORAGE>": "storage/snake_oil",
     "<RUNPATH_FILE>": "test-data/ert/snake_oil.snake_oil.ert/.ert_runpath_list",
     "<RUNPATH>": "test-data/ert/snake_oil.snake_oil.ert/storage/snake_oil/runpath/realization-<IENS>/iter-<ITER>",

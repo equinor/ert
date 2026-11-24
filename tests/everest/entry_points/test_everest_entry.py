@@ -20,7 +20,7 @@ def raise_system_error(*args, **kwargs):
     raise SystemError("Reality was ripped to shreds!")
 
 
-@patch("everest.bin.everest_script.run_server_monitor")
+@patch("everest.bin.everest_script.run_server_monitor_async")
 @patch("everest.bin.everest_script.start_server")
 @patch("everest.config.ServerConfig.get_server_context_from_conn_info")
 @patch(
@@ -55,9 +55,10 @@ def test_everest_entry_debug(
     everest_script_api_mock.get_client.return_value.wait_for_server.assert_called_once_with(
         timeout=600
     )
-    start_monitor_mock.assert_called_once_with(
+    start_monitor_mock.assert_awaited_once_with(
         client=everest_script_api_mock.get_client.return_value,
         experiment_id=everest_script_api_mock.get_client.return_value.start_experiment.return_value,
+        disable_monitoring=False,
     )
     assert everest_script_api_mock.get_client.call_count == 2
     get_server_context_from_conn_info_mock.assert_not_called()
@@ -67,9 +68,12 @@ def test_everest_entry_debug(
     assert '"objective_functions"' in logstream
     assert '"name": "my_control"' in logstream
     assert f'"config_path": "{Path.cwd()}/config.yml"' in logstream
+    assert "everest command used: run" in caplog.messages
+    assert "everest flag used: run --debug" in caplog.messages
+    assert "everest flag used: run --gui" not in caplog.messages
 
 
-@patch("everest.bin.everest_script.run_server_monitor")
+@patch("everest.bin.everest_script.run_server_monitor_async")
 @patch("everest.bin.everest_script.start_server")
 @patch("everest.config.ServerConfig.get_server_context_from_conn_info")
 @patch(
@@ -96,15 +100,16 @@ def test_everest_entry(
     everest_script_api_mock.get_client.return_value.wait_for_server.assert_called_once_with(
         timeout=600
     )
-    start_monitor_mock.assert_called_once_with(
+    start_monitor_mock.assert_awaited_once_with(
         client=everest_script_api_mock.get_client.return_value,
         experiment_id=everest_script_api_mock.get_client.return_value.start_experiment.return_value,
+        disable_monitoring=False,
     )
     assert everest_script_api_mock.get_client.call_count == 2
     get_server_context_from_conn_info_mock.assert_not_called()
 
 
-@patch("everest.bin.everest_script.run_server_monitor")
+@patch("everest.bin.everest_script.run_server_monitor_async")
 @patch("everest.bin.everest_script.start_server")
 @patch("everest.config.ServerConfig.get_server_context_from_conn_info")
 @patch(
@@ -145,7 +150,7 @@ def test_everest_entry_detached_already_run(
     # start a new run
     everest_entry(["config.yml"])
     start_server_mock.assert_called_once()
-    start_monitor_mock.assert_called_once()
+    start_monitor_mock.assert_awaited_once()
     start_experiment_mock.assert_called_once()
     assert everest_script_api_mock.get_client.call_count == 2
 
@@ -161,7 +166,7 @@ def test_everest_entry_detached_already_run(
     # run again, should start a new run like above
     everest_entry(["config.yml"])
     start_server_mock.assert_called_once()
-    start_monitor_mock.assert_called_once()
+    start_monitor_mock.assert_awaited_once()
     start_experiment_mock.assert_called_once()
     assert everest_script_api_mock.get_client.call_count == 4
 
@@ -199,7 +204,7 @@ def test_everest_entry_detached_already_run_monitor(
 
 @patch("everest.bin.everest_script.ErtClient")
 @patch("everest.config.ServerConfig.get_server_context_from_conn_info")
-@patch("everest.bin.everest_script.run_server_monitor")
+@patch("everest.bin.everest_script.run_server_monitor_async")
 @patch("everest.bin.everest_script.start_server")
 @patch(
     "everest.bin.kill_script.ErtClient",
@@ -313,7 +318,7 @@ def test_everest_entry_monitor_already_run(
 
 
 @patch(
-    "everest.bin.everest_script.run_server_monitor",
+    "everest.bin.everest_script.run_server_monitor_async",
     side_effect=raise_system_error,
 )
 @patch("everest.bin.everest_script.start_server")
@@ -335,6 +340,8 @@ def test_exception_raised_when_server_run_fails(
 
     with pytest.raises(SystemError, match="Reality was ripped to shreds!"):
         everest_entry(["config.yml"])
+
+    start_monitor_mock.assert_awaited_once()
 
 
 @patch(
@@ -420,6 +427,7 @@ def test_that_run_everest_prints_where_it_runs(
             return_value=("a", "b", ("c", "d")),
         ),
         patch("everest.bin.everest_script.start_server"),
+        patch("everest.bin.everest_script.run_server_monitor_async"),
     ):
         everest_entry(["config.yml"])
 

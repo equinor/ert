@@ -2,6 +2,7 @@ from pathlib import Path
 from unittest.mock import MagicMock
 
 import pytest
+from pydantic import ValidationError
 
 import ert.run_models.everest_run_model
 from ert.base_model_context import use_runtime_plugins
@@ -47,3 +48,8 @@ def test_that_runpath_strings_are_generated_correctly(
 def test_that_log_level_in_environment_gives_deprecation_warning():
     with pytest.warns(ConfigWarning, match="`environment: log_level` is deprecated"):
         everest_config_with_defaults(environment={"log_level": "debug"})
+
+
+def test_that_none_environment_raises_validation_error():
+    with pytest.raises(ValidationError):
+        everest_config_with_defaults(environment=None)

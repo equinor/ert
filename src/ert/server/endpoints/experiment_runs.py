@@ -1,6 +1,9 @@
 import asyncio
+import copy
 import dataclasses
 import datetime as dt
+import functools
+import json
 import logging
 import os
 import queue
@@ -15,7 +18,6 @@ from contextlib import ExitStack
 from queue import SimpleQueue
 from typing import Annotated
 
-import anyio
 from fastapi import (
     APIRouter,
     BackgroundTasks,
@@ -26,21 +28,25 @@ from fastapi import (
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
-from pydantic import BaseModel
 from starlette import status
 from starlette.requests import Request
 from starlette.responses import PlainTextResponse, Response
-from starlette.websockets import WebSocket
+from starlette.websockets import WebSocket, WebSocketDisconnect
 
 from ert.base_model_context import use_runtime_plugins
 from ert.config import ConfigWarning, QueueSystem
 from ert.ensemble_evaluator import EndEvent, EvaluatorServerConfig
 from ert.ensemble_evaluator.event import FullSnapshotEvent, SnapshotUpdateEvent
 from ert.ensemble_evaluator.snapshot import EnsembleSnapshot
-from ert.plugins import get_site_plugins
+from ert.plugins import ErtPluginManager, ErtRuntimePlugins, get_site_plugins
 from ert.run_models import StatusEvents
 from ert.run_models.everest_run_model import EverestExitCode, EverestRunModel
 from ert.server.common import EverEndpoints
+from ert.server.status_event_forwarder import (
+    StatusEventForwarder,
+    StatusEventNotifier,
+    create_status_event_forwarder,
+)
 from everest.config import EverestConfig
 from everest.everserver.server import (
     ExperimentState,
@@ -63,17 +69,28 @@ class ExperimentRunnerState:
     status: ExperimentStatus = dataclasses.field(default_factory=ExperimentStatus)
     events: list[StatusEvents] = dataclasses.field(default_factory=list)
     subscribers: dict[str, "Subscriber"] = dataclasses.field(default_factory=dict)
+    finalized: asyncio.Event = dataclasses.field(default_factory=asyncio.Event)
+    active_streams: int = 0
     config_path: str | os.PathLike[str] | None = None
     run_path: str | os.PathLike[str] | None = None
     storage_path: str | os.PathLike[str] | None = None
     start_time_unix: int | None = None
+    status_event_forwarder: StatusEventForwarder | None = None
+
+    def publish(self, event: StatusEvents) -> None:
+        self.events.append(event)
+        for subscriber in self.subscribers.values():
+            subscriber.notify()
+        if self.status_event_forwarder is not None:
+            self.status_event_forwarder.forward(event)
+
+    def reset_for_rerun(self) -> None:
+        self.events.clear()
+        self.finalized.clear()
+        self.status = ExperimentStatus()
 
 
 _experiments: dict[str, ExperimentRunnerState] = {}
-
-
-class PathsCheckRequest(BaseModel):
-    paths: list[str]
 
 
 def _get_experiment(experiment_id: str) -> ExperimentRunnerState:
@@ -90,10 +107,10 @@ def _failed_realizations_messages(
     snapshots: dict[int, EnsembleSnapshot] = {}
     for event in events:
         if isinstance(event, FullSnapshotEvent) and event.snapshot:
-            snapshots[event.iteration] = event.snapshot
+            snapshots[event.iteration] = copy.deepcopy(event.snapshot)
         elif isinstance(event, SnapshotUpdateEvent) and event.snapshot:
             snapshot = snapshots[event.iteration]
-            snapshot.merge_snapshot(event.snapshot)
+            snapshot.merge_snapshot(copy.deepcopy(event.snapshot))
     messages = [
         OPT_FAILURE_REALIZATIONS
         if exit_code == EverestExitCode.TOO_FEW_REALIZATIONS
@@ -171,13 +188,35 @@ def verify_auth(
 authenticated = [Depends(verify_auth)]
 
 
-async def _with_runtime_plugins() -> AsyncIterator[None]:
+@functools.cache
+def _create_plugin_manager() -> ErtPluginManager:
+    return ErtPluginManager()
+
+
+async def get_plugin_manager() -> ErtPluginManager:
+    # Async so that FastAPI resolves it on the event loop thread instead of
+    # the threadpool, ensuring the plugin manager is never built concurrently.
+    return _create_plugin_manager()
+
+
+async def get_status_event_notifier(
+    plugin_manager: Annotated[ErtPluginManager, Depends(get_plugin_manager)],
+) -> StatusEventNotifier | None:
+    if not plugin_manager.has_status_event_listener:
+        return None
+    return plugin_manager.notify_status_event
+
+
+async def _with_runtime_plugins(
+    plugin_manager: Annotated[ErtPluginManager, Depends(get_plugin_manager)],
+) -> AsyncIterator[ErtRuntimePlugins]:
     stack = ExitStack()
     try:
         stack.enter_context(warnings.catch_warnings())
         warnings.filterwarnings("ignore", category=ConfigWarning)
-        stack.enter_context(use_runtime_plugins(get_site_plugins()))
-        yield
+        site_plugins = get_site_plugins(plugin_manager)
+        stack.enter_context(use_runtime_plugins(site_plugins))
+        yield site_plugins
     finally:
         stack.close()
 
@@ -199,6 +238,30 @@ def experiments() -> JSONResponse:
     return JSONResponse({"experiment_ids": list(_experiments.keys())})
 
 
+@router.get("/" + EverEndpoints.ACTIVE_STREAMS, dependencies=authenticated)
+def active_streams() -> JSONResponse:
+    return JSONResponse(
+        {
+            "active_streams": sum(
+                experiment.active_streams for experiment in _experiments.values()
+            )
+        }
+    )
+
+
+@router.get("/" + EverEndpoints.PENDING_STATUS_EVENTS, dependencies=authenticated)
+def pending_status_events() -> JSONResponse:
+    return JSONResponse(
+        {
+            "pending_status_events": sum(
+                experiment.status_event_forwarder.pending
+                for experiment in _experiments.values()
+                if experiment.status_event_forwarder is not None
+            )
+        }
+    )
+
+
 @router.post("/" + EverEndpoints.STOP, dependencies=authenticated)
 def stop() -> Response:
     if not _experiments:
@@ -212,18 +275,25 @@ def stop() -> Response:
 
 @router.post(
     "/" + EverEndpoints.START_EXPERIMENT,
-    dependencies=[*authenticated, Depends(_with_runtime_plugins)],
+    dependencies=authenticated,
 )
 async def start_experiment(
     config: EverestConfig,
     background_tasks: BackgroundTasks,
+    site_plugins: Annotated[ErtRuntimePlugins, Depends(_with_runtime_plugins)],
+    notify_status_event: Annotated[
+        StatusEventNotifier | None, Depends(get_status_event_notifier)
+    ],
 ) -> JSONResponse:
     experiment_id = str(uuid.uuid4())
-    experiment_state = ExperimentRunnerState()
+    experiment_state = ExperimentRunnerState(
+        status_event_forwarder=create_status_event_forwarder(
+            notify_status_event, experiment_id
+        )
+    )
     _experiments[experiment_id] = experiment_state
-    runner = ExperimentRunner(config, experiment_id)
     try:
-        background_tasks.add_task(runner.run)
+        background_tasks.add_task(run_everest, config, experiment_id, site_plugins)
         experiment_state.config_path = config.config_path
         experiment_state.run_path = config.simulation_dir
         experiment_state.storage_path = config.output_dir
@@ -270,32 +340,6 @@ async def start_time(
     return Response(str(experiment.start_time_unix), status_code=200)
 
 
-@router.post(f"/{EverEndpoints.RUNPATH}", dependencies=authenticated)
-async def check_runpath_exists(
-    paths: PathsCheckRequest,
-) -> Response:
-    """
-    Check if any of the given paths (iteration directories) exists.
-    Returns a 200 response if at least one path exists, 404 otherwise.
-    """
-    exists = False
-
-    async with anyio.create_task_group() as tg:
-
-        async def _check_path(path: str) -> None:
-            nonlocal exists
-            if await anyio.Path(path).exists():
-                exists = True
-                tg.cancel_scope.cancel()
-
-        for path in paths.paths:
-            tg.start_soon(_check_path, path)
-
-    if exists:
-        return Response("Runpath exists", status_code=200)
-    return Response("Runpath does not exist", status_code=404)
-
-
 @router.websocket(f"/{EverEndpoints.EVENTS}/{{experiment_id}}")
 async def websocket_endpoint(websocket: WebSocket, experiment_id: str) -> None:
     await websocket.accept()
@@ -304,32 +348,41 @@ async def websocket_endpoint(websocket: WebSocket, experiment_id: str) -> None:
         await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
         return
     subscriber_id = str(uuid.uuid4())
-    try:
+    run = _experiments[experiment_id]
+    run.active_streams += 1
+    try:  # ruff: ignore[too-many-statements-in-try-clause]
         while True:
-            event = await _get_event(
-                subscriber_id=subscriber_id, experiment_id=experiment_id
+            event = await _get_event(subscriber_id=subscriber_id, run=run)
+            payload = json.dumps(
+                jsonable_encoder(event), separators=(",", ":"), ensure_ascii=False
             )
-            await websocket.send_json(jsonable_encoder(event))
+            if (mib := len(payload.encode()) / 2**20) > 1:
+                logging.getLogger(__name__).info(
+                    f"Sending {type(event).__name__} of {mib:.2f} MiB "
+                    f"to subscriber {subscriber_id}"
+                )
+            await websocket.send_text(payload)
             if isinstance(event, EndEvent):
+                await run.finalized.wait()
+                await websocket.close(code=status.WS_1000_NORMAL_CLOSURE)
                 break
+    except WebSocketDisconnect:
+        logging.getLogger(__name__).info(f"Subscriber {subscriber_id} disconnected")
     except Exception as e:
         logging.getLogger(__name__).exception(str(e))
     finally:
+        run.active_streams -= 1
         logging.getLogger(__name__).info(
             f"Subscriber {subscriber_id} done. Closing websocket"
         )
-        # Give some time for subscribers to get events
-        await asyncio.sleep(5)
-        _experiments[experiment_id].subscribers[subscriber_id].done()
 
 
-async def _get_event(subscriber_id: str, experiment_id: str) -> StatusEvents:
+async def _get_event(subscriber_id: str, run: ExperimentRunnerState) -> StatusEvents:
     """
     The function waits until there is an event available for the subscriber
     and returns the event. If the subscriber is up to date it will
     wait until we wake up the subscriber using notify
     """
-    run = _experiments[experiment_id]
     if subscriber_id not in run.subscribers:
         run.subscribers[subscriber_id] = Subscriber()
     subscriber = run.subscribers[subscriber_id]
@@ -342,84 +395,81 @@ async def _get_event(subscriber_id: str, experiment_id: str) -> StatusEvents:
     return event
 
 
-class ExperimentRunner:
-    def __init__(
-        self,
-        everest_config: EverestConfig,
-        experiment_id: str,
-    ) -> None:
-        self._everest_config = everest_config
-        self._experiment_id = experiment_id
+async def run_everest(
+    config: EverestConfig,
+    experiment_id: str,
+    site_plugins: ErtRuntimePlugins,
+) -> None:
+    run = _experiments[experiment_id]
+    status_queue: SimpleQueue[StatusEvents] = SimpleQueue()
+    run_model: EverestRunModel | None = None
+    end_message = "Experiment ended without a terminal event"
+    try:  # ruff: ignore[too-many-statements-in-try-clause]
+        with use_runtime_plugins(site_plugins):
+            run_model = EverestRunModel.create(
+                everest_config=config,
+                experiment_name=f"EnOpt@{dt.datetime.now().astimezone().isoformat(timespec='seconds')}",
+                target_ensemble="batch",
+                status_queue=status_queue,
+                runtime_plugins=site_plugins,
+            )
+        run.status = ExperimentStatus(
+            message="Experiment started", status=ExperimentState.running
+        )
+        loop = asyncio.get_running_loop()
+        simulation_future = loop.run_in_executor(
+            None,
+            lambda: run_model.start_simulations_thread(
+                EvaluatorServerConfig()
+                if run_model.queue_config.queue_system == QueueSystem.LOCAL
+                else EvaluatorServerConfig(use_ipc_protocol=False)
+            ),
+        )
+        while True:
+            if run.status.status == ExperimentState.stopped:
+                run_model.cancel()
+                raise UserCancelled("Optimization aborted")
+            try:
+                item: StatusEvents = status_queue.get(block=False)
+            except queue.Empty:
+                await asyncio.sleep(0.01)
+                continue
 
-    async def run(self) -> None:
-        run = _experiments[self._experiment_id]
-        status_queue: SimpleQueue[StatusEvents] = SimpleQueue()
-        run_model: EverestRunModel | None = None
-        try:  # ruff: ignore[too-many-statements-in-try-clause]
-            site_plugins = get_site_plugins()
-            with use_runtime_plugins(site_plugins):
-                run_model = EverestRunModel.create(
-                    everest_config=self._everest_config,
-                    experiment_name=f"EnOpt@{dt.datetime.now().astimezone().isoformat(timespec='seconds')}",
-                    target_ensemble="batch",
-                    status_queue=status_queue,
-                    runtime_plugins=site_plugins,
-                )
-            run.status = ExperimentStatus(
-                message="Experiment started", status=ExperimentState.running
-            )
-            loop = asyncio.get_running_loop()
-            simulation_future = loop.run_in_executor(
-                None,
-                lambda: run_model.start_simulations_thread(
-                    EvaluatorServerConfig()
-                    if run_model.queue_config.queue_system == QueueSystem.LOCAL
-                    else EvaluatorServerConfig(use_ipc_protocol=False)
-                ),
-            )
-            while True:
-                if run.status.status == ExperimentState.stopped:
-                    run_model.cancel()
-                    raise UserCancelled("Optimization aborted")
-                try:
-                    item: StatusEvents = status_queue.get(block=False)
-                except queue.Empty:
-                    await asyncio.sleep(0.01)
-                    continue
+            run.publish(item)
 
-                run.events.append(item)
-                for sub in run.subscribers.values():
-                    sub.notify()
-
-                if isinstance(item, EndEvent):
-                    # Wait for subscribers to receive final events
-                    for sub in list(run.subscribers.values()):
-                        await sub.is_done()
-                    break
-            await simulation_future
-            exp_status, msg = _get_optimization_status(
-                run_model.exit_code,
-                run.events,
-            )
-            run.status = ExperimentStatus(
-                message=msg,
-                status=exp_status,
-            )
-        except UserCancelled as e:
-            logging.getLogger(__name__).info(f"User cancelled: {e}")
-        except Exception as e:
-            logging.getLogger(__name__).exception(e)
-            run.status = ExperimentStatus(
-                message=f"Exception: {e}\n{traceback.format_exc()}",
-                status=ExperimentState.failed,
-            )
-        finally:
+            if isinstance(item, EndEvent):
+                break
+        await simulation_future
+        exp_status, msg = _get_optimization_status(
+            run_model.exit_code,
+            run.events,
+        )
+        run.status = ExperimentStatus(
+            message=msg,
+            status=exp_status,
+        )
+    except UserCancelled as e:
+        end_message = str(e)
+        logging.getLogger(__name__).info(f"User cancelled: {e}")
+    except Exception as e:
+        end_message = str(e)
+        logging.getLogger(__name__).exception(e)
+        run.status = ExperimentStatus(
+            message=f"Exception: {e}\n{traceback.format_exc()}",
+            status=ExperimentState.failed,
+        )
+    finally:
+        try:
             if run_model and run_model._experiment:
                 run_model._experiment.status = run.status
+        finally:
+            if not any(isinstance(event, EndEvent) for event in run.events):
+                run.publish(EndEvent(failed=True, msg=end_message))
+            run.finalized.set()
 
-            logging.getLogger(__name__).info(
-                f"ExperimentRunner done. Items left in queue: {status_queue.qsize()}"
-            )
+        logging.getLogger(__name__).info(
+            f"ExperimentRunner done. Items left in queue: {status_queue.qsize()}"
+        )
 
 
 class Subscriber:
@@ -433,17 +483,10 @@ class Subscriber:
     def __init__(self) -> None:
         self.index = 0
         self._event = asyncio.Event()
-        self._done = asyncio.Event()
 
     def notify(self) -> None:
         self._event.set()
 
-    def done(self) -> None:
-        self._done.set()
-
     async def wait_for_event(self) -> None:
         await self._event.wait()
         self._event.clear()
-
-    async def is_done(self) -> None:
-        await self._done.wait()

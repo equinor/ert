@@ -452,6 +452,29 @@ def test_that_site_queue_options_are_ignored_with_differing_user_queue_system_ar
     assert config.queue_config.queue_system == QueueSystem.LOCAL
 
 
+@pytest.mark.parametrize(
+    ("user_config", "expected_is_site_default"),
+    [
+        pytest.param("", True, id="only_site_sets_it"),
+        pytest.param("REALIZATION_MEMORY 1G\n", False, id="user_keyword"),
+        pytest.param(
+            "QUEUE_OPTION LSF REALIZATION_MEMORY 1G\n", False, id="user_queue_option"
+        ),
+    ],
+)
+def test_that_queue_config_records_whether_realization_memory_is_the_site_default(
+    user_config, expected_is_site_default
+):
+    config = ErtConfig.with_plugins(
+        ErtRuntimePlugins(queue_options=LsfQueueOptions(realization_memory="7Gb"))
+    ).from_file_contents("NUM_REALIZATIONS 1\n" + user_config)
+
+    assert (
+        config.queue_config.realization_memory_is_site_default
+        == expected_is_site_default
+    )
+
+
 def test_that_slurm_specific_max_runtime_option_is_deprecated():
     with pytest.warns(ConfigWarning, match="SLURM MAX_RUNTIME is deprecated"):
         ErtConfig.from_file_contents(

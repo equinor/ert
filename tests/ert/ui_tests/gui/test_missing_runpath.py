@@ -72,7 +72,6 @@ def test_missing_runpath_has_isolated_failures(
 
     try:
         with open_gui_with_config(tmp_path / "config.ert") as gui:
-            qtbot.addWidget(gui)
             run_experiment(
                 EnsembleExperiment, gui, wait_done=False, check_realizations=False
             )
@@ -130,7 +129,6 @@ def test_missing_runpath_does_not_show_waiting_bar(
 
     try:
         with open_gui_with_config(tmp_path / "config.ert") as gui:
-            qtbot.addWidget(gui)
             run_experiment(
                 EnsembleExperiment, gui, wait_done=False, check_realizations=False
             )

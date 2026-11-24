@@ -29,6 +29,7 @@ from ert.gui.tools.event_viewer import (
 from ert.namespace import Namespace
 from ert.plugins import ErtRuntimePlugins, get_site_plugins
 from ert.services import ErtServerController
+from ert.services.ert_server_controller import ServerAlreadyRunningError
 from ert.storage import (
     ErtStorageException,
     LocalStorage,
@@ -146,7 +147,13 @@ def run_gui(args: Namespace, plugins: ErtRuntimePlugins | None = None) -> int:
                 "with this storage.",
                 file=sys.stderr,
             )
-    return -1
+        except ServerAlreadyRunningError as e:
+            print(f"Error: {e}", file=sys.stderr)
+            print(
+                "Cannot connect to storage service because it is already running.",
+                file=sys.stderr,
+            )
+        return -1
 
 
 def _start_initial_gui_window(
@@ -239,6 +246,7 @@ def _start_initial_gui_window(
         logger.info(f"Warning shown in gui '{msg}'")
 
     assert storage_path is not None
+    _run_ecosystem_gui_startup(ert_config, logger)
     main_window = _setup_main_window(
         ert_config, args, log_handler, storage_path, runtime_plugins
     )
@@ -271,6 +279,20 @@ def _start_initial_gui_window(
         main_window,
         ert_config.ens_path,
     )
+
+
+def _run_ecosystem_gui_startup(ert_config: ErtConfig, logger: logging.Logger) -> None:
+    if ert_config.ecosystem is None:
+        return
+    plugin = ert_config.PREINSTALLED_ECOSYSTEM_PLUGINS.get(ert_config.ecosystem)
+    if plugin is None:
+        return
+    try:
+        plugin.on_gui_startup()
+    except Exception:
+        logger.exception(
+            f"Ecosystem plugin {ert_config.ecosystem!r} failed during gui startup"
+        )
 
 
 def _setup_main_window(

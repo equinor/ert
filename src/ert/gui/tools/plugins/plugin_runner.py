@@ -93,7 +93,7 @@ class PluginRunner:
             dialog.presentError.emit(
                 "Job failed!",
                 f"The job '{self.__plugin.getName()}' has failed while running!",
-                details,
+                self._runner.error() or "",
             )
             dialog.disposeDialog.emit()
         elif self._runner.isCancelled():

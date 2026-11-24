@@ -34,7 +34,17 @@ class EverEndpoints(StrEnum):
     EXPERIMENTS = auto()
     STATUS = auto()
     EVENTS = auto()
+    ACTIVE_STREAMS = auto()
+    PENDING_STATUS_EVENTS = auto()
     RUNPATH = auto()
+
+
+class ErtRunnerEndpoints(StrEnum):
+    REGISTER = auto()
+    START_EXPERIMENT_ERT = auto()
+    RUNPATH = auto()
+    RUNMODEL = auto()
+    FAILED_REALIZATIONS = auto()
 
 
 def get_storage() -> Storage:

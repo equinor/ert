@@ -9,6 +9,7 @@ from PyQt6.QtWidgets import (
 )
 
 from ert.config import ErtConfig, ObservationType
+from ert.config._shapes import PolygonShapeConfig
 from ert.config.rft_config import RFTConfig
 from ert.ensemble_evaluator import state
 from ert.gui.experiments.view.realization import RealizationWidget
@@ -24,7 +25,9 @@ from tests.ert.defaults_generator import (
     create_seismic_observation,
     create_seismic_observation_dict,
     create_seismic_response,
+    create_summary_observation,
     create_summary_observation_dict,
+    create_summary_response,
 )
 from tests.ert.utils import SnapshotBuilder
 
@@ -41,6 +44,7 @@ def create_experiment_from_config(config: ErtConfig, storage):
             "response_configuration": dump_all(ens_config.response_configuration),
             "observations": dump_all(config.observation_declarations),
             "ert_templates": config.ert_templates,
+            "shape_registry": config.shape_registry.model_dump(mode="json"),
         },
     )
 
@@ -97,14 +101,16 @@ def test_that_missing_response_for_observation_response_key_does_not_crash(
 
 @pytest.mark.filterwarnings("ignore:.*contains a SUMMARY key but no forward model step")
 @pytest.mark.parametrize(
-    ("value_modifier"),
+    ("value_modifier", "expected_num_responses"),
     [
-        pytest.param(1, id="threshold is reached"),
-        pytest.param(100, id="threshold is never reached"),
+        pytest.param(1, 1, id="threshold is reached"),
+        pytest.param(100, 0, id="threshold is never reached"),
     ],
 )
 @pytest.mark.slow
-def test_that_breakthrough_experiment_does_not_crash(qtbot, storage, value_modifier):
+def test_that_breakthrough_experiment_does_not_crash(
+    qtbot, storage, value_modifier, expected_num_responses
+):
     date = datetime(year=2000, month=1, day=1)  # ruff: ignore[call-datetime-without-tzinfo]
     key = "WWCT:OP1"
 
@@ -149,8 +155,12 @@ def test_that_breakthrough_experiment_does_not_crash(qtbot, storage, value_modif
 
     assert len(ensemble_widget._figure.get_axes()) == 1
 
+    verify_number_of_visualized_responses(
+        ensemble_widget, expected_num_responses=expected_num_responses
+    )
 
-@pytest.mark.filterwarnings("ignore:.*contains a RFT key but no forward model step")
+
+@pytest.mark.filterwarnings("ignore:.*contains an RFT key but no forward model step")
 @pytest.mark.slow
 def test_that_rft_experiment_without_a_zone_does_not_crash(qtbot, storage):
     date = datetime(year=2000, month=1, day=1).date()  # ruff: ignore[call-datetime-without-tzinfo]
@@ -241,7 +251,7 @@ def test_that_rft_experiment_without_a_zone_does_not_crash(qtbot, storage):
 @pytest.mark.parametrize(
     ("approximate_missing_rft_values", "visualized_responses"), [(True, 1), (False, 0)]
 )
-@pytest.mark.filterwarnings("ignore:.*contains a RFT key but no forward model step")
+@pytest.mark.filterwarnings("ignore:.*contains an RFT key but no forward model step")
 @pytest.mark.slow
 def test_that_approximated_rft_responses_are_visualized_in_ensemble_widget_if_enabled(
     qtbot, storage, approximate_missing_rft_values, visualized_responses
@@ -345,13 +355,16 @@ def verify_number_of_visualized_responses(ensemble_widget, expected_num_response
     plot = ensemble_widget._figure.get_axes()
     assert len(plot) == 1
     collections = plot[0].collections
+    if expected_num_responses == 0:
+        assert len(collections) == 1
+        return
     assert len(collections) == 2
     strip_plot_response_collection = collections[-1]
     displayed_responses = np.asarray(strip_plot_response_collection.get_offsets())
     assert len(displayed_responses) == expected_num_responses
 
 
-@pytest.mark.filterwarnings("ignore:.*contains a RFT key but no forward model step")
+@pytest.mark.filterwarnings("ignore:.*contains an RFT key but no forward model step")
 @pytest.mark.slow
 def test_that_many_realizations_in_rft_affect_responses_not_observation_tree(
     qtbot, storage
@@ -510,6 +523,53 @@ def test_that_many_realizations_in_rft_affect_responses_not_observation_tree(
     verify_number_of_visualized_responses(ensemble_widget, expected_num_responses=1)
 
 
+@pytest.mark.filterwarnings("ignore:.*contains a SUMMARY key but no forward model step")
+@pytest.mark.slow
+@pytest.mark.parametrize(
+    ("ms_offset1", "ms_offset2", "expected_num_responses"),
+    [
+        pytest.param(0, 0, 2),
+        pytest.param(5000, 5000, 0),
+        pytest.param(50, 5000, 1),
+        pytest.param(50, 5, 2),
+    ],
+)
+def test_that_summary_observations_use_tolerance_on_response_match(
+    qtbot, storage, ms_offset1, ms_offset2, expected_num_responses
+):
+    date_obs = datetime(2020, 1, 1, 0, 0, 0)  # ruff: ignore[call-datetime-without-tzinfo]
+    date0 = date_obs + timedelta(milliseconds=ms_offset1)
+    date1 = date_obs + timedelta(milliseconds=ms_offset2)
+    observation = create_summary_observation(date=date_obs, value=1.0)
+    response0 = create_summary_response(time=date0, values=1.1)
+    response1 = create_summary_response(time=date1, values=0.9)
+
+    config = ErtConfig.from_dict(
+        {
+            "NUM_REALIZATIONS": 2,
+            "ECLBASE": "BASE",
+            "SUMMARY": ["*"],
+        }
+    )
+    config.observation_declarations.append(observation)
+
+    experiment = create_experiment_from_config(config, storage)
+    ensemble = experiment.create_ensemble(name="default", ensemble_size=2)
+    ensemble.save_response("summary", response0, 0)
+    ensemble.save_response("summary", response1, 1)
+
+    ensemble_widget = EnsembleWidget()
+    ensemble_widget.setEnsemble(ensemble)
+    qtbot.addWidget(ensemble_widget)
+
+    panels_widget = ensemble_widget._tab_widget
+    panels_widget.setCurrentIndex(_EnsembleWidgetTabs.OBSERVATIONS_TAB)
+
+    verify_number_of_visualized_responses(
+        ensemble_widget, expected_num_responses=expected_num_responses
+    )
+
+
 @pytest.mark.slow
 def test_that_seismic_observations_use_tolerance_on_response_match(qtbot, storage):
     observation = create_seismic_observation(east=1.0, north=1.0)
@@ -522,6 +582,41 @@ def test_that_seismic_observations_use_tolerance_on_response_match(qtbot, storag
             "SEISMIC": ["dummy.csv"],
         }
     )
+    config.observation_declarations.append(observation)
+
+    experiment = create_experiment_from_config(config, storage)
+    ensemble = experiment.create_ensemble(name="default", ensemble_size=2)
+    ensemble.save_response("seismic", response0, 0)
+    ensemble.save_response("seismic", response1, 1)
+
+    ensemble_widget = EnsembleWidget()
+    ensemble_widget.setEnsemble(ensemble)
+    qtbot.addWidget(ensemble_widget)
+
+    panels_widget = ensemble_widget._tab_widget
+    panels_widget.setCurrentIndex(_EnsembleWidgetTabs.OBSERVATIONS_TAB)
+
+    verify_number_of_visualized_responses(ensemble_widget, expected_num_responses=2)
+
+
+@pytest.mark.slow
+def test_that_seismic_does_not_crash_on_boundary_polygon(qtbot, storage):
+    config = ErtConfig.from_dict(
+        {
+            "NUM_REALIZATIONS": 2,
+            "SEISMIC": ["dummy.csv"],
+        }
+    )
+
+    polygon_outside_of_east_north = "((10 10, 10 50, 50 50, 50 10, 10 10))"
+    boundary = PolygonShapeConfig(wkt=f"MULTIPOLYGON ({polygon_outside_of_east_north})")
+    boundary_id = config.shape_registry.register(boundary)
+    observation = create_seismic_observation(
+        east=1.0, north=1.0, boundary_id=boundary_id
+    )
+    response0 = create_seismic_response()
+    response1 = create_seismic_response()
+
     config.observation_declarations.append(observation)
 
     experiment = create_experiment_from_config(config, storage)
@@ -711,7 +806,6 @@ def test_that_observations_in_the_tree_are_constrained_by_response_key(qtbot, st
 def test_that_observations_are_identified_and_sorted_by_full_index_key(
     qtbot, storage, observations, expected_name_order, mocked_files
 ):
-
     def mock_gen_obs_file():
         gen_obs_file = "gen_obs_data.txt"
         gen_obs = [float(i + 1) for i in range(5)]
@@ -842,10 +936,10 @@ def test_that_run_status_tab_shows_placeholder_when_no_snapshot_exists(qtbot, st
     assert run_status_view._stack.currentWidget() is run_status_view._placeholder
 
 
+@pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key but no forward")
 def test_that_get_misfit_df_returns_polars_dataframe_with_expected_columns(
     qtbot, storage
 ):
-
     date = datetime(year=2000, month=1, day=1)  # ruff: ignore[call-datetime-without-tzinfo]
     key = "FOPR"
     config = ErtConfig.from_dict(

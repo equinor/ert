@@ -48,6 +48,7 @@ logger = logging.getLogger(__name__)
 
 def _setup_reporters(
     is_interactive_run: bool,
+    report_to_evaluator: bool,
     ens_id: str | None,
     dispatch_url: str | None,
     ee_token: str | None = None,
@@ -57,7 +58,7 @@ def _setup_reporters(
     reporters: list[reporting.Reporter] = []
     if is_interactive_run:
         reporters.append(reporting.Interactive())
-    elif ens_id and experiment_id is None:
+    elif report_to_evaluator and ens_id and experiment_id is None:
         reporters.append(reporting.File())
         if dispatch_url is not None:
             reporters.append(
@@ -171,6 +172,7 @@ class Namespace(argparse.Namespace):
     """fm_dispatch argument parser namespace"""
 
     run_path: str | None = None
+    report_to_evaluator: bool = False
     steps: list[str]
 
 
@@ -188,6 +190,15 @@ def fm_dispatch(args: list[str]) -> None:
         help=(
             "One or more forward model steps to be executed from the jobs.json file. "
             "If no steps are specified, all steps will be executed."
+        ),
+    )
+
+    parser.add_argument(
+        "--report-to-evaluator",
+        action="store_true",
+        help=(
+            "Report forward model events to the ensemble evaluator given in "
+            "jobs.json. Without this flag, no network connection is attempted."
         ),
     )
 
@@ -212,7 +223,13 @@ def fm_dispatch(args: list[str]) -> None:
 
     is_interactive_run = len(parsed_args.steps) > 0
     reporters = _setup_reporters(
-        is_interactive_run, ens_id, dispatch_url, ee_token, experiment_id, str(real_id)
+        is_interactive_run,
+        parsed_args.report_to_evaluator,
+        ens_id,
+        dispatch_url,
+        ee_token,
+        experiment_id,
+        str(real_id),
     )
 
     fm_runner = ForwardModelRunner(fm_description)

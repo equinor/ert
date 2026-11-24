@@ -26,7 +26,7 @@ from ert.utils import log_duration
 
 from ._str_to_bool import str_to_bool
 from .graph_utils import create_flattened_cube_graph
-from .parameter_config import ParameterConfig
+from .parameter_config import ParameterConfig, ParameterType
 from .parsing import ConfigValidationError, ConfigWarning
 
 if TYPE_CHECKING:
@@ -38,7 +38,7 @@ _logger = logging.getLogger(__name__)
 
 
 class Field(ParameterConfig):
-    type: Literal["field"] = "field"
+    type: Literal[ParameterType.FIELD] = ParameterType.FIELD
     dimensionality: Literal[3] = 3
     ertbox_params: ErtboxParameters
     file_format: FieldFileFormat
@@ -252,6 +252,7 @@ class Field(ParameterConfig):
     def _transform_data(
         self, data_array: xr.DataArray
     ) -> np.ma.MaskedArray[Any, np.dtype[np.floating]]:
+        inactive_cells = np.isnan(data_array.values)
         return np.ma.MaskedArray(
             _field_truncate(
                 field_transform(
@@ -261,18 +262,19 @@ class Field(ParameterConfig):
                 self.truncation_min,
                 self.truncation_max,
             ),
+            mask=inactive_cells,
             fill_value=np.nan,
         )
 
     def load_parameter_graph(self) -> nx.Graph[int]:
-        parameter_graph = create_flattened_cube_graph(
+        """Graph with one node per ERTBOX cell and edges between
+        neighbouring cells. Node k corresponds to row k of the array
+        returned by load_parameters, i.e. the flat C-order index of
+        cell (x, y, z) in a cube of shape (nx, ny, nz).
+        """
+        return create_flattened_cube_graph(
             px=self.ertbox_params.nx, py=self.ertbox_params.ny, pz=self.ertbox_params.nz
         )
-        new_labels = {
-            old_label: new_label
-            for new_label, old_label in enumerate(parameter_graph.nodes())
-        }
-        return nx.relabel_nodes(parameter_graph, new_labels, copy=True)
 
     @property
     def nx(self) -> int:

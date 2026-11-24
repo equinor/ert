@@ -101,9 +101,9 @@
     ],
     "seed": 999,
     "types": [
-      1,
-      1,
-      1
+      "real",
+      "real",
+      "real"
     ],
     "upper_bounds": [
       1.0,

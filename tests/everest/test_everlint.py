@@ -225,12 +225,6 @@ def test_that_install_data_target_path_outside_runpath_is_invalid(
         EverestConfig(**min_config)
 
 
-def test_no_list(min_config):
-    min_config["install_data"] = []
-    errors = EverestConfig.lint_config_dict(min_config)
-    assert len(errors) == 0
-
-
 def test_empty_list(min_config):
     min_config["install_data"] = []
     errors = EverestConfig.lint_config_dict(min_config)

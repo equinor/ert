@@ -9,7 +9,8 @@ from .analysis_config import (
 from .analysis_module import AnalysisModule, ESSettings, InversionTypeES
 from .breakthrough_config import BreakthroughConfig
 from .capture_validation import capture_validation
-from .design_matrix import DesignMatrix
+from .design_matrix import DesignMatrix, DesignMatrixConfig
+from .ecosystem_plugin import EcosystemPlugin
 from .ensemble_config import EnsembleConfig
 from .ert_config import ErtConfig, forward_model_step_from_config_contents
 from .ert_plugin import ErtPlugin
@@ -38,6 +39,7 @@ from .parameter_config import (
     LocalizationType,
     ParameterCardinality,
     ParameterConfig,
+    ParameterType,
     has_updatable_parameters,
 )
 from .parsing import (
@@ -100,7 +102,9 @@ __all__ = [
     "DataSource",
     "DerivedResponseConfig",
     "DesignMatrix",
+    "DesignMatrixConfig",
     "ESSettings",
+    "EcosystemPlugin",
     "EnsembleConfig",
     "ErrorInfo",
     "ErtConfig",
@@ -139,6 +143,7 @@ __all__ = [
     "OutlierSettings",
     "ParameterCardinality",
     "ParameterConfig",
+    "ParameterType",
     "PostExperimentFixtures",
     "PostSimulationFixtures",
     "PostUpdateFixtures",

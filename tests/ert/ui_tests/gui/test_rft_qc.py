@@ -131,7 +131,7 @@ def _open_rft_qc_tab(qtbot: QtBot, gui: QWidget) -> RftQcWidget:
 
 
 @pytest.mark.screenshot_test
-@pytest.mark.filterwarnings("ignore:.*contains a RFT key but no forward model step")
+@pytest.mark.filterwarnings("ignore:.*contains an RFT key but no forward model step")
 def test_that_inspect_rft_tab_screenshot_is_up_to_date(
     qtbot,
     tmp_path: Path,
@@ -143,7 +143,7 @@ def test_that_inspect_rft_tab_screenshot_is_up_to_date(
     (tmp_path / "obs.txt").write_text(
         rft_qc_example.observations_config(), encoding="utf-8"
     )
-
+    monkeypatch.setattr("humanize.naturaltime", lambda _: "test-time")
     ert_config = ErtConfig.with_plugins(get_site_plugins()).from_file(
         str(tmp_path / "rft.ert")
     )

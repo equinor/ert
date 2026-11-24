@@ -9,11 +9,13 @@ import pytest
 from pydantic import ValidationError
 
 import ert
+from ert.base_model_context import use_runtime_plugins
 from ert.config import (
     AnalysisConfig,
     ConfigValidationError,
     ConfigWarning,
     DesignMatrix,
+    DesignMatrixConfig,
     EnsembleConfig,
     ErtConfig,
     GenKwConfig,
@@ -23,11 +25,14 @@ from ert.config import (
 )
 from ert.config.design_matrix import DESIGN_MATRIX_GROUP
 from ert.config.distribution import RawSettings
+from ert.config.queue_config import LsfQueueOptions
 from ert.mode_definitions import (
+    ENSEMBLE_EXPERIMENT_MODE,
     ES_MDA_MODE,
     EVALUATE_ENSEMBLE_MODE,
     TEST_RUN_MODE,
 )
+from ert.plugins import ErtRuntimePlugins
 from ert.run_models import (
     EnsembleExperiment,
     MultipleDataAssimilation,
@@ -121,21 +126,6 @@ def test_custom_realizations():
     assert model_factory._realizations(args, ensemble_size).tolist() == active_mask
 
 
-def test_setup_single_test_run(tmp_path):
-    model = model_factory._setup_single_test_run(
-        ErtConfig.from_file_contents(f"NUM_REALIZATIONS 100\nENSPATH {tmp_path}"),
-        Namespace(
-            current_ensemble="current-ensemble",
-            target_ensemble=None,
-            random_seed=None,
-            experiment_name=None,
-        ),
-        queue.SimpleQueue(),
-    )
-    assert isinstance(model, SingleTestRun)
-    assert model._storage.path == tmp_path
-
-
 def test_setup_single_test_run_with_ensemble(tmp_path):
     model = model_factory._setup_single_test_run(
         ErtConfig.from_file_contents(f"NUM_REALIZATIONS 100\nENSPATH {tmp_path}"),
@@ -204,6 +194,41 @@ def test_setup_ensemble_experiment(tmp_path):
     assert isinstance(model, EnsembleExperiment)
 
     assert model.active_realizations == [True] * 100
+
+
+@pytest.mark.parametrize(
+    ("user_config", "expected_is_site_default"),
+    [
+        pytest.param("", True, id="only_site_sets_it"),
+        pytest.param("REALIZATION_MEMORY 1G\n", False, id="user_keyword"),
+    ],
+)
+def test_that_run_model_keeps_whether_realization_memory_is_the_site_default(
+    tmp_path, user_config, expected_is_site_default
+):
+    site_plugins = ErtRuntimePlugins(
+        queue_options=LsfQueueOptions(realization_memory="7Gb")
+    )
+    config = ErtConfig.with_plugins(site_plugins).from_file_contents(
+        f"NUM_REALIZATIONS 1\nQUEUE_SYSTEM LSF\nENSPATH {tmp_path}\n" + user_config
+    )
+
+    with use_runtime_plugins(site_plugins):
+        model = create_model(
+            config,
+            Namespace(
+                mode=ENSEMBLE_EXPERIMENT_MODE,
+                realizations=None,
+                current_ensemble="default",
+                experiment_name="experiment",
+            ),
+            queue.SimpleQueue(),
+        )
+
+    assert (
+        model.queue_config.realization_memory_is_site_default
+        == expected_is_site_default
+    )
 
 
 @pytest.mark.filterwarnings("ignore:MIN_REALIZATIONS")
@@ -580,11 +605,13 @@ def _config_with_design_matrix(tmp_path) -> ErtConfig:
         runpath_config=ModelConfig(num_realizations=2),
         analysis_config=AnalysisConfig(
             minimum_required_realizations=2,
-            design_matrix=DesignMatrix(
-                filename=design_path,
-                design_sheet="DesignSheet",
-                default_sheet=None,
-                update=True,
+            design_matrix=DesignMatrix.from_config(
+                DesignMatrixConfig(
+                    filename=design_path,
+                    design_sheet="DesignSheet",
+                    default_sheet=None,
+                    update=True,
+                ),
                 gen_kw_update_strategy=LocalizationType.GLOBAL,
             ),
         ),

@@ -184,4 +184,5 @@ nitpick_ignore = [
     ("py:class", "Ensemble"),
     ("py:class", "ESSettings"),
     ("py:class", "Storage"),
+    ("py:class", "StatusEvents"),
 ]

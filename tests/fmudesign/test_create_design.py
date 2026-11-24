@@ -636,6 +636,19 @@ def test_that_read_correlations_returns_labeled_symmetric_matrix(tmp_path):
     assert np.isclose(arr[0, 1], 0.5)
 
 
+@pytest.mark.parametrize("omitted", ["header", "index"])
+def test_that_correlation_sheet_without_header_or_index_raises_fmudesign_error(
+    tmp_path, omitted
+):
+    filepath = tmp_path / "corr.xlsx"
+    pd.DataFrame(
+        [[1.0, np.nan], [0.5, 1.0]], index=["A", "B"], columns=["A", "B"]
+    ).to_excel(filepath, sheet_name="corr1", **{omitted: False})
+
+    with pytest.raises(FmudesignError, match="Mismatch between column and index"):
+        design_dist.read_correlations(str(filepath), corr_sheet="corr1")
+
+
 def test_that_print_corrmat_formats_without_mutating_input(capsys):
     values = np.array([[1, -0.0, 0.9], [-0.0, 1, 0], [0.9, 0, 1.0]])
     df = pd.DataFrame(values, index=["A", "B", "C"], columns=["A", "B", "C"])
@@ -1000,6 +1013,94 @@ def test_that_sampling_strategies_induce_configured_group_correlation(
     assert abs(achieved - 0.7) < 0.05
 
 
+def _sample_correlation_group(tmp_path, params, matrix, strategy="joint"):
+    path = tmp_path / "corr.xlsx"
+    _write_correlation_sheets(path, {"corr1": (list(params), matrix)})
+    corrdict = {"inputfile": str(path), "sheetnames": ["corr1"]}
+    return _sample_mc(params, corrdict=corrdict, strategy=strategy)
+
+
+@pytest.mark.parametrize("strategy", ["joint", "independent"])
+def test_that_correlation_one_between_identical_distributions_gives_identical_values(
+    tmp_path, strategy
+):
+    params = dict.fromkeys(["A", "B", "C", "D"], ("normal", ["0", "1"], "corr1"))
+    matrix = [
+        [1.0, 1.0, 1.0, 0.5],
+        [1.0, 1.0, 1.0, 0.5],
+        [1.0, 1.0, 1.0, 0.5],
+        [0.5, 0.5, 0.5, 1.0],
+    ]
+
+    result = _sample_correlation_group(tmp_path, params, matrix, strategy)
+
+    np.testing.assert_array_equal(_col(result, "A"), _col(result, "B"))
+    np.testing.assert_array_equal(_col(result, "A"), _col(result, "C"))
+
+
+def test_that_correlation_one_gives_identical_values_in_an_inconsistent_matrix(
+    tmp_path,
+):
+    params = dict.fromkeys(["A", "B", "C", "D", "E"], ("normal", ["0", "1"], "corr1"))
+    # C cannot correlate 0.9 with both D and E while they are uncorrelated
+    matrix = [
+        [1.0, 1.0, 0.0, 0.0, 0.0],
+        [1.0, 1.0, 0.0, 0.0, 0.0],
+        [0.0, 0.0, 1.0, 0.9, 0.9],
+        [0.0, 0.0, 0.9, 1.0, 0.0],
+        [0.0, 0.0, 0.9, 0.0, 1.0],
+    ]
+
+    result = _sample_correlation_group(tmp_path, params, matrix)
+
+    np.testing.assert_array_equal(_col(result, "A"), _col(result, "B"))
+
+
+@pytest.mark.parametrize(
+    ("distribution_b", "correlation_bc"),
+    [
+        pytest.param(["0", "2"], 0.5, id="different_distribution"),
+        pytest.param(["0", "1"], 0.3, id="different_correlation_with_others"),
+    ],
+)
+def test_that_correlation_one_keeps_values_apart_if_distribution_or_correlations_differ(
+    tmp_path, distribution_b, correlation_bc
+):
+    params = {
+        "A": ("normal", ["0", "1"], "corr1"),
+        "B": ("normal", distribution_b, "corr1"),
+        "C": ("normal", ["0", "1"], "corr1"),
+    }
+    matrix = [[1.0, 1.0, 0.5], [1.0, 1.0, correlation_bc], [0.5, correlation_bc, 1.0]]
+
+    result = _sample_correlation_group(tmp_path, params, matrix)
+
+    assert not np.array_equal(_col(result, "A"), _col(result, "B"))
+
+
+def test_that_correlation_one_warns_when_correlations_with_other_parameters_differ(
+    tmp_path, capsys
+):
+    params = dict.fromkeys(["A", "B", "C"], ("normal", ["0", "1"], "corr1"))
+    matrix = [[1.0, 1.0, 0.5], [1.0, 1.0, 0.3], [0.5, 0.3, 1.0]]
+
+    _sample_correlation_group(tmp_path, params, matrix)
+
+    stdout = capsys.readouterr().out
+    assert "Warning: Parameter 'B' is not set identical to 'A'" in stdout
+
+
+def test_that_correlation_one_gives_identical_values_for_numpy_arguments(tmp_path):
+    params = {
+        "A": ("normal", np.array([0.0, 1.0]), "corr1"),
+        "B": ("normal", np.array([0.0, 1.0]), "corr1"),
+    }
+
+    result = _sample_correlation_group(tmp_path, params, [[1.0, 1.0], [1.0, 1.0]])
+
+    np.testing.assert_array_equal(_col(result, "A"), _col(result, "B"))
+
+
 def test_that_independent_sampling_preserves_other_groups_when_group_is_removed(
     tmp_path,
 ):
@@ -1155,10 +1256,125 @@ def test_that_overlapping_correlation_groups_raise_value_error(tmp_path, strateg
         )
 
 
+def test_that_only_iman_conover_requires_more_realizations_than_correlated_parameters(
+    tmp_path,
+):
+    path = tmp_path / "corr.xlsx"
+    names = ["X", "Y", "Z"]
+    _write_correlation_sheets(path, {"corr1": (names, np.eye(len(names)))})
+    params = {name: ("normal", ["0", "1"], "corr1") for name in names}
+    corrdict = {"inputfile": str(path), "sheetnames": ["corr1"]}
+    with pytest.raises(
+        FmudesignError,
+        match=(
+            r"Correlation group 'corr1' in sensitivity 'foo' has 3 parameters, "
+            r"but only 3 realizations.*at least 4 realizations"
+        ),
+    ):
+        _sample_mc(params, corrdict=corrdict, size=3, correlation_iterations=0)
+
+    _sample_mc(params, corrdict=corrdict, size=3, correlation_iterations=1)
+
+
+@pytest.mark.parametrize("correlation_iterations", [0, 1])
+def test_that_correlation_groups_require_at_least_two_realizations(
+    tmp_path, correlation_iterations
+):
+    path = tmp_path / "corr.xlsx"
+    names = ["X", "Y"]
+    _write_correlation_sheets(path, {"corr1": (names, np.eye(len(names)))})
+    params = {name: ("normal", ["0", "1"], "corr1") for name in names}
+    corrdict = {"inputfile": str(path), "sheetnames": ["corr1"]}
+    with pytest.raises(
+        FmudesignError,
+        match=(
+            r"Correlation group 'corr1' in sensitivity 'foo' needs at least 2 "
+            r"realizations .* got 1\."
+        ),
+    ):
+        _sample_mc(
+            params,
+            corrdict=corrdict,
+            size=1,
+            correlation_iterations=correlation_iterations,
+        )
+
+
 def test_that_unknown_seed_strategy_raises_value_error():
     """The low-level API must reject typos instead of silently using 'joint'."""
     with pytest.raises(FmudesignError, match="seed_strategy"):
         _sample_mc({"A": ("normal", ["0", "1"], None)}, strategy="bogus")
+
+
+@pytest.mark.parametrize(
+    ("dist_name", "dist_params", "requirement"),
+    [
+        ("normal", ["1", "0"], "stddev > 0"),
+        ("normal", ["0", "1", "2", "1"], "stddev > 0 and min < max"),
+        ("normal_p10_p90", ["2", "2"], "p10 < p90"),
+        ("lognormal", ["0", "1", "-1", "2"], "sigma > 0 and 0 <= min < max"),
+        ("unif", ["0", "0"], "min < max"),
+        ("uniform_p10_p90", ["2", "2"], "p10 < p90"),
+        ("triang", ["1", "1", "1"], "min <= mode <= max and min < max"),
+        ("triangular_p10_p90", ["1", "1", "1"], "p10 < p90"),
+        ("beta", ["0", "1"], "a > 0 and b > 0"),
+        ("pert_p10_p90", ["1", "1", "1"], "p10 < p90"),
+        ("logunif", ["0", "1"], "0 < min < max"),
+        ("discrete", ["a", "b", "c"], "1 or 2 parameters"),
+        (
+            "discrete",
+            ["a,b", "-1,-2"],
+            "probabilities >= 0 with a finite positive sum",
+        ),
+        (
+            "discrete",
+            ["a,b", "inf,1"],
+            "probabilities >= 0 with a finite positive sum",
+        ),
+    ],
+)
+def test_that_invalid_distribution_parameters_raise_fmudesign_error_naming_parameter(
+    dist_name, dist_params, requirement
+):
+    with pytest.raises(
+        FmudesignError,
+        match=rf"Parameter 'A' in sensitivity 'foo': .* must have {requirement}, ",
+    ):
+        _sample_mc({"A": (dist_name, dist_params, None)}, size=5)
+
+
+def test_that_invalid_distribution_parameter_errors_label_each_value():
+    with pytest.raises(
+        FmudesignError,
+        match=r", got: mean=0\.0, stddev=1\.0, min=2\.0, max=1\.0$",
+    ):
+        _sample_mc({"A": ("normal", ["0", "1", "2", "1"], None)}, size=5)
+
+
+@pytest.mark.parametrize(
+    ("strategy", "corr_sheet", "sampled_unit"),
+    [
+        ("joint", None, "sensitivity 'foo'"),
+        ("independent", None, "parameter 'A' in sensitivity 'foo'"),
+        ("independent", "corr1", "correlation group 'corr1' in sensitivity 'foo'"),
+    ],
+)
+@pytest.mark.filterwarnings("ignore:overflow encountered in exp")
+def test_that_sampling_errors_raise_fmudesign_error_naming_the_sampled_unit(
+    tmp_path, strategy, corr_sheet, sampled_unit
+):
+    path = tmp_path / "corr.xlsx"
+    _write_correlation_sheets(path, {"corr1": (["A", "B"], np.eye(2))})
+    params = {
+        "A": ("lognormal", ["1000", "1"], corr_sheet),
+        "B": ("normal", ["0", "1"], corr_sheet),
+    }
+    corrdict = {"inputfile": str(path), "sheetnames": ["corr1"]}
+    with pytest.raises(
+        FmudesignError,
+        match=rf"Sampling {sampled_unit} failed: Sampling gave non-finite values",
+    ):
+        _sample_mc(params, corrdict=corrdict, strategy=strategy, size=5)
 
 
 def test_that_independent_sampling_without_base_seed_raises_value_error():
@@ -1237,14 +1453,4 @@ def test_that_extern_sensitivity_reports_duplicate_parameter_names_with_counts(
             filename="unused.csv",
             parameters=["PARAM1", "PARAM2", "PARAM1", "PARAM3", "PARAM3", "PARAM3"],
             seedvalues=None,
-        )
-
-
-@pytest.mark.parametrize("probabilities", [[1.5, -0.5], [np.nan, 0.5], [np.inf, 1.0]])
-def test_that_non_finite_or_negative_probabilities_raise_fmudesign_error(probabilities):
-    with pytest.raises(FmudesignError, match="must be finite non-negative"):
-        design_dist.quantiles_to_values(
-            quantiles=np.array([0.1, 0.9]),
-            values=np.array(["a", "b"]),
-            probabilities=np.array(probabilities),
         )

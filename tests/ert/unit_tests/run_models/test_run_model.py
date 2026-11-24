@@ -11,7 +11,7 @@ from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 import polars as pl
 import pytest
-from pydantic import ConfigDict
+from pydantic import ConfigDict, ValidationError
 
 from _ert.events import EESnapshotUpdate
 from ert.config import (
@@ -32,7 +32,7 @@ from ert.config.parsing import ObservationDict
 from ert.config.queue_config import LsfQueueOptions
 from ert.config.workflow_fixtures import PostExperimentFixtures, PreExperimentFixtures
 from ert.ensemble_evaluator import EndEvent, EvaluatorServerConfig, StartEvent
-from ert.ensemble_evaluator.evaluator import ParallelismViolation
+from ert.ensemble_evaluator.evaluator import MemoryViolation, ParallelismViolation
 from ert.ensemble_evaluator.event import FullSnapshotEvent
 from ert.ensemble_evaluator.snapshot import EnsembleSnapshot
 from ert.ensemble_evaluator.state import (
@@ -47,8 +47,13 @@ from ert.run_models.run_model import (
     RunModel,
     UserCancelled,
 )
+from ert.storage import LocalStorage, open_storage
 from ert.warnings import PostExperimentWarning
-from ert.workflow_runner import WorkflowJobStatus, WorkflowRunner
+from ert.workflow_runner import (
+    WorkflowJobFailedError,
+    WorkflowJobStatus,
+    WorkflowRunner,
+)
 from tests.ert.conftest import _create_design_matrix
 
 
@@ -86,6 +91,41 @@ def create_run_model(**kwargs):
         model_config = ConfigDict(frozen=False, extra="allow")
 
     return RunModelWithMockSupport(**(default_args | kwargs))
+
+
+@pytest.mark.parametrize("failure_type", [RuntimeError, ValueError, KeyboardInterrupt])
+def test_that_failed_model_initialization_releases_storage_lock(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    failure_type: type[BaseException],
+):
+    original_post_init = RunModel.model_post_init
+
+    def fail_after_opening_storage(self: RunModel, context: object) -> None:
+        original_post_init(self, context)
+        raise failure_type("Invalid prior ensemble")
+
+    monkeypatch.setattr(RunModel, "model_post_init", fail_after_opening_storage)
+    monkeypatch.setattr(LocalStorage, "LOCK_TIMEOUT", 0)
+    storage_path = tmp_path / "storage"
+
+    with pytest.raises(failure_type, match="Invalid prior ensemble") as error:
+        create_run_model(storage_path=str(storage_path))
+
+    assert error.value.__traceback__ is not None
+    with open_storage(storage_path, mode="w") as storage:
+        assert storage.can_write
+
+
+def test_that_validation_before_storage_opens_preserves_the_validation_error(
+    tmp_path: Path,
+):
+    storage_path = tmp_path / "storage"
+
+    with pytest.raises(ValidationError, match="random_seed"):
+        create_run_model(storage_path=str(storage_path), random_seed="not-an-integer")
+
+    assert not storage_path.exists()
 
 
 def test_run_model_does_not_support_rerun_failed_realizations(minimum_case):
@@ -516,6 +556,7 @@ async def test_terminate_in_post_evaluation(evaluator, use_tmpdir):
         return list(range(5))
 
     evaluator.return_value.max_parallelism_violation = ParallelismViolation()
+    evaluator.return_value.max_memory_violation = MemoryViolation()
     evaluator().run_and_get_successful_realizations = (
         mocked_run_and_get_successful_realizations
     )
@@ -755,6 +796,7 @@ async def test_run_model_stores_largest_cpu_overspending_from_ensemble_evaluator
     )
 
     brm = create_run_model()
+    evaluator.return_value.max_memory_violation = MemoryViolation()
 
     evaluator.return_value.max_parallelism_violation = ParallelismViolation(0, "")
     await brm.run_ensemble_evaluator_async(AsyncMock(), Mock(), AsyncMock())
@@ -791,11 +833,44 @@ def test_run_model_warns_about_cpu_over_spending_as_post_simulation_warning(
     evaluator.return_value.max_parallelism_violation = ParallelismViolation(
         5, expected_msg
     )
+    evaluator.return_value.max_memory_violation = MemoryViolation()
 
     with warnings.catch_warnings(record=True) as W:
         brm._evaluate_and_postprocess(MagicMock(), MagicMock(), MagicMock())
         assert any(isinstance(w.message, PostExperimentWarning) for w in W)
         assert any(expected_msg in str(w.message) for w in W)
+
+
+@patch("ert.run_models.run_model.EnsembleEvaluator")
+def test_that_run_model_warns_about_memory_overspending_as_post_simulation_warning(
+    evaluator, use_tmpdir
+):
+    async def mocked_run_and_get_successful_realizations() -> list[int]:
+        return list(range(5))
+
+    async def mocked_wait_for_evaluation_result() -> bool:
+        return True
+
+    evaluator().wait_for_evaluation_result = mocked_wait_for_evaluation_result
+    evaluator().run_and_get_successful_realizations = (
+        mocked_run_and_get_successful_realizations
+    )
+
+    brm = create_run_model()
+    brm.queue_config.queue_system = MagicMock()
+
+    expected_msg = "Overuse of memory detected!"
+    evaluator.return_value.max_parallelism_violation = ParallelismViolation()
+    evaluator.return_value.max_memory_violation = MemoryViolation(
+        2 * 1024**3, expected_msg
+    )
+
+    with warnings.catch_warnings(record=True) as W:
+        brm._evaluate_and_postprocess(MagicMock(), MagicMock(), MagicMock())
+    assert [
+        str(w.message) for w in W if isinstance(w.message, PostExperimentWarning)
+    ] == [expected_msg]
+    assert brm.resource_overspending_warnings() == [expected_msg]
 
 
 def test_that_status_snapshot_is_written_only_when_iteration_is_finalized(use_tmpdir):
@@ -894,6 +969,7 @@ def _ert_config_dict():
     }
 
 
+@pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key but no forward")
 def test_that_ert_config_and_run_model_does_not_log_sensitive_information(
     caplog, use_tmpdir
 ):
@@ -917,6 +993,7 @@ def test_that_ert_config_and_run_model_does_not_log_sensitive_information(
     assert "'design_matrix':" not in caplog.text
 
 
+@pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key but no forward")
 def test_that_ert_config_logs_insensitive_information_about_observations_and_shapes(
     caplog,
 ):
@@ -1008,7 +1085,7 @@ def test_that_workflow_event_is_sent_and_persisted_when_stop_on_fail_aborts_work
         experiment, ensemble_size=1, name="ensemble"
     )
 
-    with pytest.raises(RuntimeError, match="failed with error"):
+    with pytest.raises(WorkflowJobFailedError, match=r"Workflow job .* failed: "):
         brm.run_workflows(
             fixtures=PreSimulationFixtures(
                 random_seed=1,
@@ -1022,10 +1099,13 @@ def test_that_workflow_event_is_sent_and_persisted_when_stop_on_fail_aborts_work
     (event,) = _drain(status_queue)
     assert event.status is WorkflowJobStatus.FAILED
     assert event.stdout == "printed before failing\n"
+    assert event.stopped_workflow
+    assert event.error.endswith("failed with exit code 1")
 
-    assert [e.stdout for e in _persisted_workflow_events(experiment)] == [
-        "printed before failing\n"
-    ]
+    [persisted_event] = _persisted_workflow_events(experiment)
+    assert persisted_event.stdout == "printed before failing\n"
+    assert persisted_event.stopped_workflow
+    assert persisted_event.error == event.error
 
 
 def test_that_workflow_events_from_update_hook_carry_iteration(tmp_path, use_tmpdir):

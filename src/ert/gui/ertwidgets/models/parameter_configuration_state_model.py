@@ -3,7 +3,11 @@ from collections.abc import Iterable, Mapping
 from PyQt6.QtCore import QObject
 from PyQt6.QtCore import pyqtSignal as Signal
 
-from ert.config.parameter_config import LocalizationType, ParameterConfig
+from ert.config.parameter_config import (
+    LocalizationType,
+    ParameterConfig,
+    ParameterType,
+)
 
 
 class ParameterConfigurationStateModel(QObject):
@@ -36,25 +40,27 @@ class ParameterConfigurationStateModel(QObject):
         return self._init_configured_parameters
 
     @property
-    def update_strategies(self) -> dict[str, LocalizationType]:
+    def update_strategies(self) -> dict[ParameterType, LocalizationType]:
         return {
-            parameter.type.upper(): parameter.update_strategy
+            parameter.type: parameter.update_strategy
             for parameter in self.parameters
             if parameter.update_strategy is not None
+            and isinstance(parameter.type, ParameterType)
         }
 
     def apply_update_strategies(
-        self, update_strategies: Mapping[str, LocalizationType]
+        self, update_strategies: Mapping[ParameterType, LocalizationType]
     ) -> None:
         if self.has_prior:
             raise RuntimeError("Parameters from prior ensemble cannot be changed.")
 
         self._draft_configured_parameters = [
             parameter.model_copy(
-                update={"update_strategy": update_strategies[parameter.type.upper()]}
+                update={"update_strategy": update_strategies[parameter.type]}
             )
             if parameter.update_strategy is not None
-            and parameter.type.upper() in update_strategies
+            and isinstance(parameter.type, ParameterType)
+            and parameter.type in update_strategies
             else parameter
             for parameter in self._configured_parameters
         ]

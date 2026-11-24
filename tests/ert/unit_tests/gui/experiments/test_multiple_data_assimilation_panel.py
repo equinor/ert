@@ -15,7 +15,7 @@ from PyQt6.QtWidgets import (
 )
 from pytestqt.qtbot import QtBot
 
-from ert.config import DesignMatrix, EnsembleConfig, GenKwConfig
+from ert.config import DesignMatrix, DesignMatrixConfig, EnsembleConfig, GenKwConfig
 from ert.config.analysis_config import AnalysisConfig
 from ert.config.analysis_module import ESSettings
 from ert.config.distribution import RawSettings
@@ -246,11 +246,13 @@ def test_that_update_strategy_summary_includes_design_matrix_parameters(
         design_matrix_path,
         pl.DataFrame({"REAL": [0, 1], "matrix_parameter": [1.0, 2.0]}),
     )
-    design_matrix = DesignMatrix(
-        filename=design_matrix_path,
-        design_sheet="DesignSheet",
-        default_sheet=None,
-        update=True,
+    design_matrix = DesignMatrix.from_config(
+        DesignMatrixConfig(
+            filename=design_matrix_path,
+            design_sheet="DesignSheet",
+            default_sheet=None,
+            update=True,
+        ),
         gen_kw_update_strategy=LocalizationType.DISTANCE,
     )
     notifier = ErtNotifier()
@@ -486,131 +488,6 @@ def test_that_multiple_data_assimilation_panel_no_warning_for_equivalent_weight_
     assert warning_icon.isHidden()
 
 
-def _create_panel_with_weights(
-    qtbot: QtBot, notifier: ErtNotifier, weights: str
-) -> MultipleDataAssimilationPanel:
-    active_realizations = [True] * 5
-    panel = MultipleDataAssimilationPanel(
-        analysis_config=AnalysisConfig(
-            minimum_required_realizations=1,
-            es_settings=ESSettings(weights=weights),
-        ),
-        parameter_configuration=[
-            Mock(
-                spec=ParameterConfig,
-                type="gen_kw",
-                update_strategy=LocalizationType.GLOBAL,
-            )
-        ],
-        runpath="",
-        notifier=notifier,
-        active_realizations=active_realizations,
-        config_num_realization=len(active_realizations),
-    )
-    qtbot.addWidget(panel)
-    return panel
-
-
-def test_that_single_update_checkbox_locks_esmda_weights_to_one(qtbot: QtBot):
-    notifier = ErtNotifier()
-    notifier._storage = MockStorage()
-    panel = _create_panel_with_weights(qtbot, notifier, "8, 4, 2, 1")
-    weights_box = panel.findChild(StringBox, "weights_input_esmda")
-    single_update_checkbox = panel.findChild(QCheckBox, "single_update_checkbox_esmda")
-
-    single_update_checkbox.click()
-
-    assert weights_box.text() == "1"
-    assert not weights_box.isEnabled()
-    assert panel.get_experiment_arguments().weights == "1"
-    assert panel.isConfigurationValid()
-
-
-def test_that_unchecking_single_update_restores_previous_esmda_weights(qtbot: QtBot):
-    notifier = ErtNotifier()
-    notifier._storage = MockStorage()
-    panel = _create_panel_with_weights(qtbot, notifier, "8, 4, 2, 1")
-    weights_box = panel.findChild(StringBox, "weights_input_esmda")
-    single_update_checkbox = panel.findChild(QCheckBox, "single_update_checkbox_esmda")
-    weights_box.setText("3, 2, 1")
-
-    single_update_checkbox.click()
-    single_update_checkbox.click()
-
-    assert weights_box.text() == "3, 2, 1"
-    assert weights_box.isEnabled()
-    assert panel.get_experiment_arguments().weights == "3, 2, 1"
-
-
-def test_that_single_update_hides_esmda_weight_mismatch_warning(qtbot: QtBot):
-    notifier = ErtNotifier()
-    notifier._storage = MockStorage()
-    panel = _create_panel_with_weights(qtbot, notifier, "8, 4, 2, 1")
-    warning_icon = panel.findChild(QLabel, "warning_icon_weights_esmda")
-    single_update_checkbox = panel.findChild(QCheckBox, "single_update_checkbox_esmda")
-
-    single_update_checkbox.click()
-
-    assert warning_icon.isHidden()
-
-
-def test_that_selecting_prior_ensemble_unchecks_and_disables_single_update(
-    qtbot: QtBot,
-):
-    notifier = ErtNotifier()
-    notifier._storage = MockStorage()
-    notifier._storage._setup_mocked_run(
-        "mock_ensemble",
-        "mock_experiment",
-        [REALIZATION_FINISHED_SUCCESSFULLY],
-        experiment_type=ExperimentType.ES_MDA,
-        iteration=0,
-        parameter_configuration={
-            "PARAMETER": Mock(
-                spec=ParameterConfig,
-                type="gen_kw",
-                update_strategy=LocalizationType.GLOBAL,
-            )
-        },
-    )
-    panel = _create_panel_with_weights(qtbot, notifier, "4, 2, 1")
-    single_update_checkbox = panel.findChild(QCheckBox, "single_update_checkbox_esmda")
-    select_prior_checkbox = panel.findChild(QCheckBox, "select_prior_checkbox_esmda")
-
-    single_update_checkbox.click()
-    select_prior_checkbox.click()
-
-    assert not single_update_checkbox.isChecked()
-    assert not single_update_checkbox.isEnabled()
-
-    select_prior_checkbox.click()
-
-    assert single_update_checkbox.isEnabled()
-
-
-def test_that_single_update_is_kept_when_ensemble_list_refreshes_after_a_run(
-    qtbot: QtBot,
-):
-    notifier = ErtNotifier()
-    notifier._storage = MockStorage()
-    panel = _create_panel_with_weights(qtbot, notifier, "4, 2, 1")
-    weights_box = panel.findChild(StringBox, "weights_input_esmda")
-    warning_icon = panel.findChild(QLabel, "warning_icon_weights_esmda")
-    single_update_checkbox = panel.findChild(QCheckBox, "single_update_checkbox_esmda")
-    single_update_checkbox.click()
-
-    notifier.ertChanged.emit()
-
-    assert single_update_checkbox.isChecked()
-    assert weights_box.text() == "1"
-    assert panel.get_experiment_arguments().weights == "1"
-
-    single_update_checkbox.click()
-
-    assert weights_box.text() == "4, 2, 1"
-    assert warning_icon.isHidden()
-
-
 def _open_and_capture_threshold(panel, qtbot):
     captured_value = None
 
@@ -749,11 +626,13 @@ def test_that_show_parameters_uses_updated_design_matrix_parameter_strategy(
         design_matrix_path,
         pl.DataFrame({"REAL": [0], design_parameter_name: [1]}),
     )
-    design_matrix = DesignMatrix(
-        filename=design_matrix_path,
-        design_sheet="DesignSheet",
-        default_sheet=None,
-        update=True,
+    design_matrix = DesignMatrix.from_config(
+        DesignMatrixConfig(
+            filename=design_matrix_path,
+            design_sheet="DesignSheet",
+            default_sheet=None,
+            update=True,
+        )
     )
 
     notifier = ErtNotifier()
@@ -871,6 +750,6 @@ def test_that_prior_selection_disables_parameter_update_strategy_changes(
     assert edit_button is not None
     qtbot.mouseClick(edit_button, Qt.MouseButton.LeftButton)
 
-    assert comboboxes_enabled == [False, False, False]
+    assert comboboxes_enabled == [False]
     assert panel.get_experiment_arguments().parameter_configuration == [prior_parameter]
     assert prior_parameter.update_strategy == LocalizationType.GLOBAL

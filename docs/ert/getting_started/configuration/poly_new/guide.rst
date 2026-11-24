@@ -61,7 +61,7 @@ The focus will be moved to the left sidebar menu item "Experiment status", displ
   This is due to an upper limit on how many realizations can run concurrently, a constraint determined by the queue system.
   We will configure this at a later stage.
 
-Once all the realizations are complete, close all ERT windows.
+Once all the realizations are complete, close all ERT windows. Only one ERT GUI can use the ``storage`` folder at a time, so you must close ERT before starting it again (see :ref:`one_gui_per_storage`).
 
 Inspect the results
 *******************
@@ -282,6 +282,8 @@ The two required arguments for :ref:`GEN_KW <gen_kw>` are:
  1. **COEFFS**: The name assigned to the parameter set, serving as an identifier.
  2. **coeff_priors**: The name of the file containing the defined priors.
 
+.. _parameter_viewer:
+
 Once configured, a button "Parameters" will appear in the simulation panel
 Clicking this will open the "Parameter viewer" window, displaying the defined parameters:
 
@@ -456,7 +458,7 @@ With the final configuration:
 
 .. literalinclude:: with_observations/poly_final.ert
 
-Launch ERT, choose the ``Multiple data assimilation``, toggle on the ``Single update``-option and hit the play button.
+Launch ERT, choose the "Ensemble Smoother" and hit the play button.
 
 Plot prior and posterior ensembles and notice that the updated parameters yield responses that better align with observations.
 
@@ -495,7 +497,7 @@ Remove index list from ``observations`` as we now use all 50 observations:
 
 .. literalinclude:: with_more_observations/observations
 
-Re-run ``Multiple data assimilation`` with the ``Single update``-option enabled and notice that the estimate of ``b`` has improved:
+Re-run ``Ensemble smoother`` and notice that the estimate of ``b`` has improved:
 
 .. image:: with_more_observations/coeff_b.png
 

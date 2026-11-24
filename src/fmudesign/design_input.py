@@ -13,6 +13,7 @@ from fmudesign.utils import (
     parse_decimals,
     read_excel_sheet,
     resolve_path,
+    strip_text_cells,
 )
 
 
@@ -23,13 +24,14 @@ class DesignInput:
 
     @classmethod
     def from_xlsx(cls, input_filename: str, design_input_sheet: str) -> Self:
-        designinput = read_excel_sheet(input_filename, design_input_sheet)
+        designinput = read_excel_sheet(
+            input_filename, design_input_sheet, dtype={"sensname": str}
+        )
         return cls.from_dataframe(input_filename, designinput)
 
     @classmethod
     def from_dataframe(cls, input_filename: str, df: pd.DataFrame) -> Self:
-        # Strip strings in column 'sensname' while preserving NaN values
-        df = df.assign(sensname=lambda _df: _df["sensname"].str.strip())
+        df = strip_text_cells(df)
         _check_designinput(df)
         df["sensname"] = df["sensname"].ffill()
 
@@ -81,8 +83,15 @@ class DesignInput:
                 sensdict["parameters"] = list(group["param_name"])
 
             else:
+                problem = (
+                    f"invalid type {sens_type!r}"
+                    if _has_value(sens_type)
+                    else "no type on its first row"
+                )
                 raise FmudesignError(
-                    f"Sensitivity {sensname} does not have a valid sensitivity type"
+                    f"Sensitivity {sensname!r} in the design input sheet has "
+                    f"{problem}. Valid types are: seed, scenario, dist, ref, "
+                    "background, extern."
                 )
 
             if "numreal" in group and _has_value(group["numreal"].iloc[0]):
@@ -113,6 +122,12 @@ class DesignInput:
 
 def _check_designinput(dsgn_input: pd.DataFrame) -> None:
     """Checks for valid input in designinput sheet"""
+    if dsgn_input["sensname"].head(1).isna().any():
+        raise FmudesignError(
+            "The first row of the designinput sheet has no sensname. "
+            "Each sensitivity must be named on its first row."
+        )
+
     # Filter out rows where sensname has no value
     valid_sensnames = dsgn_input["sensname"].dropna()
     duplicated_mask = valid_sensnames.duplicated()
@@ -255,9 +270,7 @@ def _read_dependencies(
         if sheetname not in workbook.sheet_names:
             raise FmudesignError(f"Worksheet {sheetname!r} not found")
         cells = workbook.get_sheet_by_name(sheetname).to_python(skip_empty_area=False)
-    rows = (
-        [value if value.strip() else "" for value in map(str, row)] for row in cells
-    )
+    rows = ([str(value).strip() for value in row] for row in cells)
 
     headers = {index: name for index, name in enumerate(next(rows, [])) if name}
     if from_parameter not in headers.values():

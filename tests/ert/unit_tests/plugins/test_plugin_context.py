@@ -174,6 +174,9 @@ def test_that_plugin_context_with_two_site_configurations_raises_error():
             return ErtRuntimePlugins(environment_variables={"a": "c"})
 
     with (
-        pytest.raises(ValueError, match="Only one site configuration is allowed"),
+        pytest.raises(
+            ValueError,
+            match=r"Only one plugin may implement the 'site_configurations' hook",
+        ),
     ):
         get_site_plugins(ErtPluginManager(plugins=[SiteOne, SiteTwo]))

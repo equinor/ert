@@ -25,7 +25,7 @@ from packaging.version import Version
 from resdata import ResDataType
 from resdata.grid import GridGenerator
 from resdata.resfile import ResdataKW
-from resfo_utilities.testing import egrids, summaries
+from resfo_utilities.testing import summaries
 
 if Version(version("resdata")).major < 7:
     import cwrap
@@ -33,7 +33,7 @@ if Version(version("resdata")).major < 7:
 from ert.field_utils import FieldFileFormat, Shape, read_field, save_field
 from ert.field_utils.field_file_format import ROFF_FORMATS
 from ert.mode_definitions import ENSEMBLE_EXPERIMENT_MODE
-from tests.ert.grid_generator import xtgeo_box_grids
+from tests.ert.grid_generator import field_egrids, xtgeo_box_grids
 
 from .run_cli import run_cli_with_pm
 
@@ -45,6 +45,10 @@ names = st.text(
         max_codepoint=ord("~"),
         exclude_characters="\"'$,:%",  # These have specific meaning in configs
     ),
+).filter(
+    # Names consisting only of dots (".", "..", ...) give file names such as
+    # "..ext" which have no extension according to Path.suffix
+    lambda name: bool(Path(f"{name}.ext").suffix)
 )
 
 config_contents = """
@@ -141,7 +145,7 @@ class IoProvider:
             )
             grid.to_file(grid_file, str(grid_format))
         elif lib == IoLibrary.ERT:
-            egrid = self.data.draw(egrids)
+            egrid = self.data.draw(field_egrids)
             self.dims = (
                 egrid.global_grid.grid_head.num_x,
                 egrid.global_grid.grid_head.num_y,

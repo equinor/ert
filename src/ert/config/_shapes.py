@@ -3,6 +3,8 @@ from __future__ import annotations
 from functools import cached_property
 from typing import Annotated, ClassVar, Literal, Self, cast
 
+import numpy as np
+import numpy.typing as npt
 import shapely
 import xtgeo
 from pydantic import BaseModel, Field, model_validator
@@ -123,20 +125,26 @@ class PolygonShapeConfig(ShapeConfig):
         shapely.prepare(multipolygon)
         return multipolygon
 
-    def contains(self, east: float, north: float) -> bool:
-        """Check if a point is inside any of the internal polygons.
+    def contains(
+        self,
+        east: npt.NDArray[np.floating],
+        north: npt.NDArray[np.floating],
+    ) -> npt.NDArray[np.bool_]:
+        """Check which points are inside any of the internal polygons.
 
         Args:
-            east: UTM_X-coordinate of the point
-            north: UTM_Y-coordinate of the point
+            east: UTM_X-coordinates of the points
+            north: UTM_Y-coordinates of the points
 
         Returns:
-            True if the point is inside the polygon (but not on the boundary), False
-            otherwise. Behavior is like that (and without any tolerance applied) as it
-            is assumed it doesn't matter much what happens to the points near the
-            boundary.
+            For each point, True if it is inside the polygon (but not on the
+            boundary), False otherwise. Behavior is like that (and without any
+            tolerance applied) as it is assumed it doesn't matter much what happens
+            to the points near the boundary.
         """
-        return bool(shapely.contains_xy(self._polygon, east, north))
+        return np.asarray(
+            shapely.contains_xy(self._polygon, east, north), dtype=np.bool_
+        )
 
     def __eq__(self, other: object) -> bool:
         """Compare two PolygonShapeConfig instances by geometry.

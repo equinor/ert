@@ -7,9 +7,11 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from _ert.forward_model_runner.fm_dispatch import ForwardModelDescriptionJSON
+from _ert.events import StdStream
 from _ert.forward_model_runner.forward_model_step import ForwardModelStep
 from _ert.forward_model_runner.reporting.message import (
     Checksum,
+    Exited,
     Finish,
     Init,
     Manifest,
@@ -44,6 +46,18 @@ class ForwardModelRunner:
         return {
             name: {"type": "file", "path": str(Path(file).absolute())}
             for name, file in data.items()
+        }
+
+    @staticmethod
+    def _existing_std_stream_paths(step: ForwardModelStep) -> dict[StdStream, str]:
+        files: dict[StdStream, str | None] = {
+            "stdout": step.std_out,
+            "stderr": step.std_err,
+        }
+        return {
+            stream: str(Path(file).absolute())
+            for stream, file in files.items()
+            if file and Path(file).is_file()
         }
 
     def _populate_checksums(
@@ -92,6 +106,10 @@ class ForwardModelRunner:
         for step in step_queue:
             self._currently_running_step = step
             for status_update in step.run():
+                if isinstance(status_update, Exited):
+                    status_update.std_stream_paths = self._existing_std_stream_paths(
+                        step
+                    )
                 yield status_update
                 if not status_update.success():
                     yield Checksum(checksum_dict={}, run_path=str(Path.cwd()))

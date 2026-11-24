@@ -1,14 +1,23 @@
 import json
 import logging
 from pathlib import Path
+from unittest.mock import Mock
 
 import pytest
 
 import ert.plugins.hook_implementations
-from ert.plugins import ErtPluginManager, ErtRuntimePlugins, plugin
+from ert import EcosystemPlugin
+from ert.ensemble_evaluator.event import EndEvent
+from ert.plugins import ErtPluginManager, get_site_plugins, plugin
+from ert.plugins.plugin_manager import hook_implementation
+from ert.run_models.event import EverestBatchResultEvent
 from ert.trace import trace, tracer
 from tests.ert.unit_tests.plugins import dummy_plugins
-from tests.ert.unit_tests.plugins.dummy_plugins import PLUGIN_IP_ADDRESS, DummyFMStep
+from tests.ert.unit_tests.plugins.dummy_plugins import (
+    PLUGIN_IP_ADDRESS,
+    DummyEcosystem,
+    DummyFMStep,
+)
 
 
 @pytest.fixture(autouse=True)
@@ -336,19 +345,29 @@ def test_that_forward_model_step_is_registered(tmpdir):
         assert pm.forward_model_steps == [DummyFMStep]
 
 
-def test_that_plugin_manager_with_two_site_configurations_raises_error():
-    class SiteOne:
-        @plugin(name="foo")
-        def site_configurations():
-            return ErtRuntimePlugins(environment_variables={"a": "b"})
+@pytest.mark.parametrize(
+    "hook_name", ["get_ip_address", "on_status_event", "site_configurations"]
+)
+def test_that_second_implementation_of_single_implementation_hook_is_rejected(
+    hook_name,
+):
+    def make_plugin(plugin_name):
+        @hook_implementation(specname=hook_name)
+        def hook():
+            return None
 
-    class SiteTwo:
-        @plugin(name="foo")
-        def site_configurations():
-            return ErtRuntimePlugins(environment_variables={"a": "c"})
+        return type(plugin_name, (), {"hook": staticmethod(hook)})
 
-    with pytest.raises(ValueError, match="Only one site configuration is allowed"):
-        ErtPluginManager(plugins=[SiteOne, SiteTwo]).get_site_configurations()
+    first, second = make_plugin("FirstPlugin"), make_plugin("SecondPlugin")
+    pm = ErtPluginManager(plugins=[first])
+
+    with pytest.raises(
+        ValueError, match=f"Only one plugin may implement the '{hook_name}' hook"
+    ):
+        pm.register(second)
+
+    assert pm.is_registered(first)
+    assert not pm.is_registered(second)
 
 
 def test_get_ip_address(monkeypatch, tmpdir):
@@ -362,3 +381,96 @@ def test_get_ip_address(monkeypatch, tmpdir):
         assert default_plugin.get_ip_address() != pm.get_ip_address()
         assert default_plugin.get_ip_address() == default_ip_address
         assert pm.get_ip_address() == PLUGIN_IP_ADDRESS
+
+
+def test_that_has_status_event_listener_is_false_without_implementing_plugin():
+    assert not ErtPluginManager(plugins=[]).has_status_event_listener
+
+
+def test_that_has_status_event_listener_is_true_with_implementing_plugin():
+    class EventListener:
+        @plugin(name="event_listener")
+        def on_status_event(experiment_run_id, event):
+            pass
+
+    assert ErtPluginManager(plugins=[EventListener]).has_status_event_listener
+
+
+def test_that_notify_status_event_passes_event_and_experiment_run_id_to_plugin():
+    received_events = []
+
+    class EventListener:
+        @plugin(name="event_listener")
+        def on_status_event(experiment_run_id, event):
+            received_events.append((experiment_run_id, event))
+
+    event = EndEvent(failed=False, msg="done")
+    ErtPluginManager(plugins=[EventListener]).notify_status_event(
+        experiment_run_id="e_id", event=event
+    )
+    assert received_events == [("e_id", event)]
+
+
+def test_that_plugin_modifying_status_event_does_not_modify_the_original_event():
+    class ModifyingPlugin:
+        @plugin(name="event_listener")
+        def on_status_event(experiment_run_id, event):
+            event.results["objective"] = "modified by plugin"
+
+    event = EverestBatchResultEvent(
+        batch=0,
+        everest_event="OPTIMIZATION_RESULT",
+        result_type="FunctionResult",
+        results={"objective": 1.0},
+    )
+    ErtPluginManager(plugins=[ModifyingPlugin]).notify_status_event(
+        experiment_run_id="e_id", event=event
+    )
+    assert event.results == {"objective": 1.0}
+
+
+def test_that_notify_status_event_logs_instead_of_raising_plugin_exceptions(caplog):
+    class FailingPlugin:
+        @plugin(name="event_listener")
+        def on_status_event(experiment_run_id, event):
+            raise RuntimeError("kaboom!")
+
+    pm = ErtPluginManager(plugins=[FailingPlugin])
+    with caplog.at_level(logging.ERROR):
+        pm.notify_status_event(experiment_run_id="e_id", event=Mock())
+    assert "Status event plugin failed for experiment run 'e_id'" in caplog.text
+    assert "kaboom!" in caplog.text
+
+
+def test_that_ecosystem_plugins_are_installed_by_name_in_runtime_plugins(
+    monkeypatch,
+):
+    pm = ErtPluginManager(plugins=[dummy_plugins])
+    assert pm.ecosystem_plugin is DummyEcosystem
+
+    monkeypatch.setattr(pm, "get_installable_workflow_jobs", dict)
+    runtime_plugins = get_site_plugins(pm)
+    assert list(runtime_plugins.installed_ecosystem_plugins) == ["DUMMY_ECOSYSTEM"]
+    assert isinstance(
+        runtime_plugins.installed_ecosystem_plugins["DUMMY_ECOSYSTEM"], DummyEcosystem
+    )
+
+
+def test_that_installing_more_than_one_ecosystem_plugin_is_an_error():
+    class OtherEcosystem(EcosystemPlugin):
+        name: str = "OTHER_ECOSYSTEM"
+
+        def configure(self, config_dict):
+            pass
+
+    class OtherPlugins:
+        @staticmethod
+        @plugin(name="other")
+        def ecosystem_plugin():
+            return OtherEcosystem
+
+    pm = ErtPluginManager(plugins=[dummy_plugins, OtherPlugins])
+    with pytest.raises(
+        ValueError, match=r"Only one ecosystem plugin.*DummyEcosystem.*OtherEcosystem"
+    ):
+        _ = pm.ecosystem_plugin

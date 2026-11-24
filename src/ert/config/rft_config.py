@@ -722,7 +722,7 @@ class RFTConfig(SimulationResponseConfig):
             )
             if not simulation_step_exists:
                 ConfigWarning.warn(
-                    "Config contains a RFT key but no forward model "
+                    "Config contains an RFT key but no forward model "
                     "step known to generate rft files"
                 )
 

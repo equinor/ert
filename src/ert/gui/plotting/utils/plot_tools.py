@@ -69,6 +69,11 @@ class ConditionalAxisFormatter(mticker.Formatter):
 
 class PlotTools:
     @staticmethod
+    def show_no_data(axes: Axes, message: str) -> None:
+        axes.text(0.5, 0.5, message, ha="center", va="center")
+        axes.set_axis_off()
+
+    @staticmethod
     def show_grid(axes: Axes, plot_context: PlotContext) -> None:
         config = plot_context.plotConfig()
         if config.is_grid_enabled():

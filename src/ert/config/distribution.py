@@ -374,7 +374,7 @@ class DerrfSettings(TransSettingsValidation):
         if np.any((result > self.max) | (result < self.min)):
             warnings.warn(
                 (
-                    "trans_derff suffered from catastrophic loss"
+                    "trans_derff suffered from catastrophic loss "
                     "of precision, clamping to min,max"
                 ),
                 stacklevel=1,

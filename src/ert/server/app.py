@@ -1,4 +1,6 @@
+import inspect
 import json
+import logging
 from contextlib import asynccontextmanager
 from enum import Enum
 from typing import Any
@@ -9,6 +11,8 @@ from fastapi.responses import HTMLResponse, RedirectResponse, Response
 
 from ert.server.endpoints import router as endpoints_router
 from ert.server.exceptions import ErtStorageError
+
+logger = logging.getLogger(__name__)
 
 
 class JSONEncoder(json.JSONEncoder):
@@ -44,10 +48,17 @@ async def lifespan(app: FastAPI):  # type: ignore
     yield
 
 
+_fastapi_telemetry_options: dict[str, Any] = (
+    {"telemetry": {"tracing": False}}
+    if "telemetry" in inspect.signature(FastAPI).parameters
+    else {}
+)
+
 app = FastAPI(
     title="ERT server API",
     version="0.1.0",
     debug=True,
+    **_fastapi_telemetry_options,
     default_response_class=JSONResponse,
     lifespan=lifespan,
 )
@@ -57,6 +68,11 @@ app = FastAPI(
 async def ert_storage_error_handler(
     request: Request, exc: ErtStorageError
 ) -> JSONResponse:
+    logger.error(
+        f"{request.method} {request.url.path} failed with "
+        f"status {exc.__status_code__}: {exc.args[0]}",
+        exc_info=exc,
+    )
     return JSONResponse(
         {
             "detail": {
@@ -74,6 +90,9 @@ async def ert_storage_error_handler(
 async def not_implemented_handler(
     request: Request, exc: NotImplementedError
 ) -> JSONResponse:
+    logger.error(
+        f"{request.method} {request.url.path} is not implemented", exc_info=exc
+    )
     return JSONResponse({}, status_code=status.HTTP_501_NOT_IMPLEMENTED)
 
 

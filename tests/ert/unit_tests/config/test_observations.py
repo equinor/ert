@@ -391,6 +391,7 @@ def test_that_rft_config_is_created_from_observations():
     }
 
 
+@pytest.mark.filterwarnings("ignore:Config contains an RFT key but no forward model")
 def test_that_rft_config_is_created_from_mix_of_observations_and_responses():
     ert_config = ErtConfig.from_dict(
         {
@@ -2288,11 +2289,11 @@ def test_that_hours_are_rounded_to_closest_int_in_plot_observations():
 
 
 def test_that_base_observation_fails_validation_with_unknown_kwarg():
-
     with pytest.raises(ValidationError):
         BaseObservation(random_kwarg=42)
 
 
+@pytest.mark.filterwarnings("ignore:Config contains an RFT key but no forward model")
 def test_that_missing_rft_observations_name_is_defaulted_to_primary_keys():
     well = "PROD"
     date = "2015-02-01"
@@ -2316,6 +2317,26 @@ def test_that_missing_rft_observations_name_is_defaulted_to_primary_keys():
     ert_config = ert_config_from_parser(obs_config_contents)
     obs_name = ert_config.observation_declarations[0].name
     assert obs_name == f"{well}:{date}:{property_}:{east}:{north}:{tvd}"
+
+
+@pytest.mark.filterwarnings("ignore:Config contains an RFT key but no forward model")
+def test_that_rft_localization_after_east_and_north_keeps_their_values():
+    obs_config_contents = """
+        RFT_OBSERVATION {
+        VALUE=3800;
+        ERROR=10;
+        EAST=9500.0;
+        NORTH=10000.0;
+        WELL=PROD;
+        DATE=2015-02-01;
+        PROPERTY=PRESSURE;
+        TVD=8400.0;
+        LOCALIZATION { RADIUS=500; };
+        };
+    """
+    ert_config = ert_config_from_parser(obs_config_contents)
+    rft_observation = ert_config.observation_declarations[0]
+    assert (rft_observation.east, rft_observation.north) == (9500.0, 10000.0)
 
 
 def test_that_missing_summary_observations_name_is_defaulted_to_primary_key():

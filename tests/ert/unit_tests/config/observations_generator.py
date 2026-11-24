@@ -27,7 +27,7 @@ def class_name(o: Observation) -> str:
 def as_obs_config_content(observation: Observation) -> str:
     result = f"{class_name(observation)} {observation.name}"
     result += " { "
-    for f_name in observation.model_fields:
+    for f_name in type(observation).model_fields:
         if f_name in {"name", "type", "index"}:
             continue
 

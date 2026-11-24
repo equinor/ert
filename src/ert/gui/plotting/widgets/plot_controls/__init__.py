@@ -3,6 +3,7 @@ from .custom_palette_dialog import CustomPaletteDialog
 from .distribution_options import DistributionOptions
 from .everest_controls_plot_options import EverestControlsPlotOptions
 from .general_options import GeneralPlotOptions
+from .map_options import MapOptions
 from .plot_color_palette_selector import PlotColorPaletteSelector
 from .statistics_options import StatisticsOptions
 
@@ -12,6 +13,7 @@ __all__ = [
     "DistributionOptions",
     "EverestControlsPlotOptions",
     "GeneralPlotOptions",
+    "MapOptions",
     "PlotColorPaletteSelector",
     "StatisticsOptions",
 ]

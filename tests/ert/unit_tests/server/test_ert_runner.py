@@ -1,0 +1,855 @@
+import json
+import shutil
+from collections.abc import Iterator
+from pathlib import Path
+from queue import SimpleQueue
+from types import SimpleNamespace
+from unittest.mock import AsyncMock, Mock
+from uuid import uuid4
+
+import pytest
+from fastapi import BackgroundTasks, FastAPI
+from fastapi.testclient import TestClient
+
+from ert.config import ErtConfig, QueueSystem
+from ert.config.gen_kw_config import GenKwConfig
+from ert.config.parsing.config_errors import ConfigValidationError
+from ert.ensemble_evaluator import EndEvent, EvaluatorServerConfig
+from ert.plugins import ErtPluginManager, ErtRuntimePlugins, plugin
+from ert.run_models import SingleTestRun
+from ert.run_models.event import RunModelStatusEvent
+from ert.run_models.run_model import RunModel
+from ert.server.endpoints import ert_runner
+from ert.server.endpoints.experiment_runs import (
+    ExperimentRunnerState,
+    _experiments,
+    _get_experiment,
+    get_status_event_notifier,
+    verify_auth,
+)
+from ert.server.status_event_forwarder import StatusEventForwarder
+from ert.storage import LocalStorage, open_storage
+from everest.everserver.server import ExperimentState, ExperimentStatus
+from tests.ert.utils import wait_until_all_status_events_are_delivered
+
+
+def test_that_run_args_deserializes_selected_parameter_configurations():
+    parameters = [
+        GenKwConfig.model_validate(
+            {
+                "name": name,
+                "distribution": {"name": "normal", "mean": 0, "std": 1},
+                "update_strategy": None,
+            }
+        )
+        for name in ["SELECTED_B", "SELECTED_A"]
+    ]
+
+    args = ert_runner.RunArgs.model_validate_json(
+        json.dumps(
+            {
+                "mode": "es_mda",
+                "experiment_name": "parameter-selection",
+                "parameter_configuration": [
+                    parameter.model_dump(mode="json") for parameter in parameters
+                ],
+            }
+        )
+    )
+
+    assert args.model_extra is not None
+    selected = args.model_extra["parameter_configuration"]
+    assert selected == parameters
+    assert all(isinstance(parameter, GenKwConfig) for parameter in selected)
+    assert all(parameter.update_strategy is None for parameter in selected)
+
+
+def test_that_run_args_preserves_omitted_parameter_configuration():
+    args = ert_runner.RunArgs.model_validate_json(
+        '{"mode": "es_mda", "experiment_name": "parameter-selection"}'
+    )
+
+    assert not hasattr(args, "parameter_configuration")
+
+
+def test_that_run_args_preserves_empty_parameter_configuration():
+    args = ert_runner.RunArgs.model_validate_json(
+        '{"mode": "es_mda", "experiment_name": "parameter-selection", '
+        '"parameter_configuration": []}'
+    )
+
+    assert args.model_extra is not None
+    assert args.model_extra["parameter_configuration"] == []
+
+
+@pytest.mark.asyncio
+async def test_that_start_uses_the_registered_model_and_config_id(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    registry: dict[str, ert_runner.ErtExperimentRunnerState] = {}
+    monkeypatch.setattr(ert_runner, "_experiments", registry)
+    config = Mock(
+        spec=ErtConfig,
+        config_path="config.ert",
+        runpath_config=SimpleNamespace(
+            runpath_format_string="simulations/realization-<IENS>/iter-<ITER>"
+        ),
+        ens_path="storage",
+    )
+    request = ert_runner.StartErtExperimentRequest.model_construct(
+        config=config,
+        args=ert_runner.RunArgs(
+            mode="ensemble_experiment", experiment_name="registration-test"
+        ),
+    )
+    tasks = BackgroundTasks()
+    model = Mock(spec=RunModel)
+    writer = Mock()
+    model._storage = writer
+    create_model = Mock(return_value=model)
+    monkeypatch.setattr(ert_runner, "create_model", create_model)
+
+    registration = await ert_runner.register(request, Mock())
+    writer.close.assert_not_called()
+    assert model._storage is writer
+    config_id = json.loads(bytes(registration.body))["config_id"]
+    response = await ert_runner.start_experiment_ert(
+        ert_runner._get_ert_experiment(config_id), tasks
+    )
+
+    assert response.status_code == 200
+    assert response.body == b""
+    state = registry[config_id]
+    assert isinstance(state, ert_runner.ErtExperimentRunnerState)
+    assert state.run_model is model
+    assert state.config_path == "config.ert"
+    assert state.run_path == "simulations/realization-<IENS>/iter-<ITER>"
+    assert state.storage_path == "storage"
+    assert state.start_time_unix is not None
+    create_model.assert_called_once_with(config, request.args, state.status_queue)
+    assert len(tasks.tasks) == 1
+    assert tasks.tasks[0].func is ert_runner.run_ert
+    assert tasks.tasks[0].args == (state,)
+
+
+@pytest.mark.asyncio
+async def test_that_registered_ert_experiment_passes_status_events_and_id_to_notifier(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    received_events = []
+
+    def notify_status_event(*, experiment_run_id, event):
+        received_events.append((experiment_run_id, event))
+
+    monkeypatch.setattr(ert_runner, "_experiments", {})
+    events = [
+        RunModelStatusEvent(iteration=0, run_id=uuid4(), msg="running"),
+        EndEvent(failed=False, msg="done"),
+    ]
+    model = Mock(spec=RunModel)
+    model.queue_config = SimpleNamespace(queue_system=QueueSystem.LOCAL)
+
+    def create_model(config, args, status_queue):
+        model.start_simulations_thread.side_effect = lambda *_, **__: [
+            status_queue.put(event) for event in events
+        ]
+        return model
+
+    monkeypatch.setattr(ert_runner, "create_model", create_model)
+    request = ert_runner.StartErtExperimentRequest.model_construct(
+        config=Mock(
+            spec=ErtConfig,
+            config_path="config.ert",
+            runpath_config=SimpleNamespace(runpath_format_string="runpath"),
+            ens_path="storage",
+        ),
+        args=ert_runner.RunArgs(
+            mode="ensemble_experiment", experiment_name="notifier-test"
+        ),
+    )
+
+    registration = await ert_runner.register(request, notify_status_event)
+    config_id = json.loads(bytes(registration.body))["config_id"]
+    state = ert_runner._get_ert_experiment(config_id)
+    await ert_runner.run_ert(state)
+
+    await wait_until_all_status_events_are_delivered(state.status_event_forwarder)
+    assert received_events == [(config_id, event) for event in events]
+
+
+@pytest.mark.asyncio
+async def test_that_ert_experiment_registered_without_notifier_has_no_forwarder(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    monkeypatch.setattr(ert_runner, "_experiments", {})
+    monkeypatch.setattr(ert_runner, "create_model", Mock(spec=RunModel))
+    request = ert_runner.StartErtExperimentRequest.model_construct(
+        config=Mock(
+            spec=ErtConfig,
+            config_path="config.ert",
+            runpath_config=SimpleNamespace(runpath_format_string="runpath"),
+            ens_path="storage",
+        ),
+        args=ert_runner.RunArgs(
+            mode="ensemble_experiment", experiment_name="no-notifier-test"
+        ),
+    )
+
+    registration = await ert_runner.register(request, None)
+
+    config_id = json.loads(bytes(registration.body))["config_id"]
+    assert ert_runner._get_ert_experiment(config_id).status_event_forwarder is None
+
+
+@pytest.mark.asyncio
+async def test_that_status_event_notifier_is_none_when_no_plugin_listens():
+    assert await get_status_event_notifier(ErtPluginManager(plugins=[])) is None
+
+
+@pytest.mark.asyncio
+async def test_that_status_event_notifier_passes_events_to_listening_plugin():
+    received_events = []
+
+    class EventListener:
+        @plugin(name="event_listener")
+        def on_status_event(experiment_run_id, event):
+            received_events.append((experiment_run_id, event))
+
+    notifier = await get_status_event_notifier(
+        ErtPluginManager(plugins=[EventListener])
+    )
+    assert notifier is not None
+    event = EndEvent(failed=False, msg="done")
+    notifier(experiment_run_id="e_id", event=event)
+
+    assert received_events == [("e_id", event)]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("outcome", ["completed", "failed", "exception"])
+@pytest.mark.parametrize("rerun_failed_realizations", [False, True])
+async def test_that_execution_retains_its_model_after_termination(
+    monkeypatch: pytest.MonkeyPatch, outcome: str, rerun_failed_realizations: bool
+):
+    experiment_id = str(uuid4())
+    model = Mock(spec=RunModel)
+    state = ert_runner.ErtExperimentRunnerState(
+        run_model=model, status_queue=SimpleQueue()
+    )
+    monkeypatch.setitem(_experiments, experiment_id, state)
+    model.queue_config = SimpleNamespace(queue_system=QueueSystem.LOCAL)
+
+    def execute(
+        evaluator_config: EvaluatorServerConfig, *, rerun_failed_realizations: bool
+    ):
+        assert state.run_model is model
+        if outcome == "exception":
+            raise RuntimeError("Simulation raised")
+        state.status_queue.put(EndEvent(failed=outcome == "failed", msg=outcome))
+
+    model.start_simulations_thread.side_effect = execute
+    create_model = Mock(side_effect=AssertionError("Model already registered"))
+    monkeypatch.setattr(ert_runner, "create_model", create_model)
+    await ert_runner.run_ert(state, rerun_failed_realizations=rerun_failed_realizations)
+
+    assert model.start_simulations_thread.call_args.kwargs == {
+        "rerun_failed_realizations": rerun_failed_realizations
+    }
+    create_model.assert_not_called()
+    assert _get_experiment(experiment_id) is state
+    assert state.run_model is model
+    assert state.status.status == (
+        ExperimentState.completed if outcome == "completed" else ExperimentState.failed
+    )
+    assert state.events[-1] == EndEvent(
+        failed=outcome != "completed",
+        msg="Simulation raised" if outcome == "exception" else outcome,
+    )
+
+
+@pytest.mark.asyncio
+async def test_that_model_creation_error_does_not_register_a_state(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    registry: dict[str, ert_runner.ErtExperimentRunnerState] = {}
+    monkeypatch.setattr(ert_runner, "_experiments", registry)
+    monkeypatch.setattr(
+        ert_runner, "create_model", Mock(side_effect=ValueError("Invalid config"))
+    )
+
+    request = ert_runner.StartErtExperimentRequest.model_construct(
+        config=Mock(spec=ErtConfig),
+        args=ert_runner.RunArgs(
+            mode="ensemble_experiment", experiment_name="registration-test"
+        ),
+    )
+
+    with pytest.raises(ValueError, match="Invalid config"):
+        await ert_runner.register(request, Mock())
+    assert not registry
+
+
+@pytest.mark.asyncio
+async def test_that_config_validation_error_on_registration_gives_http_422(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    registry: dict[str, ert_runner.ErtExperimentRunnerState] = {}
+    monkeypatch.setattr(ert_runner, "_experiments", registry)
+    monkeypatch.setattr(
+        ert_runner,
+        "create_model",
+        Mock(side_effect=ConfigValidationError("Ensemble size must be positive")),
+    )
+    request = ert_runner.StartErtExperimentRequest.model_construct(
+        config=Mock(spec=ErtConfig),
+        args=ert_runner.RunArgs(
+            mode="ensemble_experiment", experiment_name="registration-test"
+        ),
+    )
+
+    with pytest.raises(ert_runner.HTTPException) as error:
+        await ert_runner.register(request, Mock())
+
+    assert error.value.status_code == 422
+    assert "Ensemble size must be positive" in error.value.detail
+    assert not registry
+
+
+@pytest.mark.asyncio
+async def test_that_failed_registration_releases_partially_initialized_storage(
+    minimum_case: ErtConfig, monkeypatch: pytest.MonkeyPatch
+):
+    registry: dict[str, ert_runner.ErtExperimentRunnerState] = {}
+    monkeypatch.setattr(ert_runner, "_experiments", registry)
+    monkeypatch.setattr(LocalStorage, "LOCK_TIMEOUT", 0)
+
+    def fail_after_opening_storage(self: SingleTestRun, context: object):
+        RunModel.model_post_init(self, context)
+        raise RuntimeError("Invalid prior ensemble")
+
+    monkeypatch.setattr(SingleTestRun, "model_post_init", fail_after_opening_storage)
+    request = ert_runner.StartErtExperimentRequest(
+        config=minimum_case,
+        args=ert_runner.RunArgs.model_validate(
+            {
+                "mode": "test_run",
+                "experiment_name": "registration-test",
+                "current_ensemble": "prior",
+                "active_realizations": None,
+            }
+        ),
+    )
+
+    with pytest.raises(RuntimeError, match="Invalid prior ensemble") as error:
+        await ert_runner.register(request, Mock())
+
+    assert error.value.__traceback__ is not None
+    assert not registry
+    with open_storage(minimum_case.ens_path, mode="w") as storage:
+        assert storage.can_write
+
+
+@pytest.mark.asyncio
+async def test_that_cancellation_before_start_does_not_start_simulations(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    experiment_id = str(uuid4())
+    model = Mock(spec=RunModel)
+    model._storage = Mock(spec=LocalStorage)
+    state = ert_runner.ErtExperimentRunnerState(
+        status=ExperimentStatus(status=ExperimentState.stopped, message="Cancelled"),
+        run_model=model,
+        status_queue=SimpleQueue(),
+    )
+    monkeypatch.setitem(_experiments, experiment_id, state)
+    create_model = Mock()
+    monkeypatch.setattr(ert_runner, "create_model", create_model)
+
+    await ert_runner.run_ert(state)
+
+    create_model.assert_not_called()
+    model.start_simulations_thread.assert_not_called()
+    model._storage.close.assert_called_once_with()
+    assert state.events == [
+        EndEvent(failed=True, msg="Experiment cancelled before start.")
+    ]
+
+
+@pytest.mark.asyncio
+async def test_that_run_cancelled_before_start_delivers_its_end_event_to_listener(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    received_events = []
+
+    def listener(*, event):
+        received_events.append(event)
+
+    model = Mock(spec=RunModel)
+    model._storage = Mock(spec=LocalStorage)
+    state = ert_runner.ErtExperimentRunnerState(
+        status=ExperimentStatus(status=ExperimentState.stopped, message="Cancelled"),
+        run_model=model,
+        status_queue=SimpleQueue(),
+        status_event_forwarder=StatusEventForwarder(listener),
+    )
+    monkeypatch.setitem(_experiments, str(uuid4()), state)
+
+    await ert_runner.run_ert(state)
+
+    assert state.finalized.is_set()
+    await wait_until_all_status_events_are_delivered(state.status_event_forwarder)
+    assert received_events == [
+        EndEvent(failed=True, msg="Experiment cancelled before start.")
+    ]
+
+
+@pytest.mark.asyncio
+async def test_that_rerun_forwards_events_of_both_runs_to_listener(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    received_events = []
+
+    def listener(*, event):
+        received_events.append(event)
+
+    status_queue: SimpleQueue = SimpleQueue()
+    runs_events = [
+        [EndEvent(failed=False, msg="first run")],
+        [EndEvent(failed=False, msg="rerun")],
+    ]
+    model = Mock(spec=RunModel)
+    model.queue_config = SimpleNamespace(queue_system=QueueSystem.LOCAL)
+    model.start_simulations_thread.side_effect = lambda *_, **__: [
+        status_queue.put(event) for event in runs_events.pop(0)
+    ]
+    state = ert_runner.ErtExperimentRunnerState(
+        run_model=model,
+        status_queue=status_queue,
+        status_event_forwarder=StatusEventForwarder(listener),
+    )
+    monkeypatch.setitem(_experiments, str(uuid4()), state)
+
+    await ert_runner.run_ert(state)
+    state.reset_for_rerun()
+    await ert_runner.run_ert(state, rerun_failed_realizations=True)
+
+    await wait_until_all_status_events_are_delivered(state.status_event_forwarder)
+    assert received_events == [
+        EndEvent(failed=False, msg="first run"),
+        EndEvent(failed=False, msg="rerun"),
+    ]
+
+
+@pytest.mark.asyncio
+async def test_that_setup_failure_closes_storage_and_publishes_one_failed_end_event(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    model = Mock(spec=RunModel)
+    model._storage = Mock(spec=LocalStorage)
+    model.queue_config = SimpleNamespace(queue_system=QueueSystem.LOCAL)
+    state = ert_runner.ErtExperimentRunnerState(
+        run_model=model, status_queue=SimpleQueue()
+    )
+    monkeypatch.setitem(_experiments, str(uuid4()), state)
+    monkeypatch.setattr(
+        ert_runner,
+        "EvaluatorServerConfig",
+        Mock(side_effect=OSError("Address already in use")),
+    )
+
+    await ert_runner.run_ert(state)
+
+    model.start_simulations_thread.assert_not_called()
+    model._storage.close.assert_called_once_with()
+    assert state.events == [
+        EndEvent(
+            failed=True,
+            msg="Exception occurred during setup: Address already in use",
+        )
+    ]
+    assert state.status.status == ExperimentState.failed
+    assert state.finalized.is_set()
+
+
+@pytest.fixture
+def runner_client() -> Iterator[TestClient]:
+    app = FastAPI()
+    app.include_router(ert_runner.router)
+    app.dependency_overrides[verify_auth] = lambda: None
+    app.dependency_overrides[ert_runner._with_runtime_plugins] = lambda: None
+    with TestClient(app) as client:
+        yield client
+
+
+@pytest.mark.slow
+def test_that_forward_model_steps_run_via_the_server_see_plugin_environment_variables(
+    monkeypatch: pytest.MonkeyPatch, use_tmpdir, runner_client: TestClient
+):
+    monkeypatch.setattr(ert_runner, "_experiments", {})
+    Path("PRINT_GREETING").write_text(
+        "EXECUTABLE printenv\nARGLIST GREETING\nSTDOUT greeting\n",
+        encoding="utf-8",
+    )
+    Path("config.ert").write_text(
+        "NUM_REALIZATIONS 1\n"
+        "INSTALL_JOB print_greeting PRINT_GREETING\n"
+        "FORWARD_MODEL print_greeting\n",
+        encoding="utf-8",
+    )
+    config = ErtConfig.with_plugins(
+        ErtRuntimePlugins(env_pr_fm_step={"print_greeting": {"GREETING": "hello"}})
+    ).from_file("config.ert")
+
+    registration = runner_client.post(
+        "/experiment_runs/register",
+        json={"config": config.model_dump(mode="json"), "args": {"mode": "test_run"}},
+    )
+    assert registration.status_code == 200, registration.text
+    runner_client.post(
+        "/experiment_runs/start_experiment_ert",
+        params={"config_id": registration.json()["config_id"]},
+    )
+
+    step_stdout = Path("simulations/realization-0/iter-0/greeting.0")
+    assert step_stdout.read_text(encoding="utf-8") == "hello\n"
+
+
+def test_that_inspection_and_runpath_requests_reuse_the_registered_model(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, runner_client: TestClient
+):
+    runpath = tmp_path / "realization-0"
+    runpath.mkdir()
+    model = Mock(spec=RunModel)
+    model.check_if_runpath_exists.side_effect = runpath.exists
+    model.rm_runpath.side_effect = lambda: shutil.rmtree(runpath)
+    model._storage = Mock()
+    model.get_number_of_existing_runpaths.return_value = 1
+    model.get_number_of_active_realizations.return_value = 2
+    model.supports_rerunning_failed_realizations = True
+    model._create_mask_from_failed_realizations.return_value = [False, True]
+    state = ert_runner.ErtExperimentRunnerState(
+        run_model=model, status_queue=SimpleQueue()
+    )
+    config_id = str(uuid4())
+    monkeypatch.setitem(_experiments, config_id, state)
+    create_model = Mock(side_effect=AssertionError("Model already registered"))
+    monkeypatch.setattr(ert_runner, "create_model", create_model)
+    payload = {"config_id": config_id}
+
+    response = runner_client.post("/experiment_runs/runpath", params=payload)
+    assert response.status_code == 200
+    response = runner_client.post("/experiment_runs/runmodel", params=payload)
+    assert response.status_code == 200
+    assert response.json() == {
+        "number_of_existing_runpaths": 1,
+        "number_of_active_realizations": 2,
+        "supports_rerunning_failed_realizations": True,
+    }
+    response = runner_client.request(
+        "GET", "/experiment_runs/failed_realizations", params=payload
+    )
+    assert response.status_code == 200
+    assert response.json() == {"failed_realizations": [False, True]}
+    response = runner_client.request(
+        "DELETE", "/experiment_runs/runpath", params=payload
+    )
+    assert response.status_code == 200
+    assert not runpath.exists()
+    response = runner_client.post("/experiment_runs/runpath", params=payload)
+    assert response.status_code == 404
+    model.rm_runpath.assert_called_once_with()
+    model._storage.close.assert_not_called()
+    create_model.assert_not_called()
+
+
+@pytest.mark.parametrize(
+    ("method", "model_method", "expected_status"),
+    [("POST", "check_if_runpath_exists", 500), ("DELETE", "rm_runpath", 500)],
+)
+def test_that_runpath_requests_report_run_model_errors(
+    monkeypatch: pytest.MonkeyPatch,
+    runner_client: TestClient,
+    method: str,
+    model_method: str,
+    expected_status: int,
+):
+    model = Mock(spec=RunModel)
+    getattr(model, model_method).side_effect = OSError("Disk error")
+    config_id = str(uuid4())
+    monkeypatch.setitem(
+        _experiments,
+        config_id,
+        ert_runner.ErtExperimentRunnerState(
+            run_model=model, status_queue=SimpleQueue()
+        ),
+    )
+
+    response = runner_client.request(
+        method, "/experiment_runs/runpath", params={"config_id": config_id}
+    )
+
+    assert response.status_code == expected_status
+
+
+def test_that_runpath_deletion_responds_forbidden_with_the_permission_error_text(
+    monkeypatch: pytest.MonkeyPatch, runner_client: TestClient
+):
+    model = Mock(spec=RunModel)
+    model.rm_runpath.side_effect = PermissionError("Operation not permitted")
+    config_id = str(uuid4())
+    monkeypatch.setitem(
+        _experiments,
+        config_id,
+        ert_runner.ErtExperimentRunnerState(
+            run_model=model, status_queue=SimpleQueue()
+        ),
+    )
+
+    response = runner_client.delete(
+        "/experiment_runs/runpath", params={"config_id": config_id}
+    )
+
+    assert response.status_code == 403
+    assert response.json() == {"detail": "Operation not permitted"}
+
+
+@pytest.mark.parametrize(
+    ("method", "endpoint"),
+    [
+        ("POST", "start_experiment_ert"),
+        ("DELETE", "register"),
+        ("POST", "runpath"),
+        ("DELETE", "runpath"),
+        ("POST", "runmodel"),
+        ("GET", "failed_realizations"),
+    ],
+)
+@pytest.mark.parametrize("other_experiment", [False, True])
+def test_that_config_id_requests_reject_missing_or_non_ert_states(
+    monkeypatch: pytest.MonkeyPatch,
+    runner_client: TestClient,
+    method: str,
+    endpoint: str,
+    other_experiment: bool,
+):
+    config_id = str(uuid4())
+    if other_experiment:
+        monkeypatch.setitem(_experiments, config_id, ExperimentRunnerState())
+
+    response = runner_client.request(
+        method, f"/experiment_runs/{endpoint}", params={"config_id": config_id}
+    )
+
+    assert response.status_code == 404
+    assert response.json() == {"detail": f"ERT config '{config_id}' not found"}
+
+
+def test_that_discard_closes_storage_and_removes_the_registration(
+    monkeypatch: pytest.MonkeyPatch, runner_client: TestClient
+):
+    model = Mock(spec=RunModel)
+    model._storage = Mock()
+    state = ert_runner.ErtExperimentRunnerState(
+        run_model=model, status_queue=SimpleQueue()
+    )
+    monkeypatch.setitem(_experiments, "registered-config", state)
+
+    response = runner_client.delete(
+        "/experiment_runs/register", params={"config_id": "registered-config"}
+    )
+
+    assert response.status_code == 200
+    assert response.content == b""
+    model._storage.close.assert_called_once_with()
+    assert "registered-config" not in _experiments
+    assert (
+        runner_client.delete(
+            "/experiment_runs/register", params={"config_id": "registered-config"}
+        ).status_code
+        == 404
+    )
+    model._storage.close.assert_called_once_with()
+
+
+@pytest.mark.asyncio
+async def test_that_start_rejects_a_state_resolved_before_discard(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    model = Mock(spec=RunModel)
+    model._storage = Mock()
+    state = ert_runner.ErtExperimentRunnerState(
+        run_model=model, status_queue=SimpleQueue()
+    )
+    monkeypatch.setitem(_experiments, "registered-config", state)
+    resolved_state = ert_runner._get_ert_experiment("registered-config")
+    await ert_runner.discard_registration("registered-config")
+    tasks = BackgroundTasks()
+
+    with pytest.raises(ert_runner.HTTPException) as error:
+        await ert_runner.start_experiment_ert(resolved_state, tasks)
+
+    assert error.value.status_code == 404
+    assert not tasks.tasks
+
+
+@pytest.mark.parametrize(
+    ("method", "endpoint"),
+    [("POST", "start_experiment_ert"), ("DELETE", "register"), ("DELETE", "runpath")],
+)
+def test_that_start_discard_and_delete_are_rejected_while_runpath_deletion_runs(
+    monkeypatch: pytest.MonkeyPatch,
+    runner_client: TestClient,
+    method: str,
+    endpoint: str,
+):
+    model = Mock(spec=RunModel)
+    model._storage = Mock()
+    state = ert_runner.ErtExperimentRunnerState(
+        run_model=model, status_queue=SimpleQueue()
+    )
+    monkeypatch.setitem(_experiments, "registered-config", state)
+    run_ert = AsyncMock()
+    monkeypatch.setattr(ert_runner, "run_ert", run_ert)
+    params = {"config_id": "registered-config"}
+    concurrent_responses = []
+    model.rm_runpath.side_effect = lambda: concurrent_responses.append(
+        runner_client.request(method, f"/experiment_runs/{endpoint}", params=params)
+    )
+
+    response = runner_client.delete("/experiment_runs/runpath", params=params)
+
+    assert response.status_code == 200
+    assert [r.status_code for r in concurrent_responses] == [409]
+    run_ert.assert_not_awaited()
+    model._storage.close.assert_not_called()
+    assert _experiments["registered-config"] is state
+    assert state.start_time_unix is None
+
+
+@pytest.mark.parametrize("experiment_status", list(ExperimentState))
+def test_that_discard_rejects_started_experiments_without_closing_storage(
+    monkeypatch: pytest.MonkeyPatch,
+    runner_client: TestClient,
+    experiment_status: ExperimentState,
+):
+    model = Mock(spec=RunModel)
+    model._storage = Mock()
+    state = ert_runner.ErtExperimentRunnerState(
+        run_model=model,
+        status_queue=SimpleQueue(),
+        start_time_unix=1,
+        status=ExperimentStatus(status=experiment_status),
+    )
+    monkeypatch.setitem(_experiments, "registered-config", state)
+
+    response = runner_client.delete(
+        "/experiment_runs/register", params={"config_id": "registered-config"}
+    )
+
+    assert response.status_code == 409
+    model._storage.close.assert_not_called()
+    assert _experiments["registered-config"] is state
+
+
+def test_that_a_registered_model_cannot_be_started_twice(
+    monkeypatch: pytest.MonkeyPatch,
+    runner_client: TestClient,
+):
+    config_id = str(uuid4())
+    state = ert_runner.ErtExperimentRunnerState(
+        run_model=Mock(spec=RunModel), status_queue=SimpleQueue()
+    )
+    monkeypatch.setitem(_experiments, config_id, state)
+    run_ert = AsyncMock()
+    monkeypatch.setattr(ert_runner, "run_ert", run_ert)
+
+    response = runner_client.post(
+        "/experiment_runs/start_experiment_ert", params={"config_id": config_id}
+    )
+    assert response.status_code == 200
+    assert response.content == b""
+
+    response = runner_client.post(
+        "/experiment_runs/start_experiment_ert", params={"config_id": config_id}
+    )
+    assert response.status_code == 409
+    run_ert.assert_awaited_once_with(state, rerun_failed_realizations=False)
+
+
+@pytest.mark.parametrize(
+    "terminal_status",
+    [ExperimentState.completed, ExperimentState.failed, ExperimentState.stopped],
+)
+def test_that_rerun_reuses_the_model_and_clears_previous_events(
+    monkeypatch: pytest.MonkeyPatch,
+    runner_client: TestClient,
+    terminal_status: ExperimentState,
+):
+    model = Mock(spec=RunModel)
+    model.supports_rerunning_failed_realizations = True
+    model.has_failed_realizations.return_value = True
+    state = ert_runner.ErtExperimentRunnerState(
+        run_model=model,
+        status_queue=SimpleQueue(),
+        start_time_unix=1,
+        status=ExperimentStatus(status=terminal_status),
+        events=[EndEvent(failed=True, msg="Previous run")],
+    )
+    state.finalized.set()
+    monkeypatch.setitem(_experiments, "registered-config", state)
+    run_ert = AsyncMock()
+    monkeypatch.setattr(ert_runner, "run_ert", run_ert)
+
+    response = runner_client.post(
+        "/experiment_runs/start_experiment_ert",
+        params={"config_id": "registered-config", "rerun_failed_realizations": True},
+    )
+
+    assert response.status_code == 200
+    assert response.content == b""
+    assert state.events == []
+    assert state.run_model is model
+    assert state.status.status == ExperimentState.pending
+    run_ert.assert_awaited_once_with(state, rerun_failed_realizations=True)
+
+
+@pytest.mark.parametrize(
+    ("status", "finalized", "supports_rerun", "has_failures"),
+    [
+        (ExperimentState.pending, False, True, True),
+        (ExperimentState.running, False, True, True),
+        (ExperimentState.stopped, False, True, True),
+        (ExperimentState.completed, True, False, True),
+        (ExperimentState.completed, True, True, False),
+        (ExperimentState.stopped, True, False, True),
+    ],
+)
+def test_that_rerun_rejects_unfinished_or_ineligible_models(
+    monkeypatch: pytest.MonkeyPatch,
+    runner_client: TestClient,
+    status: ExperimentState,
+    finalized: bool,
+    supports_rerun: bool,
+    has_failures: bool,
+):
+    model = Mock(spec=RunModel)
+    model.supports_rerunning_failed_realizations = supports_rerun
+    model.has_failed_realizations.return_value = has_failures
+    state = ert_runner.ErtExperimentRunnerState(
+        run_model=model,
+        status_queue=SimpleQueue(),
+        status=ExperimentStatus(status=status),
+    )
+    if finalized:
+        state.finalized.set()
+    monkeypatch.setitem(_experiments, "registered-config", state)
+    run_ert = AsyncMock()
+    monkeypatch.setattr(ert_runner, "run_ert", run_ert)
+
+    response = runner_client.post(
+        "/experiment_runs/start_experiment_ert",
+        params={"config_id": "registered-config", "rerun_failed_realizations": True},
+    )
+
+    assert response.status_code == 409
+    run_ert.assert_not_awaited()

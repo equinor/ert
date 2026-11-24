@@ -405,13 +405,8 @@ def update_runmodels(draw):
     }
 
 
-@st.composite
-def multidass(_):
-    # Note: this does not test runs from prior ensembles, it may be
-    # better to test that separately
-    return {
-        "prior_ensemble_id": None,
-    }
+# This does not test runs from prior ensembles.
+multidass = st.just({"prior_ensemble_id": None})
 
 
 distribution_strategy = st.fixed_dictionaries(
@@ -598,7 +593,7 @@ def test_that_deserializing_ensemble_information_filter_is_the_inverse_of_serial
 @given(
     initial_ensemble_runmodels(require_updatable_parameters=True),
     update_runmodels(),
-    multidass(),
+    multidass,
     st.data(),
 )
 @pytest.mark.slow
@@ -645,6 +640,7 @@ def _create_and_verify_runmodel_snapshot(config, snapshot, cli_args, case):
     # Override these to avoid user time/env-specifics in snapshots
     runmodel.queue_config.queue_options.activate_script = "activate"
     runmodel.substitutions["<DATE>"] = "2000-01-01"
+    runmodel.substitutions["<USER>"] = "user"
 
     serialized = runmodel.model_dump_json(indent=2) + "\n"
 

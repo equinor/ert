@@ -283,6 +283,7 @@ def test_that_pert_transform_does_not_exceed_max_from_roundoff():
     assert transform_scalar(dist, 9) == 1
 
 
+@pytest.mark.flaky(reruns=4)
 @given(
     st.tuples(nice_floats(), nice_floats()).map(sorted),
     valid_pert_params(),

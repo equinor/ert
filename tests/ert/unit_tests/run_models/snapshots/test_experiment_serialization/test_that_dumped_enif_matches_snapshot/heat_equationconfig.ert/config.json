@@ -28,7 +28,8 @@
       "activate_script": "activate"
     },
     "stop_long_running": false,
-    "max_runtime": null
+    "max_runtime": null,
+    "realization_memory_is_site_default": false
   },
   "forward_model_steps": [
     {
@@ -69,6 +70,8 @@
     "<DATE>": "2000-01-01",
     "<CWD>": "test-data/ert/heat_equation.config.ert",
     "<CONFIG_FILE>": "config.ert",
+    "<USER>": "user",
+    "<SCRATCH>": "simulations",
     "<RUNPATH_FILE>": "test-data/ert/heat_equation.config.ert/.ert_runpath_list",
     "<RUNPATH>": "simulations/realization-<IENS>/iter-<ITER>",
     "<ECL_BASE>": "HEAT",

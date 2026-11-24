@@ -297,8 +297,8 @@ def test_makedirs(monkeypatch, tmp_path):
     )
     for _ in fmstep.run():
         pass
-    assert (tmp_path / "a/file").is_file()
-    assert (tmp_path / "b/c/file").is_file()
+    assert (tmp_path / "a").is_dir()
+    assert (tmp_path / "b/c").is_dir()
 
 
 @pytest.mark.parametrize(
@@ -429,3 +429,98 @@ def test_that_max_running_minutes_timeout_does_not_trigger_before_limit():
     assert result is None, (
         "Timeout should not trigger for a job running 23h with a 1440-minute limit"
     )
+
+
+@pytest.mark.parametrize(
+    ("command", "stdout_exists", "stderr_exists"),
+    [
+        ("true", False, False),
+        ("echo hello", True, False),
+        (">&2 echo err", False, True),
+        ("echo hello; >&2 echo err", True, True),
+    ],
+)
+def test_that_stdout_and_stderr_files_are_conditionally_removed_after_a_step(
+    tmp_path, monkeypatch, command: str, stdout_exists: bool, stderr_exists: bool
+):
+    monkeypatch.chdir(tmp_path)
+    step = ForwardModelStep(
+        {
+            "name": "writer",
+            "executable": "/bin/sh",
+            "argList": ["-c", command],
+            "stdout": "out.txt",
+            "stderr": "err.txt",
+        },
+        0,
+    )
+    list(step.run())
+    assert (tmp_path / "out.txt").exists() == stdout_exists
+    assert (tmp_path / "err.txt").exists() == stderr_exists
+
+
+def test_that_stale_output_files_are_removed_when_step_writes_nothing(
+    tmp_path, monkeypatch
+):
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "out.txt").write_text("stale")
+    step = ForwardModelStep(
+        {
+            "name": "silent",
+            "executable": "/bin/sh",
+            "argList": ["-c", ":"],
+            "stdout": "out.txt",
+        },
+        0,
+    )
+    list(step.run())
+    assert not (tmp_path / "out.txt").exists()
+
+
+def test_that_std_streams_are_not_deleted_on_timeouts(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(ForwardModelStep, "MEMORY_POLL_PERIOD", 0.01)
+    wait_for_go = "until [ -e go ]; do sleep 0.01; done"
+    step = ForwardModelStep(
+        {
+            "name": "slow",
+            "executable": "/bin/sh",
+            "argList": [
+                "-c",
+                f"({wait_for_go}; echo late) & ({wait_for_go}; echo late >&2) & wait",
+            ],
+            "stdout": "out.txt",
+            "stderr": "err.txt",
+            "max_running_minutes": 0,
+        },
+        0,
+    )
+    opened = []
+    open_file_handles = step._open_file_handles
+
+    def recording_open_file_handles():
+        handles = open_file_handles()
+        opened.extend(handle for handle in handles if handle is not None)
+        return handles
+
+    monkeypatch.setattr(step, "_open_file_handles", recording_open_file_handles)
+
+    messages = list(step.run())
+
+    exited = messages[-1]
+    assert isinstance(exited, Exited)
+    assert not exited.success()
+    assert opened
+    assert all(handle.closed for handle in opened)
+    assert (tmp_path / "out.txt").exists()
+    assert (tmp_path / "err.txt").exists()
+
+    (tmp_path / "go").touch()
+    deadline = time.monotonic() + 10
+    while time.monotonic() < deadline and not (
+        (tmp_path / "out.txt").read_text(encoding="utf-8")
+        and (tmp_path / "err.txt").read_text(encoding="utf-8")
+    ):
+        time.sleep(0.01)
+    assert (tmp_path / "out.txt").read_text(encoding="utf-8") == "late\n"
+    assert (tmp_path / "err.txt").read_text(encoding="utf-8") == "late\n"

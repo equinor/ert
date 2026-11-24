@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import io
 import json
 import logging
@@ -10,11 +11,12 @@ import time
 import traceback
 from base64 import b64encode
 from collections import OrderedDict
-from collections.abc import Callable, Generator
+from collections.abc import AsyncGenerator, Callable, Generator
 from contextlib import suppress
 from copy import deepcopy
 from functools import wraps
 from os import PathLike
+from pathlib import Path
 from typing import TYPE_CHECKING, Any, Concatenate, cast
 from urllib.parse import quote
 
@@ -23,21 +25,31 @@ import numpy as np
 import numpy.typing as npt
 import pandas as pd
 from pydantic import ValidationError
-from websockets.asyncio.client import backoff, process_exception
+from pydantic_core import to_jsonable_python
+from websockets.asyncio.client import (
+    ClientConnection,
+    backoff,
+    connect,
+    process_exception,
+)
 from websockets.exceptions import (
     ConnectionClosedError,
     ConnectionClosedOK,
     WebSocketException,
 )
-from websockets.sync.client import ClientConnection, connect
 
 from _ert.threading import ErtThread
-from ert.server.common import EverEndpoints
+from ert.config.ert_config import ErtConfig
+from ert.ensemble_evaluator import ConnectionLostEvent, EndEvent
+from ert.server.common import ErtRunnerEndpoints, EverEndpoints
+from ert.shared.constants import LOCALHOST_IP
 
-from .shared_client import ErtClientConnectionInfo, Methods, SharedClient
+from .shared_client import Client, ErtClientConnectionInfo, Methods, SharedClient
 
 if TYPE_CHECKING:
     from ert.run_models.event import StatusEvents
+
+    from .ert_server_controller import ErtServerConnectionInfo
 
 DEFAULT_TIMEOUT = 120
 DEFAULT_CACHE_SIZE = 256
@@ -102,8 +114,8 @@ def _checked(response: httpx.Response) -> httpx.Response:
         raise httpx.RequestError(message=f"{response.text}")
     if response.status_code != httpx.codes.OK:
         raise httpx.RequestError(
-            f" Please report this error and try restarting the application."
-            f"{response.text} from url: {response.url}."
+            f"Response status {response.status_code}: {response.text} "
+            f"from url: {response.url}."
         )
     return response
 
@@ -146,6 +158,28 @@ class ErtClient:
         """
         return cls(
             SharedClient.get_client(project, connect_timeout), timeout=request_timeout
+        )
+
+    @classmethod
+    def get_localhost_client(
+        cls,
+        project: Path,
+        connection_info: ErtServerConnectionInfo,
+        request_timeout: int = DEFAULT_TIMEOUT,
+    ) -> ErtClient:
+        """Connect to a server on the local host, bypassing hostname lookup."""
+        return cls(
+            SharedClient(
+                project,
+                Client(
+                    ErtClientConnectionInfo(
+                        base_url=f"https://{LOCALHOST_IP}:{connection_info['port']}",
+                        auth_token=connection_info["authtoken"],
+                        cert=connection_info["cert"],
+                    )
+                ),
+            ),
+            timeout=request_timeout,
         )
 
     @property
@@ -330,6 +364,14 @@ class ErtClient:
         response = self._experiment_runs_get(EverEndpoints.EXPERIMENTS)
         return list(response.json()["experiment_ids"])
 
+    def active_event_streams(self) -> int:
+        response = self._experiment_runs_get(EverEndpoints.ACTIVE_STREAMS)
+        return int(response.json()["active_streams"])
+
+    def pending_status_events(self) -> int:
+        response = self._experiment_runs_get(EverEndpoints.PENDING_STATUS_EVENTS)
+        return int(response.json()["pending_status_events"])
+
     def experiment_status(self, experiment_id: str) -> dict[str, Any]:
         return dict(
             self._experiment_runs_get(f"{EverEndpoints.STATUS}/{experiment_id}").json()
@@ -348,6 +390,7 @@ class ErtClient:
         )
 
     def start_experiment(self, config: dict[str, Any]) -> str:
+        """Starts an Everest experiment, returns the experiment ID."""
         response = self._request(
             "POST",
             f"{_EXPERIMENT_RUNS}/{EverEndpoints.START_EXPERIMENT}",
@@ -356,7 +399,46 @@ class ErtClient:
         )
         return str(_checked(response).json()["experiment_id"])
 
+    def register_ert_experiment(self, config: ErtConfig, args: Any) -> str:
+        """Registers an ERT configuration, returns its config ID."""
+        response = self._request(
+            "POST",
+            f"{_EXPERIMENT_RUNS}/{ErtRunnerEndpoints.REGISTER}",
+            auth=self._auth,
+            json={
+                "config": config.model_dump(mode="json"),
+                "args": to_jsonable_python(args),
+            },
+        )
+        return str(_checked(response).json()["config_id"])
+
+    def discard_registration(self, config_id: str) -> None:
+        _checked(
+            self._request(
+                "DELETE",
+                f"{_EXPERIMENT_RUNS}/{ErtRunnerEndpoints.REGISTER}",
+                auth=self._auth,
+                params={"config_id": config_id},
+            )
+        )
+
+    def start_experiment_ert(
+        self, config_id: str, *, rerun_failed_realizations: bool = False
+    ) -> None:
+        """Starts a registered ERT experiment."""
+        params: dict[str, str | bool] = {"config_id": config_id}
+        if rerun_failed_realizations:
+            params["rerun_failed_realizations"] = True
+        response = self._request(
+            "POST",
+            f"{_EXPERIMENT_RUNS}/{ErtRunnerEndpoints.START_EXPERIMENT_ERT}",
+            auth=self._auth,
+            params=params,
+        )
+        _checked(response)
+
     def stop_server(self, retries: int = 5) -> bool:
+        """Stops the experiment server, returns True if successful."""
         status_code, sleep = 400, retries
         while status_code != httpx.codes.OK and retries > 0:
             status_code = self._request(
@@ -368,21 +450,66 @@ class ErtClient:
             time.sleep(sleep - retries)
         return status_code == httpx.codes.OK
 
-    def runpath_exists(self, paths: list[str]) -> bool:
+    def runpath_exists(self, config_id: str) -> bool:
+        """
+        Checks if the runpath for the given ERT experiment exists.
+        Returns True if it does.
+        """
         response = self._request(
             "POST",
-            f"{_EXPERIMENT_RUNS}/{EverEndpoints.RUNPATH}",
+            f"{_EXPERIMENT_RUNS}/{ErtRunnerEndpoints.RUNPATH}",
             auth=self._auth,
-            json={"paths": paths},
+            params={"config_id": config_id},
         )
-        return response.status_code == httpx.codes.OK
+        if response.status_code == httpx.codes.NOT_FOUND:
+            return False
+        _checked(response)
+        return True
+
+    def runpath_delete(self, config_id: str) -> None:
+        """
+        Deletes the runpath for the given ERT experiment.
+        Raises an exception on failure.
+        Timeout is set to None (no timeout)
+        as the operation may take a significant amount of time.
+        """
+        response = self._request(
+            "DELETE",
+            f"{_EXPERIMENT_RUNS}/{ErtRunnerEndpoints.RUNPATH}",
+            auth=self._auth,
+            params={"config_id": config_id},
+            timeout=None,
+        )
+        if response.is_success:
+            return
+        if response.status_code == httpx.codes.FORBIDDEN:
+            raise PermissionError(response.json()["detail"])
+        raise httpx.RequestError("Failed to delete runpath")
+
+    def get_runmodel_data(self, config_id: str) -> dict[str, Any]:
+        """Retrieves the runmodel data for the given ERT experiment."""
+        response = self._request(
+            "POST",
+            f"{_EXPERIMENT_RUNS}/{ErtRunnerEndpoints.RUNMODEL}",
+            auth=self._auth,
+            params={"config_id": config_id},
+        )
+        return _checked(response).json()
+
+    def get_failed_realizations(self, config_id: str) -> list[bool]:
+        response = self._request(
+            "GET",
+            f"{_EXPERIMENT_RUNS}/{ErtRunnerEndpoints.FAILED_REALIZATIONS}",
+            auth=self._auth,
+            params={"config_id": config_id},
+        )
+        return _checked(response).json()["failed_realizations"]
 
     # <-------------- WebSocket -------------->
 
     def iter_events(
         self,
         experiment_id: str,
-        refresh_interval: float = 0.01,
         open_timeout: float = 30.0,
         websocket_recv_timeout: float = 1.0,
     ) -> Generator[StatusEvents, None, None]:
@@ -391,6 +518,35 @@ class ErtClient:
         Each iterator owns a separate connection and blocks only its consuming
         thread. Close the iterator when stopping consumption early.
         """
+        with asyncio.Runner() as runner:
+            events = self.iter_events_async(
+                experiment_id,
+                open_timeout,
+                websocket_recv_timeout,
+            )
+
+            async def next_event() -> StatusEvents:
+                return await anext(events)
+
+            async def close_events() -> None:
+                await events.aclose()
+
+            try:
+                while True:
+                    try:
+                        event = runner.run(next_event())
+                    except StopAsyncIteration:
+                        break
+                    yield event
+            finally:
+                runner.run(close_events())
+
+    async def iter_events_async(
+        self,
+        experiment_id: str,
+        open_timeout: float = 30.0,
+        websocket_recv_timeout: float = 1.0,
+    ) -> AsyncGenerator[StatusEvents, None]:
         from ert.run_models.event import (  # ruff: ignore[import-outside-top-level]
             status_event_from_json,
         )
@@ -403,7 +559,7 @@ class ErtClient:
         credentials = b64encode(f"{username}:{password}".encode()).decode()
 
         logger.info("Connecting to WebSocket event stream at %s", url)
-        websocket = self._connect_with_retry(url, open_timeout, credentials)
+        websocket = await self._connect_with_retry(url, open_timeout, credentials)
         if websocket is None:
             return
 
@@ -412,7 +568,8 @@ class ErtClient:
             logger.info("Connected to WebSocket event stream at %s", url)
             while True:
                 try:
-                    message = websocket.recv(timeout=websocket_recv_timeout)
+                    async with asyncio.timeout(websocket_recv_timeout):
+                        message = await websocket.recv()
                 except TimeoutError:
                     message = None
                 if message:
@@ -430,7 +587,6 @@ class ErtClient:
                             )
                         yield event
 
-                time.sleep(refresh_interval)
         except ConnectionClosedOK:
             logger.debug("Connection closed by server")
         except ConnectionClosedError as error:
@@ -443,11 +599,8 @@ class ErtClient:
         except Exception:
             logger.error(traceback.format_exc())
         finally:
-            # Interrupting the generator unwinds it mid closing-handshake, which
-            # makes close() raise InvalidState. That must not replace the
-            # KeyboardInterrupt or GeneratorExit that triggered the teardown.
             with suppress(WebSocketException, OSError):
-                websocket.close()
+                await websocket.close()
             logger.info(
                 "WebSocket event stream for experiment %s ended after %s events",
                 experiment_id,
@@ -457,24 +610,35 @@ class ErtClient:
     def setup_event_queue_from_ws_endpoint(
         self,
         experiment_id: str,
-        refresh_interval: float = 0.01,
         open_timeout: float = 30,
         websocket_recv_timeout: float = 1.0,
+        *,
+        event_queue: queue.SimpleQueue[StatusEvents] | None = None,
     ) -> tuple[queue.SimpleQueue[StatusEvents], ErtThread]:
         """Return a queue of experiment events and the thread that fills it.
 
         The caller owns the thread and must start it.
         """
-        event_queue: queue.SimpleQueue[StatusEvents] = queue.SimpleQueue()
+        if event_queue is None:
+            event_queue = queue.SimpleQueue()
 
         def passthrough_ws_events() -> None:
+            end_event_received = False
             for event in self.iter_events(
                 experiment_id,
-                refresh_interval=refresh_interval,
                 open_timeout=open_timeout,
                 websocket_recv_timeout=websocket_recv_timeout,
             ):
+                end_event_received = isinstance(event, EndEvent)
                 event_queue.put(event)
+            if not end_event_received:
+                event_queue.put(
+                    ConnectionLostEvent(
+                        failed=True,
+                        msg="Lost connection to the ERT server before the "
+                        "experiment finished.",
+                    )
+                )
 
         monitor_thread = ErtThread(
             name="ert_storage_api_event_monitor",
@@ -484,7 +648,7 @@ class ErtClient:
 
         return event_queue, monitor_thread
 
-    def _connect_with_retry(
+    async def _connect_with_retry(
         self, url: str, open_timeout: float, credentials: str
     ) -> ClientConnection | None:
         """Open a WebSocket connection, retrying transient handshake failures.
@@ -497,10 +661,11 @@ class ErtClient:
         delays: Generator[float] = backoff()
         for attempt in range(1, _WEBSOCKET_CONNECT_RETRIES + 1):
             try:
-                return connect(
+                return await connect(
                     url,
                     ssl=self._ssl_context,
                     open_timeout=open_timeout,
+                    max_size=None,
                     additional_headers={"Authorization": f"Basic {credentials}"},
                 )
             except Exception as exc:
@@ -516,7 +681,7 @@ class ErtClient:
                     f"(attempt {attempt}/{_WEBSOCKET_CONNECT_RETRIES}), "
                     f"retrying in {delay:.1f}s. Exception: {exc}",
                 )
-                time.sleep(delay)
+                await asyncio.sleep(delay)
         return None
 
     # <-------------- Internals -------------->

@@ -1,5 +1,6 @@
 import argparse
 import datetime as dt
+import ipaddress
 import json
 import logging
 import logging.config
@@ -33,6 +34,7 @@ from ert.plugins import setup_site_logging
 from ert.services import ErtServerExit, raise_ert_server_exit_on_signal
 from ert.shared import __file__ as ert_shared_path
 from ert.shared import find_available_socket, get_machine_name
+from ert.shared.constants import LOCALHOST_IP
 from ert.trace import tracer
 from ert.utils import makedirs_if_needed
 
@@ -144,6 +146,7 @@ def _generate_certificate(cert_folder: Path) -> tuple[Path, Path, bytes]:
         .add_extension(
             x509.SubjectAlternativeName(
                 [x509.DNSName(f"{san_name}") for san_name in subject_alternative_names]
+                + [x509.IPAddress(ipaddress.ip_address(LOCALHOST_IP))]
             ),
             critical=False,
         )
@@ -274,6 +277,7 @@ def main() -> None:
         "ssl_certfile": cert_path,
         "ssl_keyfile_password": key_pw,
         "ssl_version": ssl.PROTOCOL_TLS_SERVER,
+        "timeout_graceful_shutdown": 3,
     }
 
     logging_conf = yaml.safe_load(
@@ -312,6 +316,9 @@ def main() -> None:
             run_server(args, debug=False, uvicorn_config=uvicorn_config)
         except (SystemExit, ErtServerExit):
             logger.info("Stopping ert server")
+        except BaseException:
+            logger.exception("Ert server crashed unexpectedly")
+            raise
         finally:
             stopped.set()
             _join_terminate_thread(terminate_on_parent_death_thread)

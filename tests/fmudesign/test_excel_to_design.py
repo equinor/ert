@@ -31,7 +31,7 @@ MOCK_GENERAL_INPUT = pd.DataFrame(
 )
 
 MOCK_DESIGNINPUT = pd.DataFrame(
-    data=[["sensname", "numreal", "type", "param_name"], ["rms_seed", "", "seed"]]
+    data=[["sensname", "numreal", "type", "param_name"], ["rms_seed", "", "seed", ""]]
 )
 
 
@@ -103,11 +103,11 @@ def test_that_duplicate_sensitivity_names_raise_value_error(use_tmpdir):
     mock_erroneous_designinput = pd.DataFrame(
         data=[
             ["sensname", "numreal", "type", "param_name"],
-            ["rms_seed", "", "seed"],
-            ["rms_seed", "", "seed"],
-            [np.nan, "", "seed"],  # NaN sensname - should be ignored
-            ["", "", "seed"],  # Empty string - should be ignored
-            ["valid_name", "", "seed"],  # Valid unique name
+            ["rms_seed", "", "seed", None],
+            ["rms_seed", "", "seed", None],
+            [np.nan, "", "seed", None],  # NaN sensname - should be ignored
+            ["", "", "seed", None],  # Empty string - should be ignored
+            ["valid_name", "", "seed", None],  # Valid unique name
         ]
     )
     input_path = _write_config_workbook(
@@ -120,6 +120,106 @@ def test_that_duplicate_sensitivity_names_raise_value_error(use_tmpdir):
         excel_to_config(input_path)
 
 
+@pytest.mark.parametrize("first_name", ["faults", 1])
+def test_that_numeric_sensitivity_names_are_read_as_text(use_tmpdir, first_name):
+    design_input = pd.DataFrame(
+        data=[
+            ["sensname", "numreal", "type", "param_name"],
+            [first_name, "", "seed", ""],
+            [2, "", "seed", ""],
+        ]
+    )
+    input_path = _write_config_workbook("designinput.xlsx", design_input=design_input)
+
+    assert list(excel_to_config(input_path).sensitivities) == [str(first_name), "2"]
+
+
+@pytest.mark.parametrize(
+    ("first_name", "named_rows"),
+    [("", []), ("", [["rms_seed", "", "seed", ""]]), ("   ", [])],
+    ids=["empty column", "unnamed leading row", "whitespace-only name"],
+)
+def test_that_first_design_input_row_without_sensname_raises_error(
+    use_tmpdir, first_name, named_rows
+):
+    design_input = pd.DataFrame(
+        data=[
+            ["sensname", "numreal", "type", "param_name"],
+            [first_name, "", "seed", ""],
+            *named_rows,
+        ]
+    )
+    input_path = _write_config_workbook("designinput.xlsx", design_input=design_input)
+
+    with pytest.raises(FmudesignError, match="first row of the designinput sheet"):
+        excel_to_config(input_path)
+
+
+def test_that_whitespace_only_sensname_continues_the_sensitivity_above(use_tmpdir):
+    design_input = pd.DataFrame(
+        data=[
+            ["sensname", "type", "param_name", "dist_name", "dist_param1"],
+            ["rms_seed", "seed", "A", "const", 1],
+            ["   ", "", "B", "const", 2],
+        ]
+    )
+    input_path = _write_config_workbook("designinput.xlsx", design_input=design_input)
+
+    sensitivities = excel_to_config(input_path).sensitivities
+    assert list(sensitivities) == ["rms_seed"]
+    assert list(sensitivities["rms_seed"]["parameters"]) == ["A", "B"]
+
+
+@pytest.mark.parametrize(
+    "blank_row",
+    [["   ", "", "", "", ""], ["", "", "   ", "", ""]],
+    ids=["whitespace sensname", "whitespace param_name"],
+)
+def test_that_rows_holding_only_whitespace_are_ignored(use_tmpdir, blank_row):
+    design_input = pd.DataFrame(
+        data=[
+            ["sensname", "type", "param_name", "dist_name", "dist_param1"],
+            blank_row,
+            ["rms_seed", "seed", "A", "const", 1],
+            blank_row,
+            ["", "", "B", "const", 2],
+        ]
+    )
+    input_path = _write_config_workbook("designinput.xlsx", design_input=design_input)
+
+    sensitivities = excel_to_config(input_path).sensitivities
+    assert list(sensitivities) == ["rms_seed"]
+    assert list(sensitivities["rms_seed"]["parameters"]) == ["A", "B"]
+
+
+def test_that_whitespace_around_design_input_text_is_stripped(use_tmpdir):
+    design_input = pd.DataFrame(
+        data=[
+            ["sensname", "type", "param_name", "dist_name", "dist_param1"],
+            ["rms_seed", " seed ", " A ", " const ", 1],
+        ]
+    )
+    input_path = _write_config_workbook("designinput.xlsx", design_input=design_input)
+
+    sensitivities = excel_to_config(input_path).sensitivities
+    assert sensitivities["rms_seed"]["parameters"] == {"A": ["const", 1]}
+
+
+def test_that_whitespace_only_cell_in_a_populated_row_counts_as_empty(use_tmpdir):
+    design_input = pd.DataFrame(
+        data=[
+            ["sensname", "type", "param_name", "dist_name", "dist_param1"],
+            ["rms_seed", "seed", "A", "const", "   "],
+            ["", "", "B", "const", "low"],
+            ["", "", "C", "const", 3],
+        ]
+    )
+    input_path = _write_config_workbook("designinput.xlsx", design_input=design_input)
+
+    with pytest.raises(FmudesignError, match='a value in "dist_param1"'):
+        excel_to_config(input_path)
+
+
 def test_that_excel_to_design_strips_sensitivity_and_parameter_name_whitespace(
     use_tmpdir,
 ):
@@ -129,7 +229,7 @@ def test_that_excel_to_design_strips_sensitivity_and_parameter_name_whitespace(
     mock_spacious_designinput = pd.DataFrame(
         data=[
             ["sensname", "numreal", "type", "param_name"],
-            ["rms_seed   ", "", "seed"],
+            ["rms_seed   ", "", "seed", ""],
         ]
     )
     defaultvalues_spacious = pd.DataFrame(
@@ -175,8 +275,8 @@ def test_that_mixed_sensitivity_types_raise_value_error(use_tmpdir):
     mock_erroneous_designinput = pd.DataFrame(
         data=[
             ["sensname", "numreal", "type", "param_name"],
-            ["rms_seed", "", "seed"],
-            ["", "", "dist"],
+            ["rms_seed", "", "seed", ""],
+            ["", "", "dist", ""],
         ]
     )
     input_path = _write_config_workbook(
@@ -184,6 +284,34 @@ def test_that_mixed_sensitivity_types_raise_value_error(use_tmpdir):
     )
 
     with pytest.raises(FmudesignError, match="contains more than one sensitivity type"):
+        excel_to_config(input_path)
+
+
+@pytest.mark.parametrize(
+    ("sens_type", "problem"),
+    [
+        ("montecarlo", "has invalid type 'montecarlo'"),
+        ("", "has no type on its first row"),
+    ],
+)
+def test_that_invalid_sensitivity_type_error_lists_valid_types(
+    use_tmpdir, sens_type, problem
+):
+    design_input = pd.DataFrame(
+        data=[
+            ["sensname", "numreal", "type", "param_name"],
+            ["Sens_1", "", sens_type, ""],
+        ]
+    )
+    input_path = _write_config_workbook("designinput.xlsx", design_input=design_input)
+
+    with pytest.raises(
+        FmudesignError,
+        match=(
+            rf"Sensitivity 'Sens_1' in the design input sheet {problem}\. "
+            r"Valid types are: seed, scenario, dist, ref, background, extern\."
+        ),
+    ):
         excel_to_config(input_path)
 
 
@@ -370,6 +498,42 @@ def test_that_invalid_background_correlation_sheet_raises_value_error(
         excel_to_config(input_path)
 
 
+def test_that_missing_correlation_sheet_raises_fmudesign_error(use_tmpdir):
+    input_path = _write_background_workbook(
+        "designinput.xlsx", BACKGROUND_WITH_CORR, None, "backgroundsheet"
+    )
+
+    with pytest.raises(
+        FmudesignError,
+        match=(
+            r"Correlation sheet 'bgcorr' could not be read from 'designinput.xlsx'"
+            r".*\nSheets in workbook: \['general_input', 'designinput', "
+            r"'defaultvalues', 'backgroundsheet'\]"
+        ),
+    ):
+        excel_to_config(input_path)
+
+
+def test_that_non_numeric_correlation_entry_raises_fmudesign_error(use_tmpdir):
+    corr_matrix = pd.DataFrame(
+        [[1.0, np.nan], ["0,5", 1.0]],
+        index=["PARAM_A", "PARAM_B"],
+        columns=["PARAM_A", "PARAM_B"],
+    )
+    input_path = _write_background_workbook(
+        "designinput.xlsx", BACKGROUND_WITH_CORR, corr_matrix, "backgroundsheet"
+    )
+
+    with pytest.raises(
+        FmudesignError,
+        match=(
+            r"All elements in matrix in corr sheet bgcorr must be numbers or "
+            r"blank, got: .*'0,5'"
+        ),
+    ):
+        excel_to_config(input_path)
+
+
 def test_that_missing_background_sheet_error_lists_available_sheets(use_tmpdir):
     input_path = _write_background_workbook(
         "designinput.xlsx", BACKGROUND_WITH_CORR, None, "typo_sheet"
@@ -405,6 +569,22 @@ def test_that_background_sheet_matching_ignores_case_underscores_and_whitespace(
     background = excel_to_config(input_path).background
     assert list(background["parameters"]) == ["PARAM_A", "PARAM_B"]
     assert background["correlations"]["sheetnames"] == ["bgcorr"]
+
+
+def test_that_whitespace_around_background_sheet_text_is_stripped(use_tmpdir):
+    background = pd.DataFrame(
+        data=[
+            ["param_name", "dist_name", "dist_param1"],
+            [" PARAM_A ", " const ", " high "],
+        ]
+    )
+    input_path = _write_background_workbook(
+        "designinput.xlsx", background, None, "backgroundsheet"
+    )
+
+    assert excel_to_config(input_path).background["parameters"] == {
+        "PARAM_A": ["const", ["high"], None]
+    }
 
 
 def test_that_missing_background_csv_file_raises_value_error(use_tmpdir):
@@ -461,7 +641,10 @@ def test_that_excel_to_design_preserves_seed_strategy(use_tmpdir):
         ]
     )
     designinput = pd.DataFrame(
-        data=[["sensname", "numreal", "type", "param_name"], ["rms_seed", "", "seed"]]
+        data=[
+            ["sensname", "numreal", "type", "param_name"],
+            ["rms_seed", "", "seed", ""],
+        ]
     )
     input_path = _write_config_workbook(
         "designinput.xlsx",
@@ -482,12 +665,12 @@ def _write_dependency_workbook(path, rows):
     return path
 
 
-def test_that_dependency_columns_map_by_parameter_name_and_exact_source_value(tmp_path):
+def test_that_dependency_columns_map_by_parameter_name_and_source_value(tmp_path):
     input_path = _write_dependency_workbook(
         tmp_path / "dependencies.xlsx",
         [
             ["MULTIPLIER", "SOURCE", "LABEL"],
-            [1, " high ", " sand "],
+            [1, "high", "sand"],
             [2.5, 2, "mixed"],
             [-3, "low", "shale"],
         ],
@@ -497,15 +680,26 @@ def test_that_dependency_columns_map_by_parameter_name_and_exact_source_value(tm
     )
 
     result = map_dependencies(
-        pd.DataFrame({"SOURCE": ["low", 2, " high "]}),
+        pd.DataFrame({"SOURCE": ["low", 2, "high"]}),
         dependencies={"SOURCE": dependencies},
     )
 
     assert result.to_dict(orient="list") == {
-        "SOURCE": ["low", 2, " high "],
+        "SOURCE": ["low", 2, "high"],
         "MULTIPLIER": [-3, 2.5, 1],
-        "LABEL": ["shale", "mixed", " sand "],
+        "LABEL": ["shale", "mixed", "sand"],
     }
+
+
+def test_that_whitespace_around_dependency_sheet_text_is_stripped(tmp_path):
+    input_path = _write_dependency_workbook(
+        tmp_path / "dependencies.xlsx",
+        [[" SOURCE ", " TARGET "], [" high ", " upper "]],
+    )
+
+    assert _read_dependencies(
+        filename=str(input_path), sheetname="dependencies", from_parameter="SOURCE"
+    ) == {"from_values": ["high"], "to_params": {"TARGET": ["upper"]}}
 
 
 def test_that_numeric_dependency_keys_and_targets_preserve_precision(tmp_path):

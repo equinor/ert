@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import copy
+import inspect
 import logging
 import os
 import pprint
@@ -9,7 +10,7 @@ from collections import Counter, defaultdict
 from collections.abc import Mapping
 from dataclasses import dataclass
 from functools import cached_property
-from pathlib import Path
+from pathlib import Path, PurePath
 from typing import TYPE_CHECKING, Any, ClassVar, NamedTuple, Self, cast, overload
 
 from numpy.random import SeedSequence
@@ -32,6 +33,7 @@ from ._observations import (
 from ._shapes import ShapeRegistry
 from .analysis_config import AnalysisConfig
 from .breakthrough_config import BreakthroughConfig
+from .ecosystem_plugin import EcosystemPlugin
 from .ensemble_config import EnsembleConfig
 from .forward_model_step import (
     ForwardModelJSON,
@@ -46,7 +48,7 @@ from .forward_model_step import (
 from .gen_data_config import GenDataConfig
 from .gen_kw_config import DataSource, GenKwConfig
 from .model_config import DEFAULT_ECLBASE_FORMAT, ModelConfig
-from .parameter_config import LocalizationType
+from .parameter_config import LocalizationType, ParameterType
 from .parse_arg_types_list import parse_arg_types_list
 from .parsing import (
     ConfigDict,
@@ -59,6 +61,7 @@ from .parsing import (
     ObservationConfigError,
     init_forward_model_schema,
     init_user_config_schema,
+    make_pre_defines,
     parse_contents,
     read_file,
 )
@@ -81,6 +84,8 @@ if TYPE_CHECKING:
     from .parameter_config import ParameterConfig
 
 logger = logging.getLogger(__name__)
+
+SCRATCH_RUNPATH = "<SCRATCH>/realization-<IENS>/iter-<ITER>"
 
 EMPTY_LINES = re.compile(r"\n[\s\n]*\n")
 
@@ -842,6 +847,33 @@ RESERVED_KEYWORDS = ["realization", "IENS", "ITER"]
 USER_CONFIG_SCHEMA = init_user_config_schema()
 
 
+def _validate_options(
+    ecosystem_plugin: EcosystemPlugin, raw_options: Mapping[str, str]
+) -> None:
+    parameters = list(inspect.signature(ecosystem_plugin.configure).parameters.values())
+    option_parameters = parameters[1:]
+    if any(p.kind is inspect.Parameter.VAR_KEYWORD for p in option_parameters):
+        return
+    accepted = {
+        p.name
+        for p in option_parameters
+        if p.kind
+        in {inspect.Parameter.KEYWORD_ONLY, inspect.Parameter.POSITIONAL_OR_KEYWORD}
+    }
+    unknown = [key for key in raw_options if key.lower() not in accepted]
+    if unknown:
+        raise ConfigValidationError.from_collected(
+            [
+                ErrorInfo(
+                    f"Ecosystem plugin {ecosystem_plugin.name!r} does not accept "
+                    f"option {key!s}. Accepted options: "
+                    f"{sorted(opt.upper() for opt in accepted)!r}"
+                )
+                for key in unknown
+            ]
+        )
+
+
 class ErtConfig(BaseModel, extra="forbid"):
     DEFAULT_ENSPATH: ClassVar[str] = "storage"
     DEFAULT_RUNPATH_FILE: ClassVar[str] = ".ert_runpath_list"
@@ -849,6 +881,7 @@ class ErtConfig(BaseModel, extra="forbid"):
         Mapping[str, SiteInstalledForwardModelStep]
     ] = {}
     PREINSTALLED_WORKFLOWS: ClassVar[dict[str, WorkflowJob]] = {}
+    PREINSTALLED_ECOSYSTEM_PLUGINS: ClassVar[Mapping[str, EcosystemPlugin]] = {}
     ENV_PR_FM_STEP: ClassVar[dict[str, dict[str, Any]]] = {}
     ENV_VARIABLES: ClassVar[dict[str, str]] = {}
     QUEUE_OPTIONS: ClassVar[KnownQueueOptions | None] = None
@@ -859,6 +892,7 @@ class ErtConfig(BaseModel, extra="forbid"):
     ensemble_config: EnsembleConfig = Field(default_factory=EnsembleConfig)
     ens_path: str = DEFAULT_ENSPATH
     env_vars: dict[str, str] = Field(default_factory=dict)
+    env_pr_fm_step: dict[str, dict[str, str]] = Field(default_factory=dict)
     analysis_config: AnalysisConfig = Field(default_factory=AnalysisConfig)
     queue_config: QueueConfig = Field(default_factory=QueueConfig)
     workflow_jobs: dict[str, WorkflowJob] = Field(default_factory=dict)
@@ -880,6 +914,7 @@ class ErtConfig(BaseModel, extra="forbid"):
         default_factory=RandomSeedGenerator
     )
     shape_registry: ShapeRegistry = Field(default_factory=ShapeRegistry)
+    ecosystem: str | None = None
 
     @model_validator(mode="after")
     def set_fields(self) -> Self:
@@ -981,6 +1016,9 @@ class ErtConfig(BaseModel, extra="forbid"):
                 Mapping[str, SiteInstalledForwardModelStep]
             ] = runtime_plugins.installed_forward_model_steps
             PREINSTALLED_WORKFLOWS = dict(runtime_plugins.installed_workflow_jobs)
+            PREINSTALLED_ECOSYSTEM_PLUGINS: ClassVar[Mapping[str, EcosystemPlugin]] = (
+                runtime_plugins.installed_ecosystem_plugins
+            )
             ENV_PR_FM_STEP: ClassVar[dict[str, dict[str, Any]]] = (
                 uppercase_subkeys_and_stringify_subvalues(
                     {k: dict(v) for k, v in runtime_plugins.env_pr_fm_step.items()}
@@ -1047,12 +1085,32 @@ class ErtConfig(BaseModel, extra="forbid"):
         )
 
     @classmethod
+    def _apply_ecosystem_plugin(cls, config_dict: ConfigDict) -> None:
+        if ConfigKeys.ECOSYSTEM not in config_dict:
+            return
+        ecosystem_name, raw_options = config_dict[ConfigKeys.ECOSYSTEM]
+        ecosystem_plugin = cls.PREINSTALLED_ECOSYSTEM_PLUGINS.get(ecosystem_name)
+        if ecosystem_plugin is None:
+            raise ConfigValidationError.with_context(
+                f"Could not find ecosystem plugin {ecosystem_name!r} in list "
+                "of installed ecosystem plugins: "
+                f"{sorted(cls.PREINSTALLED_ECOSYSTEM_PLUGINS)!r}",
+                ecosystem_name,
+            )
+        options = {key.lower(): value for key, value in raw_options.items()}
+        try:
+            _validate_options(ecosystem_plugin, raw_options)
+            ecosystem_plugin.configure(config_dict, **options)
+        except ConfigValidationError as err:
+            for info in err.errors:
+                if info.line is None:
+                    info.set_context(ecosystem_name)
+            raise ConfigValidationError.from_collected([err]) from err
+
+    @classmethod
     def from_dict(cls, config_dict: ConfigDict) -> Self:
+        cls._apply_ecosystem_plugin(config_dict)
         substitutions = _substitutions_from_dict(config_dict)
-        runpath_file = config_dict.get(
-            ConfigKeys.RUNPATH_FILE, ErtConfig.DEFAULT_RUNPATH_FILE
-        )
-        substitutions["<RUNPATH_FILE>"] = runpath_file
         config_dir = substitutions.get("<CONFIG_PATH>", "")
         config_file = substitutions.get("<CONFIG_FILE>", "no_config")
         config_file_path = Path(config_dir) / config_file
@@ -1069,23 +1127,27 @@ class ErtConfig(BaseModel, extra="forbid"):
         model_config = None
 
         try:
-            model_config = ModelConfig.from_dict(config_dict)
+            runpath = Substitutions(substitutions).substitute(
+                config_dict.get(ConfigKeys.RUNPATH, SCRATCH_RUNPATH)
+            )
+            model_config = ModelConfig.from_dict(
+                {**config_dict, ConfigKeys.RUNPATH: runpath}
+            )
 
         except ConfigValidationError as e:
             errors.append(e)
         except PydanticValidationError as err:
             errors.append(ConfigValidationError.from_pydantic(err))
 
-        if model_config is not None:
-            runpath = model_config.runpath_format_string
-            summary_file_base_name = model_config.summary_file_base_name
-            substitutions["<RUNPATH>"] = runpath
-            if summary_file_base_name is not None:
-                substitutions["<ECL_BASE>"] = summary_file_base_name
-                substitutions["<ECLBASE>"] = summary_file_base_name
-            else:
-                substitutions["<ECL_BASE>"] = DEFAULT_ECLBASE_FORMAT
-                substitutions["<ECLBASE>"] = DEFAULT_ECLBASE_FORMAT
+        queue_config = None
+        try:
+            queue_config = QueueConfig.from_dict(
+                config_dict, site_queue_options=cls.QUEUE_OPTIONS
+            )
+        except ConfigValidationError as err:
+            errors.append(err)
+
+        _set_post_defines(substitutions, model_config, queue_config)
 
         try:
             workflow_jobs, workflows, hooked_workflows = workflows_from_dict(
@@ -1118,16 +1180,6 @@ class ErtConfig(BaseModel, extra="forbid"):
 
         except ConfigValidationError as e:
             errors.append(e)
-
-        try:
-            queue_config = QueueConfig.from_dict(
-                config_dict, site_queue_options=cls.QUEUE_OPTIONS
-            )
-
-            substitutions["<NUM_CPU>"] = str(queue_config.queue_options.num_cpu)
-
-        except ConfigValidationError as err:
-            errors.append(err)
 
         obs_config_args = config_dict.get(ConfigKeys.OBS_CONFIG)
         obs_configs: list[Observation] = []
@@ -1203,20 +1255,28 @@ class ErtConfig(BaseModel, extra="forbid"):
                         "are also defined in design matrix, but due to the given"
                         " priority they will be sampled as GEN_KW."
                     )
-                if param_design:
-                    if dm.update:
-                        ConfigWarning.warn(
-                            f"Parameters {param_design} "
-                            "will be overridden by design matrix with UPDATE:TRUE. "
-                            "Updates will be enabled for these parameters "
-                            "following the GEN_KW update strategy."
-                        )
-                    else:
-                        ConfigWarning.warn(
-                            f"Parameters {param_design} "
-                            "will be overridden by design matrix. Updates will be "
-                            "turned off for these parameters."
-                        )
+                param_design_updatable = [
+                    k
+                    for k in param_design
+                    if dm.updatable_parameters.get(k)
+                    and k not in dm.categorical_parameters
+                ]
+                param_design_not_updatable = [
+                    k for k in param_design if k not in param_design_updatable
+                ]
+                if param_design_updatable:
+                    ConfigWarning.warn(
+                        f"Parameters {param_design_updatable} "
+                        "will be overridden by design matrix with UPDATE:TRUE. "
+                        "Updates will be enabled for these parameters "
+                        "following the GEN_KW update strategy."
+                    )
+                if param_design_not_updatable:
+                    ConfigWarning.warn(
+                        f"Parameters {param_design_not_updatable} "
+                        "will be overridden by design matrix. Updates will be "
+                        "turned off for these parameters."
+                    )
 
             if dm_errors:
                 raise ConfigValidationError.from_collected(dm_errors)
@@ -1249,17 +1309,15 @@ class ErtConfig(BaseModel, extra="forbid"):
 
         # update strategies
         for param_config in ensemble_config.parameter_configs.values():
-            if param_config.update_strategy is not None:
-                if (
-                    str(param_config.type).upper()
-                    in analysis_config.parameter_type_update_strategies
-                ):
-                    strategy = analysis_config.parameter_type_update_strategies[
-                        str(param_config.type).upper()
-                    ]
-                    param_config.update_strategy = strategy
-                else:
-                    param_config.update_strategy = LocalizationType.GLOBAL
+            if param_config.update_strategy is not None and isinstance(
+                param_config.type, ParameterType
+            ):
+                param_config.update_strategy = (
+                    analysis_config.parameter_type_update_strategies.get(
+                        param_config.type,
+                        LocalizationType.GLOBAL,
+                    )
+                )
 
         zonemap = config_dict.get(ConfigKeys.ZONEMAP)
         if zonemap:
@@ -1270,12 +1328,13 @@ class ErtConfig(BaseModel, extra="forbid"):
                 ensemble_config=ensemble_config,
                 ens_path=config_dict.get(ConfigKeys.ENSPATH, ErtConfig.DEFAULT_ENSPATH),
                 env_vars=env_vars,
+                env_pr_fm_step=cls.ENV_PR_FM_STEP,
                 analysis_config=analysis_config,
                 queue_config=queue_config,
                 workflow_jobs=workflow_jobs,
                 workflows=workflows,
                 hooked_workflows=hooked_workflows,
-                runpath_file=Path(runpath_file),
+                runpath_file=Path(substitutions["<RUNPATH_FILE>"]),
                 ert_templates=read_templates(config_dict),
                 forward_model_steps=cls._create_list_of_forward_model_steps_to_run(
                     installed_forward_model_steps,
@@ -1287,6 +1346,11 @@ class ErtConfig(BaseModel, extra="forbid"):
                 observation_declarations=list(obs_configs),
                 zonemap=zonemap,
                 shape_registry=shape_registry,
+                ecosystem=(
+                    str(config_dict[ConfigKeys.ECOSYSTEM][0])
+                    if ConfigKeys.ECOSYSTEM in config_dict
+                    else None
+                ),
             )
 
             cls_config.derive_rft_response_input_from_observations(config_dict)
@@ -1474,6 +1538,15 @@ class ErtConfig(BaseModel, extra="forbid"):
         ) and (
             dm_num_realizations := len(dm_active_realizations)
         ) != config_num_realizations:
+            ensemble_size = self.analysis_config.design_matrix.get_ensemble_size(
+                config_num_realizations
+            )
+            active_count = (
+                self.analysis_config.design_matrix.get_active_realization_count(
+                    ensemble_size
+                )
+            )
+            active_verb = "is" if active_count == 1 else "are"
             msg = (
                 f"NUM_REALIZATIONS ({config_num_realizations}) is "
                 + (
@@ -1481,16 +1554,17 @@ class ErtConfig(BaseModel, extra="forbid"):
                     if dm_num_realizations < config_num_realizations
                     else "less "
                 )
-                + f"than the number of realizations in DESIGN_MATRIX "
-                f"({dm_num_realizations}). Using the realizations from "
+                + "than the number of realizations implied by DESIGN_MATRIX "
+                f"({dm_num_realizations}). Using the ensemble size from "
                 + (
                     f"DESIGN_MATRIX ({dm_num_realizations})"
                     if dm_num_realizations < config_num_realizations
                     else f"NUM_REALIZATIONS ({config_num_realizations})"
                 )
+                + f", of which {active_count} {active_verb} active."
             )
             ConfigWarning.warn(msg)
-            return min(config_num_realizations, dm_num_realizations)
+            return ensemble_size
         return config_num_realizations
 
     @property
@@ -1570,10 +1644,6 @@ class ErtConfig(BaseModel, extra="forbid"):
         return [j.name for j in self.forward_model_steps]
 
     @property
-    def env_pr_fm_step(self) -> dict[str, dict[str, Any]]:
-        return self.ENV_PR_FM_STEP
-
-    @property
     def random_seed(self) -> int:
         return self.random_seed_generator.seed
 
@@ -1613,11 +1683,27 @@ def _get_files_in_directory(
     return files
 
 
+def _set_post_defines(
+    substitutions: dict[str, str],
+    model_config: ModelConfig | None,
+    queue_config: QueueConfig | None,
+) -> None:
+    if model_config is not None:
+        ecl_base = model_config.summary_file_base_name or DEFAULT_ECLBASE_FORMAT
+        substitutions["<RUNPATH>"] = model_config.runpath_format_string
+        substitutions["<ECL_BASE>"] = ecl_base
+        substitutions["<ECLBASE>"] = ecl_base
+    if queue_config is not None:
+        substitutions["<NUM_CPU>"] = str(queue_config.queue_options.num_cpu)
+
+
 def _substitutions_from_dict(config_dict: ConfigDict) -> dict[str, str]:
     substitutions = dict(config_dict.get("DEFINE", []))
-
-    if "<CONFIG_PATH>" not in substitutions:
-        substitutions["<CONFIG_PATH>"] = str(Path.cwd())
+    for key, value in make_pre_defines():
+        substitutions.setdefault(key, value)
+    substitutions["<RUNPATH_FILE>"] = config_dict.get(
+        ConfigKeys.RUNPATH_FILE, ErtConfig.DEFAULT_RUNPATH_FILE
+    )
 
     substitutions.update(dict(config_dict.get("DATA_KW", [])))
 
@@ -1633,6 +1719,33 @@ def uppercase_subkeys_and_stringify_subvalues(
             subkey.upper(): str(subvalue) for subkey, subvalue in value.items()
         }
     return fixed_dict
+
+
+def _escapes_parent_directory(path: PurePath) -> bool:
+    depth = 0
+    for part in path.parts:
+        depth += -1 if part == ".." else 1
+        if depth < 0:
+            return True
+    return False
+
+
+def _validate_path_is_inside_runpath(
+    keyword: str, path: str | None, config_file: str
+) -> None:
+    if path is None or path == "null":
+        return
+    runpath_placeholder = "<RUNPATH>"
+    if path.startswith(runpath_placeholder):
+        pure_path = PurePath(path.removeprefix(runpath_placeholder).lstrip("/"))
+    else:
+        pure_path = PurePath(path)
+    if pure_path.is_absolute() or _escapes_parent_directory(pure_path):
+        raise ConfigValidationError(
+            f"{keyword} must be a relative path that does not go outside "
+            f"the runpath, got {path!r}",
+            config_file=config_file,
+        )
 
 
 def forward_model_step_from_config_contents(
@@ -1659,6 +1772,11 @@ def forward_model_step_from_config_contents(
     arg_types_list = parse_arg_types_list(
         specified_arg_types, specified_min_args, specified_max_args
     )
+
+    for keyword in (ForwardModelStepKeys.STDOUT, ForwardModelStepKeys.STDERR):
+        _validate_path_is_inside_runpath(
+            keyword, content_dict.get(keyword), config_file
+        )
 
     environment = {k: v for [k, v] in content_dict.get("ENV", [])}
     default_mapping = {k: v for [k, v] in content_dict.get("DEFAULT", [])}

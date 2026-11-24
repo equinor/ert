@@ -32,7 +32,6 @@ from ert.storage import (
     open_storage,
 )
 from ert.storage.local_ensemble import (
-    LocalEnsemble,
     _write_observation_metadata,
 )
 from tests.ert import rft_qc_example
@@ -373,7 +372,7 @@ def test_that_rft_qc_widget_loads_and_displays_observations_responses_and_file_r
         # fmt: off
         overlay_and_not_in_grid_points = [
         # well_connection_cell   east   north    tvd           status
-            (        None,      200.0,  251.0, 300.0,    _PointStatus.NOT_IN_GRID),  # ruff: ignore[whitespace-after-open-bracket, multiple-spaces-after-comma, multiple-spaces-before-keyword]
+            (        None,      200.0,  251.0, 300.0,    _PointStatus.NOT_IN_GRID),  # ruff: ignore[whitespace-after-open-bracket, multiple-spaces-after-comma]
             (   (1, 1, 3),      100.0,  100.0, 300.0,    _PointStatus.MATCHED),  # ruff: ignore[whitespace-after-open-bracket, multiple-spaces-after-comma]
             (   (2, 2, 5),      200.0,  200.0, 500.0,    _PointStatus.INVALID_ZONE),  # ruff: ignore[whitespace-after-open-bracket, multiple-spaces-after-comma]
             (   (2, 2, 4),      200.0,  200.0, 400.0,    _PointStatus.NO_RESPONSE),  # ruff: ignore[whitespace-after-open-bracket, multiple-spaces-after-comma]
@@ -530,16 +529,13 @@ def _mock_rft_ensemble(
             else stored_location_metadata
         )
 
-    ensemble.add_rft_metadata_and_qc = partial(
-        LocalEnsemble.add_rft_metadata_and_qc, ensemble
-    )
     if isinstance(stored_responses, BaseException):
-        ensemble.load_responses.side_effect = stored_responses
+        ensemble._load_responses_lazy.side_effect = stored_responses
     else:
-        ensemble.load_responses.return_value = (
-            pl.DataFrame(schema=RFTConfig.response_schema())
+        ensemble._load_responses_lazy.return_value = (
+            pl.LazyFrame(schema=RFTConfig.response_schema())
             if stored_responses is None
-            else stored_responses
+            else stored_responses.lazy()
         )
     return ensemble
 
@@ -551,7 +547,7 @@ def _mock_rft_ensemble(
         "file-<IENS>-<ITER>",
     ],
 )
-@pytest.mark.filterwarnings("ignore:.*contains a RFT key but no forward model step")
+@pytest.mark.filterwarnings("ignore:.*contains an RFT key but no forward model step")
 @pytest.mark.slow
 def test_that_response_file_path_is_resolved(qtbot, eclbase):
     ert_config = ErtConfig.from_dict(
@@ -742,8 +738,8 @@ def test_that_observations_status_column_is_added(qtbot):
     observations = [
         # east  north   tvd   zone    observation
         ( 1.0,   1.0,   1.0, "zone1",  10.0),  # ruff: ignore[whitespace-after-open-bracket, multiple-spaces-after-comma]
-        ( 1.0,   1.0,   2.0,    None,  11.0),  # ruff: ignore[whitespace-after-open-bracket, multiple-spaces-after-comma, multiple-spaces-before-keyword]
-        ( 1.0,   1.0,   3.0,    None,  12.0),  # ruff: ignore[whitespace-after-open-bracket, multiple-spaces-after-comma, multiple-spaces-before-keyword]
+        ( 1.0,   1.0,   2.0,    None,  11.0),  # ruff: ignore[whitespace-after-open-bracket, multiple-spaces-after-comma]
+        ( 1.0,   1.0,   3.0,    None,  12.0),  # ruff: ignore[whitespace-after-open-bracket, multiple-spaces-after-comma]
         ( 2.0,   1.0,   1.0, "zone1",  13.0),  # ruff: ignore[whitespace-after-open-bracket, multiple-spaces-after-comma]
         ( 2.0,   1.0,   3.0, "zone1",  14.0),  # ruff: ignore[whitespace-after-open-bracket, multiple-spaces-after-comma]
         ( 3.0,   1.0,   1.0, "zone1",  15.0),  # ruff: ignore[whitespace-after-open-bracket, multiple-spaces-after-comma]
@@ -757,7 +753,7 @@ def test_that_observations_status_column_is_added(qtbot):
         ( 1.0,   1.0,   3.0, ["zone1"],       [1, 1, 3],    [1.0, 1.0, 3.0]),  # ruff: ignore[whitespace-after-open-bracket, multiple-spaces-after-comma]
         ( 2.0,   1.0,   1.0,        [],       [2, 1, 1],    [2.0, 1.0, 1.0]),  # ruff: ignore[whitespace-after-open-bracket, multiple-spaces-after-comma]
         ( 2.0,   1.0,   3.0, ["zone2"],       [2, 1, 3],    [2.0, 1.0, 3.0]),  # ruff: ignore[whitespace-after-open-bracket, multiple-spaces-after-comma]
-        ( 3.0,   1.0,   1.0,        [],            None,               None),  # ruff: ignore[whitespace-after-open-bracket, multiple-spaces-after-comma, multiple-spaces-before-keyword]
+        ( 3.0,   1.0,   1.0,        [],            None,               None),  # ruff: ignore[whitespace-after-open-bracket, multiple-spaces-after-comma]
         ( 4.0,   1.0,   1.0, ["zone1"],       [4, 1, 1],    [4.0, 1.0, 1.0]),  # ruff: ignore[whitespace-after-open-bracket, multiple-spaces-after-comma]
     ]
 
@@ -889,19 +885,21 @@ def test_that_response_status_column_is_added(
         ( 1.0,   1.0,   2.0, ["zone1"],       [1, 1, 2],    [1.0, 1.0, 2.0]),  # ruff: ignore[whitespace-after-open-bracket, multiple-spaces-after-comma]
     ] if with_observations else []
 
+    none = None  # bypassing ruff forcing line format despite fmt: off
     responses = [
         # connection_cell  values   cell_center      depth  cell_zones
         ( [1, 1, 1],       10.0,   [1.0, 1.0, 1.0],   1.0,  ["zone1"]),  # ruff: ignore[whitespace-after-open-bracket, multiple-spaces-after-comma]
         ( [1, 1, 3],       12.0,   [1.0, 1.0, 3.0],   3.0,  ["zone1"]),  # ruff: ignore[whitespace-after-open-bracket, multiple-spaces-after-comma]
+        ( [1, 1, 4],       none,   [1.0, 1.0, 4.0],   4.0,  ["zone1"]),  # ruff: ignore[whitespace-after-open-bracket, multiple-spaces-after-comma]
     ] if with_responses else []
     # fmt: on
 
     if not with_responses:
         expected_statuses = []
     elif approximate_missing_values and with_observations:
-        expected_statuses = [_PointStatus.RESPONSE] * 2 + [_PointStatus.APPROXIMATED]
+        expected_statuses = [_PointStatus.RESPONSE] * 3 + [_PointStatus.APPROXIMATED]
     else:
-        expected_statuses = [_PointStatus.RESPONSE] * 2
+        expected_statuses = [_PointStatus.RESPONSE] * 3
 
     stored_observations = pl.DataFrame(
         observations,
@@ -1568,7 +1566,9 @@ def test_that_hovering_over_point_highlights_it_and_moving_away_clears_it(qtbot)
 
         # Hovered point is overlaid:
         assert display_xy[plot._hover_index].tolist() == display_xy[i].tolist()
-        assert plot._hover_artist._offsets3d == pytest.approx(([cx], [cy], [cz]))
+        np.testing.assert_array_almost_equal(
+            plot._hover_artist._offsets3d, ([cx], [cy], [cz])
+        )
 
         hover_plot(plot, x + 1000, y + 1000)  # Move away from the point
 

@@ -177,8 +177,12 @@ def test_that_observations_within_boundary_stay_while_outside_are_removed():
     polygon1 = "((0 0, 0 1, 1 1, 1 0, 0 0))"
     polygon2 = "((3 3, 3 4, 4 4, 4 3, 3 3))"
     boundary = PolygonShapeConfig(wkt=f"MULTIPOLYGON ({polygon1}, {polygon2})")
+    other_boundary = PolygonShapeConfig(
+        wkt="MULTIPOLYGON (((5 5, 5 6, 6 6, 6 5, 5 5)))"
+    )
     shape_registry = ShapeRegistry()
     boundary_id = shape_registry.register(boundary)
+    other_boundary_id = shape_registry.register(other_boundary)
 
     observations = pl.DataFrame(
         [
@@ -206,8 +210,18 @@ def test_that_observations_within_boundary_stay_while_outside_are_removed():
                 north=3.5,
                 boundary_id=boundary_id,
             ),
+            create_seismic_observation(
+                east=0.6,
+                north=0.6,
+                boundary_id=other_boundary_id,
+            ),
+            create_seismic_observation(
+                east=5.5,
+                north=5.5,
+                boundary_id=other_boundary_id,
+            ),
         ]
     )
 
     qc = qc_seismic_observations(observations, shape_registry)
-    assert qc["east"].to_list() == [0.5, 2.5, 3.5]
+    assert qc["east"].to_list() == [0.5, 2.5, 3.5, 5.5]

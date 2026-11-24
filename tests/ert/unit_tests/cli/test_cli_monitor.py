@@ -1,8 +1,10 @@
 from datetime import UTC, datetime, timedelta
 from io import StringIO
+from queue import SimpleQueue
+from uuid import uuid4
 
 from ert.cli.monitor import Monitor
-from ert.ensemble_evaluator.event import SnapshotUpdateEvent
+from ert.ensemble_evaluator.event import EndEvent, SnapshotUpdateEvent
 from ert.ensemble_evaluator.snapshot import (
     EnsembleSnapshot,
     RealizationSnapshot,
@@ -12,6 +14,8 @@ from ert.ensemble_evaluator.state import (
     REALIZATION_STATE_RUNNING,
     REALIZATION_STATE_WAITING,
 )
+from ert.run_models.event import WorkflowEvent
+from ert.workflow_runner import WorkflowJobStatus
 
 
 def test_color_always():
@@ -61,6 +65,64 @@ def test_result_failure():
     monitor._print_result(True, "fail")
 
     assert out.getvalue() == "Experiment failed with the following error: fail\n"
+
+
+def test_that_monitor_prints_indented_workflow_errors_except_for_stopping_job():
+    def workflow_event(
+        job_name: str,
+        error: str | None,
+        status: WorkflowJobStatus,
+        *,
+        stopped_workflow: bool = False,
+    ):
+        return WorkflowEvent(
+            run_id=uuid4(),
+            hook="POST_SIMULATION",
+            workflow_name=job_name,
+            job_name=job_name,
+            job_index=0,
+            arguments=[],
+            stdout="",
+            stderr="printed by job",
+            status=status,
+            timestamp=datetime.now(tz=UTC),
+            error=error,
+            stopped_workflow=stopped_workflow,
+        )
+
+    events = SimpleQueue()
+    events.put(
+        workflow_event(
+            "FAILING_JOB",
+            "ValueError: first line\nsecond line",
+            WorkflowJobStatus.FAILED,
+        )
+    )
+    events.put(workflow_event("SUCCEEDING_JOB", None, WorkflowJobStatus.SUCCESS))
+    events.put(
+        workflow_event(
+            "STOPPING_JOB",
+            "ValueError: boom",
+            WorkflowJobStatus.FAILED,
+            stopped_workflow=True,
+        )
+    )
+    events.put(
+        EndEvent(
+            failed=True,
+            msg="Workflow job STOPPING_JOB failed: ValueError: boom",
+        )
+    )
+    out = StringIO()
+
+    Monitor(out=out).monitor(events)
+
+    assert out.getvalue() == (
+        "Workflow job FAILING_JOB failed: ValueError: first line\n"
+        "    second line\n"
+        "Experiment failed with the following error: "
+        "Workflow job STOPPING_JOB failed: ValueError: boom\n"
+    )
 
 
 def test_print_progress():

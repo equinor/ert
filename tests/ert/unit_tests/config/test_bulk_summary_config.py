@@ -36,6 +36,7 @@ def csv_content():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key but no forward")
 def test_that_summary_observations_can_be_initialized_from_bulk_configuration():
     bulk_obs_config = """
     SUMMARY {
@@ -142,6 +143,7 @@ def test_that_misconfigured_breakthrough_in_summary_gets_breakthrough_label_in_e
 
 
 @pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key but no forward")
 def test_that_bulk_summary_config_can_be_initialized_without_localization():
     misconfigured_breakthrough_config = """
     SUMMARY {
@@ -156,6 +158,7 @@ def test_that_bulk_summary_config_can_be_initialized_without_localization():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key but no forward")
 def test_that_missing_values_in_bulk_summary_config_raises_config_error():
     config_without_values = """
     SUMMARY {
@@ -171,6 +174,7 @@ def test_that_missing_values_in_bulk_summary_config_raises_config_error():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key but no forward")
 def test_that_multiple_bulk_summary_configs_can_be_in_the_same_config():
     multiple_summary_config = 2 * (
         """
@@ -201,6 +205,7 @@ def test_that_multiple_bulk_summary_configs_can_be_in_the_same_config():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key but no forward")
 def test_that_breakthrough_can_be_instantiated_with_well_localization_through_summary_bulk_config():  # ruff: ignore[line-too-long]
     obs_config = """
     SUMMARY {
@@ -233,6 +238,7 @@ def test_that_breakthrough_can_be_instantiated_with_well_localization_through_su
 
 
 @pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key but no forward")
 def test_that_breakthrough_can_be_instantiated_without_well_localization_through_summary_bulk_config():  # ruff: ignore[line-too-long]
     obs_config = """
     SUMMARY {
@@ -257,6 +263,7 @@ def test_that_breakthrough_can_be_instantiated_without_well_localization_through
 
 
 @pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key but no forward")
 def test_that_summary_bulk_config_resolves_csv_in_subdirectory():
     obs_config = """
     SUMMARY {
@@ -285,6 +292,7 @@ def test_that_summary_bulk_config_resolves_csv_in_subdirectory():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key but no forward")
 def test_that_summary_bulk_config_resolves_csv_in_subdirectory_from_main_config():
     summary_config = """
     SUMMARY {
@@ -327,6 +335,7 @@ def test_that_summary_bulk_config_resolves_csv_in_subdirectory_from_main_config(
 
 
 @pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key but no forward")
 def test_that_breakthrough_in_bulk_summary_config_doesnt_append_well_name_if_well_name_is_in_breakthrough_key():  # ruff: ignore[line-too-long]
     obs_config = """
     SUMMARY {
@@ -354,6 +363,7 @@ def test_that_breakthrough_in_bulk_summary_config_doesnt_append_well_name_if_wel
 
 @pytest.mark.parametrize("error", [-100, -0.5, 0])
 @pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key but no forward")
 def test_that_error_value_raises_config_validation_error_if_not_strictly_positive(
     error,
 ):
@@ -380,6 +390,7 @@ def test_that_error_value_raises_config_validation_error_if_not_strictly_positiv
 
 @pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.parametrize("well_name", ["OP-1", "OP:1", "OP.1", "OP_1-A.B:C"])
+@pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key but no forward")
 def test_that_summary_bulk_config_obs_receives_expected_name_given_special_characters(
     well_name,
 ):
@@ -431,6 +442,7 @@ def test_that_summary_bulk_config_raises_error_regarding_required_csv_columns():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key but no forward")
 def test_that_optional_csv_columns_are_included_in_summary_observation_name():
     obs_config = """
     SUMMARY {
@@ -459,6 +471,7 @@ def test_that_optional_csv_columns_are_included_in_summary_observation_name():
 )
 @pytest.mark.usefixtures("use_tmpdir")
 @settings(max_examples=10)
+@pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key but no forward")
 def test_that_fully_populated_csv_does_not_crash_given_arbitrary_keyword(keyword):
     """We expect that when all columns are populated, there should not exist a keyword
     which would crash given too few columns.
@@ -543,6 +556,7 @@ def test_that_strip_dataframe_whitespaces_converts_empty_strings_to_none():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key but no forward")
 def test_that_docs_setup_results_in_expected_observation_dataframes():
     """This test replicates the example made in observations.rst, ensuring
     that our documentation is a working happy path.

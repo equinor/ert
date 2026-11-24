@@ -6,20 +6,20 @@ from textwrap import dedent
 import numpy as np
 import pytest
 from PyQt6.QtCore import Qt, QTimer
-from PyQt6.QtWidgets import QCheckBox, QComboBox, QToolButton, QWidget
+from PyQt6.QtWidgets import QComboBox, QToolButton, QWidget
 from pytestqt.qtbot import QtBot
 from skimage import io, transform
 from skimage.metrics import structural_similarity as ssim
 
 from ert.gui.ertwidgets import ClosableDialog, CopyableLabel, TextBox
 from ert.gui.experiments import ExperimentPanel, RunDialog
+from ert.gui.experiments.ensemble_smoother_panel import EnsembleSmoother
 from ert.gui.experiments.single_test_run_panel import SingleTestRunPanel
 from ert.gui.experiments.view import RealizationWidget
 from ert.gui.experiments.view.disk_space_widget import DiskSpaceWidget
 from ert.gui.plotting.widgets import DataTypeKeysWidget, EnsembleSelectionWidget
 from ert.gui.tools.load_results import LoadResultsPanel
-from ert.run_models import EnsembleExperiment, MultipleDataAssimilation, RunModel
-from ert.services import ErtServerController
+from ert.run_models import EnsembleExperiment, RunModel
 from ert.storage import open_storage
 from tests.ert.handle_runpath_dialog import handle_runpath_dialog
 from tests.ert.ui_tests.gui.conftest import open_gui_with_config
@@ -102,24 +102,13 @@ class ExampleFolders(StrEnum):
 
 
 def run_experiment(
-    qtbot: QtBot,
-    experiment_mode: RunModel,
-    gui: QWidget,
-    *,
-    click_done: bool = True,
-    single_update: bool = False,
+    qtbot: QtBot, experiment_mode: RunModel, gui: QWidget, *, click_done: bool = True
 ) -> None:
     # Select correct experiment in the simulation panel
     experiment_panel = get_child(gui, ExperimentPanel)
     simulation_mode_combo = get_child(experiment_panel, QComboBox)
 
     simulation_mode_combo.setCurrentText(experiment_mode.display_name())
-
-    if single_update:
-        single_update_box = get_child(
-            experiment_panel, QCheckBox, name="single_update_checkbox_esmda"
-        )
-        single_update_box.setChecked(True)
 
     # Click start simulation and agree to the message
     run_experiment = get_child(experiment_panel, QWidget, name="run_experiment")
@@ -368,18 +357,15 @@ def test_that_poly_new_with_results_screenshots_are_up_to_date(
     open_storage(gui.ert_config.ens_path, mode="w")
     gui_evaluator = GuiEvaluator(source_root, example_folder, gui, qtbot)
 
-    with ErtServerController.init_service(
-        project=Path(gui.ert_config.ens_path).absolute(),
-    ):
-        button_plot_tool = get_child(gui, QToolButton, name="button_Create_plot")
-        qtbot.mouseClick(button_plot_tool, Qt.MouseButton.LeftButton)
+    button_plot_tool = get_child(gui, QToolButton, name="button_Create_plot")
+    qtbot.mouseClick(button_plot_tool, Qt.MouseButton.LeftButton)
 
-        gui_evaluator.compare_img_with_gui("poly_plot.png", POLY_PLOT_PNG_THRESHOLD)
+    gui_evaluator.compare_img_with_gui("poly_plot.png", POLY_PLOT_PNG_THRESHOLD)
 
-        data_type_widget = wait_for_child(gui, qtbot, DataTypeKeysWidget)
-        set_data_type_selection_index(data_type_widget, 1)
+    data_type_widget = wait_for_child(gui, qtbot, DataTypeKeysWidget)
+    set_data_type_selection_index(data_type_widget, 1)
 
-        gui_evaluator.compare_img_with_gui("plots.png", PLOTS_PNG_THRESHOLD)
+    gui_evaluator.compare_img_with_gui("plots.png", PLOTS_PNG_THRESHOLD)
 
     assert not gui_evaluator.gui_change_detected(), gui_evaluator.change_report()
 
@@ -434,37 +420,34 @@ def test_that_poly_new_with_observations_screenshots_are_up_to_date(
 
     gui = open_gui_with_docs_example
 
-    run_experiment(qtbot, MultipleDataAssimilation, gui, single_update=True)
+    run_experiment(qtbot, EnsembleSmoother, gui)
     open_storage(gui.ert_config.ens_path, mode="w")
     gui_evaluator = GuiEvaluator(source_root, example_folder, gui, qtbot)
 
-    with ErtServerController.init_service(
-        project=Path(gui.ert_config.ens_path).absolute(),
-    ):
-        button_plot_tool = get_child(gui, QToolButton, name="button_Create_plot")
-        qtbot.mouseClick(button_plot_tool, Qt.MouseButton.LeftButton)
+    button_plot_tool = get_child(gui, QToolButton, name="button_Create_plot")
+    qtbot.mouseClick(button_plot_tool, Qt.MouseButton.LeftButton)
 
-        ensemble_selector_widget = wait_for_child(gui, qtbot, EnsembleSelectionWidget)
+    ensemble_selector_widget = wait_for_child(gui, qtbot, EnsembleSelectionWidget)
 
-        selected_ensembles = ensemble_selector_widget._selected_ensembles
+    selected_ensembles = ensemble_selector_widget._selected_ensembles
 
-        for index in range(selected_ensembles.count()):
-            item = selected_ensembles.item(index)
-            if not item.data(Qt.ItemDataRole.CheckStateRole):
-                selected_ensembles.slot_toggle_plot(item)
-        selected_ensembles.ensembleSelectionListChanged.emit()
+    for index in range(selected_ensembles.count()):
+        item = selected_ensembles.item(index)
+        if not item.data(Qt.ItemDataRole.CheckStateRole):
+            selected_ensembles.slot_toggle_plot(item)
+    selected_ensembles.ensembleSelectionListChanged.emit()
 
-        gui_evaluator.compare_img_with_gui("plot_obs.png", PLOT_OBS_PNG_THRESHOLD)
+    gui_evaluator.compare_img_with_gui("plot_obs.png", PLOT_OBS_PNG_THRESHOLD)
 
-        data_type_widget = wait_for_child(gui, qtbot, DataTypeKeysWidget)
+    data_type_widget = wait_for_child(gui, qtbot, DataTypeKeysWidget)
 
-        for index, img, threshold in [
-            (1, "coeff_a.png", COEFF_A_PNG_THRESHOLD),
-            (2, "coeff_b.png", COEFF_B_PNG_THRESHOLD),
-            (3, "coeff_c.png", COEFF_C_PNG_THRESHOLD),
-        ]:
-            set_data_type_selection_index(data_type_widget, index)
-            gui_evaluator.compare_img_with_gui(img, threshold)
+    for index, img, threshold in [
+        (1, "coeff_a.png", COEFF_A_PNG_THRESHOLD),
+        (2, "coeff_b.png", COEFF_B_PNG_THRESHOLD),
+        (3, "coeff_c.png", COEFF_C_PNG_THRESHOLD),
+    ]:
+        set_data_type_selection_index(data_type_widget, index)
+        gui_evaluator.compare_img_with_gui(img, threshold)
 
     assert not gui_evaluator.gui_change_detected(), gui_evaluator.change_report()
 
@@ -490,29 +473,26 @@ def test_that_poly_new_with_more_observations_screenshots_are_up_to_date(
 
     gui = open_gui_with_docs_example
 
-    run_experiment(qtbot, MultipleDataAssimilation, gui, single_update=True)
+    run_experiment(qtbot, EnsembleSmoother, gui)
     open_storage(gui.ert_config.ens_path, mode="w")
     gui_evaluator = GuiEvaluator(source_root, example_folder, gui, qtbot)
 
-    with ErtServerController.init_service(
-        project=Path(gui.ert_config.ens_path).absolute(),
-    ):
-        button_plot_tool = get_child(gui, QToolButton, name="button_Create_plot")
-        qtbot.mouseClick(button_plot_tool, Qt.MouseButton.LeftButton)
+    button_plot_tool = get_child(gui, QToolButton, name="button_Create_plot")
+    qtbot.mouseClick(button_plot_tool, Qt.MouseButton.LeftButton)
 
-        ensemble_selector_widget = wait_for_child(gui, qtbot, EnsembleSelectionWidget)
+    ensemble_selector_widget = wait_for_child(gui, qtbot, EnsembleSelectionWidget)
 
-        selected_ensembles = ensemble_selector_widget._selected_ensembles
-        for index in range(selected_ensembles.count()):
-            item = selected_ensembles.item(index)
-            if not item.data(Qt.ItemDataRole.CheckStateRole):
-                selected_ensembles.slot_toggle_plot(item)
-        selected_ensembles.ensembleSelectionListChanged.emit()
+    selected_ensembles = ensemble_selector_widget._selected_ensembles
+    for index in range(selected_ensembles.count()):
+        item = selected_ensembles.item(index)
+        if not item.data(Qt.ItemDataRole.CheckStateRole):
+            selected_ensembles.slot_toggle_plot(item)
+    selected_ensembles.ensembleSelectionListChanged.emit()
 
-        data_type_widget = wait_for_child(gui, qtbot, DataTypeKeysWidget)
-        set_data_type_selection_index(data_type_widget, 2)
+    data_type_widget = wait_for_child(gui, qtbot, DataTypeKeysWidget)
+    set_data_type_selection_index(data_type_widget, 2)
 
-        gui_evaluator.compare_img_with_gui("coeff_b.png", COEFF_B_PNG_THRESHOLD)
+    gui_evaluator.compare_img_with_gui("coeff_b.png", COEFF_B_PNG_THRESHOLD)
 
     assert not gui_evaluator.gui_change_detected(), gui_evaluator.change_report()
 

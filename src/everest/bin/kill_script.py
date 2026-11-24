@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import Any
 
 from ert.services.ert_client import ErtClient
-from everest.bin.utils import setup_logging
+from everest.bin.utils import log_enabled_flags, setup_logging
 from everest.config import EverestConfig, ServerConfig
 from everest.util import version_info
 
@@ -26,6 +26,7 @@ def kill_entry(args: list[str] | None = None) -> None:
     options = parser.parse_args(args)
     with setup_logging(options):
         logger.info(version_info())
+        log_enabled_flags("kill", options)
         logger.debug(json.dumps(options.config.to_dict(), sort_keys=True, indent=2))
 
         if threading.current_thread() is threading.main_thread():

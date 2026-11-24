@@ -11,9 +11,11 @@ used to generate design matrices, including one or several Sensitivities.
 from __future__ import annotations
 
 import hashlib
+import itertools
 import logging
 from collections import Counter, defaultdict
 from datetime import datetime
+from importlib.metadata import version
 from pathlib import Path
 from textwrap import dedent
 from typing import TYPE_CHECKING, Any
@@ -23,7 +25,6 @@ import pandas as pd
 import probabilit.correlation
 import probabilit.modeling
 
-from ert.shared import __version__ as ert_version
 from fmudesign.exceptions import FmudesignError
 
 from .design_config import DesignConfig
@@ -88,6 +89,40 @@ def _round_to_decimals(df: pd.DataFrame, decimals: Mapping[str, int]) -> None:
                     "values numeric."
                 ) from err
             df[key] = values.round(int(decimals[key]))
+
+
+def _identical_parameters(
+    correlations: pd.DataFrame, parameters: Mapping[str, Sequence[Any]]
+) -> dict[str, str]:
+    """Return ``{name: original}`` for each parameter with correlation 1 to an
+    identically distributed parameter that has the same correlations with all
+    other parameters. Their values must be identical, which inducing
+    correlations cannot achieve, since it only reorders independent draws.
+
+    Prints a warning if only the correlations with other parameters differ.
+    """
+    names = correlations.index.tolist()
+    matrix = correlations.to_numpy()
+    # Arguments are unpacked, since == is ambiguous for NumPy arrays
+    distributions = {
+        param_name: [dist_name, *dist_params]
+        for param_name, (dist_name, dist_params, _) in parameters.items()
+    }
+    identical: dict[str, str] = {}
+    for i, j in itertools.combinations(range(len(names)), 2):
+        original, name = names[i], names[j]
+        same_distribution = distributions[original] == distributions[name]
+        same_correlations = np.array_equal(matrix[i], matrix[j])
+        if matrix[i, j] == 1 and same_distribution:
+            if same_correlations:
+                identical.setdefault(name, original)
+            else:
+                print(
+                    f"Warning: Parameter {name!r} is not set identical to "
+                    f"{original!r}, despite correlation 1 and the same distribution, "
+                    "as their correlations with other parameters differ"
+                )
+    return identical
 
 
 class DesignMatrix:
@@ -421,7 +456,7 @@ class DesignMatrix:
                 {
                     "Description": ["Created using ert version:", "Created on:"],
                     "Value": [
-                        ert_version,
+                        version("ert"),
                         datetime.now()
                         .astimezone()
                         .isoformat(sep=" ", timespec="seconds"),
@@ -567,8 +602,10 @@ class DesignMatrix:
         """Filling NaNs with default values"""
         for key in self.designvalues.columns:
             if key in self.defaultvalues:
-                self.designvalues[key] = self.designvalues[key].fillna(
-                    self.defaultvalues[key]
+                column = self.designvalues[key]
+                # Not fillna, as a default may differ in type from its column
+                self.designvalues[key] = column.where(
+                    column.notna(), self.defaultvalues[key]
                 )
             elif key not in self.START_COLUMNS:
                 raise FmudesignError(f"No defaultvalues given for parameter {key} ")
@@ -629,15 +666,21 @@ class DesignMatrix:
         if not plot or self.output_dir is None:
             return
 
+        # Importing matplotlib and seaborn is slow, so wait until they are needed
+        from .quality_plots import (  # ruff: ignore[import-outside-top-level]
+            QualityPlotter,
+        )
+
+        quality_plotter = QualityPlotter(df=sensitivity.sensvalues, variables=variables)
         output_dir = self.output_dir / sensitivity.sensname
-        quality_reporter.plot_columns(output_dir=output_dir)
+        quality_plotter.plot_columns(output_dir=output_dir)
         for corr_name, df_corr in sensitivity.correlation_dfs_.items():
-            quality_reporter.plot_correlation_heatmap(
+            quality_plotter.plot_correlation_heatmap(
                 corr_name, df_corr, output_dir=output_dir
             )
             # Only plot pairgrid for small correlation groups
             if len(df_corr) <= 6:
-                quality_reporter.plot_correlation(
+                quality_plotter.plot_correlation(
                     corr_name, df_corr, output_dir=output_dir
                 )
 
@@ -918,6 +961,8 @@ class MonteCarloSensitivity(Sensitivity):
                 - 'inputfile': Name of Excel file with correlation matrices
                 - 'sheetnames': List of sheet names, where each sheet contains a
                 correlation matrix. If None, parameters are treated as uncorrelated.
+                Parameters with correlation 1, the same distribution and the
+                same correlations with all other parameters get identical values.
             rng (numpy.random.Generator): Random number generator instance.
               Draws all values under 'joint'. Unused under 'independent'.
             correlation_iterations (int): Number of permutations performed
@@ -950,13 +995,23 @@ class MonteCarloSensitivity(Sensitivity):
 
         distr_by_name: dict[str, ProbabilitNode] = {}
         for param_name, (dist_name, dist_params, _) in parameters.items():
-            distr_by_name[param_name] = to_probabilit(
-                distname=dist_name, dist_parameters=dist_params
-            )
+            try:
+                distr_by_name[param_name] = to_probabilit(
+                    distname=dist_name, dist_parameters=dist_params
+                )
+            except ValueError as err:
+                raise FmudesignError(
+                    f"Parameter {param_name!r} in sensitivity {self.sensname!r}: {err}"
+                ) from err
 
         # Read and validate the correlation groups once, up front. Both seed
         # strategies consume the same groups; only the seeding differs.
-        corr_groups = self._load_correlation_groups(parameters, corrdict)
+        corr_groups, identical = self._load_correlation_groups(
+            parameters,
+            corrdict,
+            size=size,
+            correlation_iterations=correlation_iterations,
+        )
 
         if seed_strategy == SeedStrategy.JOINT:
             self._sample_joint(
@@ -986,17 +1041,13 @@ class MonteCarloSensitivity(Sensitivity):
 
         for distr_name, distr_obj in distr_by_name.items():
             samples = distr_obj.samples_
-            is_numeric = issubclass(samples.dtype.type, np.number)
-            if is_numeric and not np.all(np.isfinite(samples)):
-                raise FmudesignError(
-                    f"Sampling produced non-finite values in {distr_name}={distr_obj}\n"
-                    "Please review the parameters in the distribution."
-                )
-
             if isinstance(distr_obj, DiscreteViaUniform):
                 samples = distr_obj.to_values(samples)
 
             self.sensvalues = self.sensvalues.assign(**{distr_name: samples})
+
+        for name, original in identical.items():
+            self.sensvalues[name] = self.sensvalues[original]
 
         if self.sensname != "background":
             self.sensvalues["SENSNAME"] = self.sensname
@@ -1013,9 +1064,13 @@ class MonteCarloSensitivity(Sensitivity):
         self,
         parameters: dict[str, Any],
         corrdict: dict[str, Any] | None,
-    ) -> list[CorrelationGroup]:
+        *,
+        size: int,
+        correlation_iterations: int,
+    ) -> tuple[list[CorrelationGroup], dict[str, str]]:
         """Return ``(group_name, df_correlations, member_params)`` per correlation
-        group, reading and validating each matrix.
+        group, reading and validating each matrix, and ``{name: original}`` for
+        parameters whose values must be identical to another parameter's.
 
         Single-member groups are skipped (with a warning) and treated as
         uncorrelated. Populates ``self.correlation_dfs_`` as a side effect.
@@ -1025,9 +1080,14 @@ class MonteCarloSensitivity(Sensitivity):
             ValueError: if a parameter is a member of more than one correlation
                 group, since only one of the requested correlations could then
                 be honoured.
+            ValueError: if ``size`` is less than 2, since a correlation group
+                needs at least 2 realizations to induce any correlation.
+            ValueError: if ``correlation_iterations`` is 0 and a group has at
+                least as many parameters as ``size``, since Iman-Conover needs
+                more realizations than correlated parameters.
         """
         if not corrdict:
-            return []
+            return [], {}
 
         group_sizes = Counter(
             corr_sheet
@@ -1036,6 +1096,7 @@ class MonteCarloSensitivity(Sensitivity):
         )
 
         loaded: list[CorrelationGroup] = []
+        identical: dict[str, str] = {}
         group_of_param: dict[str, str] = {}
         # The order affects seeded sampling: sheet indices first, then names
         for corr_group_name in sorted(
@@ -1068,6 +1129,26 @@ class MonteCarloSensitivity(Sensitivity):
                     )
                 group_of_param[name] = corr_group_name
 
+            if size < 2:
+                raise FmudesignError(
+                    f"Correlation group {corr_group_name!r} in sensitivity "
+                    f"{self.sensname!r} needs at least 2 realizations (numreal, "
+                    "or repeats if numreal is not set) to correlate its "
+                    f"parameters, got {size}."
+                )
+
+            num_params = len(multivariate_parameters)
+            if correlation_iterations == 0 and size <= num_params:
+                raise FmudesignError(
+                    f"Correlation group {corr_group_name!r} in sensitivity "
+                    f"{self.sensname!r} has {num_params} parameters, but only "
+                    f"{size} realizations. Inducing correlations needs more "
+                    "realizations than correlated parameters. Use at least "
+                    f"{num_params + 1} realizations (numreal, or repeats if "
+                    "numreal is not set), or fewer parameters in the correlation "
+                    "group."
+                )
+
             if self.verbosity == 0:
                 print(
                     f"Sampling {len(multivariate_parameters)} parameters",
@@ -1079,6 +1160,17 @@ class MonteCarloSensitivity(Sensitivity):
                     f"in correlation group {corr_group_name!r}: "
                     f"{multivariate_parameters}",
                 )
+
+            # Use the matrix as given, since adjusting it turns an exact 1 into
+            # 0.999999
+            for name, original in _identical_parameters(
+                df_correlations, parameters
+            ).items():
+                print(
+                    f"Parameter {name!r} is set identical to {original!r}, "
+                    "as they have correlation 1 and the same distribution"
+                )
+                identical[name] = original
 
             # Get the nearest correlation matrix
             nearest = probabilit.correlation.nearest_correlation_matrix(
@@ -1105,7 +1197,7 @@ class MonteCarloSensitivity(Sensitivity):
             self.correlation_dfs_[corr_group_name] = df_correlations
             loaded.append((corr_group_name, df_correlations, multivariate_parameters))
 
-        return loaded
+        return loaded, identical
 
     @staticmethod
     def _make_correlator(
@@ -1150,9 +1242,14 @@ class MonteCarloSensitivity(Sensitivity):
 
         # Sample the dummy node. This samples every parent distribution and
         # stores the draws on each distribution object as 'samples_'.
-        expression.sample(
-            size=size, random_state=rng, method="lhs", correlator=correlator
-        )
+        try:
+            expression.sample(
+                size=size, random_state=rng, method="lhs", correlator=correlator
+            )
+        except ValueError as err:
+            raise FmudesignError(
+                f"Sampling sensitivity {self.sensname!r} failed: {err}"
+            ) from err
 
     def _sample_independent(
         self,
@@ -1177,9 +1274,18 @@ class MonteCarloSensitivity(Sensitivity):
             expression.correlate(*distrs, corr_mat=df_correlations.to_numpy())
             unit_rng = _derive_rng(base_seed, self.sensname, "corr", group_name)
             correlator = self._make_correlator(correlation_iterations, unit_rng)
-            expression.sample(
-                size=size, random_state=unit_rng, method="lhs", correlator=correlator
-            )
+            try:
+                expression.sample(
+                    size=size,
+                    random_state=unit_rng,
+                    method="lhs",
+                    correlator=correlator,
+                )
+            except ValueError as err:
+                raise FmudesignError(
+                    f"Sampling correlation group {group_name!r} in sensitivity "
+                    f"{self.sensname!r} failed: {err}"
+                ) from err
             grouped_params.update(member_params)
 
         # Each remaining (uncorrelated) parameter is its own independent unit.
@@ -1187,7 +1293,13 @@ class MonteCarloSensitivity(Sensitivity):
             if param_name in grouped_params:
                 continue
             unit_rng = _derive_rng(base_seed, self.sensname, "param", param_name)
-            distr.sample(size=size, random_state=unit_rng, method="lhs")
+            try:
+                distr.sample(size=size, random_state=unit_rng, method="lhs")
+            except ValueError as err:
+                raise FmudesignError(
+                    f"Sampling parameter {param_name!r} in sensitivity "
+                    f"{self.sensname!r} failed: {err}"
+                ) from err
 
 
 class ExternSensitivity(Sensitivity):

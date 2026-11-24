@@ -40,16 +40,8 @@ from definition import (
     well_radius,
 )
 from minires import Grid2D, ResSim
-from minires.geostat import gaussian_fields
-from resfo_utilities.testing import (
-    Date,
-    Simulator,
-    Smspec,
-    SmspecIntehead,
-    SummaryMiniStep,
-    SummaryStep,
-    UnitSystem,
-    Unsmry,
+from minires.geostat import (
+    gaussian_fields,
 )
 
 # Darcy's law needs no conversion factor in a coherent unit system; in the metric
@@ -145,42 +137,54 @@ def simulate(model: ResSim) -> dict[str, list[float]]:
 
 
 def write_summary(vectors: dict[str, list[float]], eclbase: str) -> None:
-    """Write the summary vectors as an ECLIPSE-style .SMSPEC/.UNSMRY pair."""
+    """Write the summary vectors as an ECLIPSE-style .SMSPEC/.UNSMRY pair.
+
+    The layout is that of `resfo_utilities.testing.Smspec`/`Unsmry`, ref the opm
+    manual, tables F.44ff.
+    """
     keys = list(vectors)
     keywords = [key.split(":")[0] for key in keys]
+    start = datetime.fromisoformat(start_date)
+    int32 = np.int32
 
-    smspec = Smspec(
-        nx=nx,
-        ny=ny,
-        nz=1,
-        restarted_from_step=0,
-        num_keywords=1 + len(keys),
-        restart="        ",
-        keywords=["TIME    ", *keywords],
-        well_names=[":+:+:+:+", *[key.split(":")[1] for key in keys]],
-        region_numbers=[-32676, *([0] * len(keys))],
-        units=["DAYS    ", *[SUMMARY_UNITS[kw] for kw in keywords]],
-        start_date=Date.from_datetime(datetime.fromisoformat(start_date)),
-        intehead=SmspecIntehead(
-            unit=UnitSystem.METRIC, simulator=Simulator.ECLIPSE_100
-        ),
+    resfo.write(
+        f"{eclbase}.SMSPEC",
+        [
+            # Unit system METRIC, simulator ECLIPSE 100
+            ("INTEHEAD", np.array([1, 100], dtype=int32)),
+            ("RESTART ", [" " * 8] * 9),
+            ("DIMENS  ", np.array([1 + len(keys), nx, ny, 1, 0, 0], dtype=int32)),
+            ("KEYWORDS", ["TIME    ", *[kw.ljust(8) for kw in keywords]]),
+            ("WGNAMES ", [":+:+:+:+", *[key.split(":")[1] for key in keys]]),
+            ("NUMS    ", np.array([-32676, *([0] * len(keys))], dtype=int32)),
+            ("UNITS   ", ["DAYS    ", *[SUMMARY_UNITS[kw] for kw in keywords]]),
+            (
+                "STARTDAT",
+                np.array(
+                    [start.day, start.month, start.year, start.hour, start.minute, 0],
+                    dtype=int32,
+                ),
+            ),
+        ],
     )
-    unsmry = Unsmry(
-        steps=[
-            SummaryStep(
-                seqnum=step,
-                ministeps=[
-                    SummaryMiniStep(
-                        mini_step=0,
-                        params=[dt * (step + 1), *[vectors[key][step] for key in keys]],
-                    )
-                ],
-            )
+    resfo.write(
+        f"{eclbase}.UNSMRY",
+        [
+            record
             for step in range(nsteps)
-        ]
+            for record in (
+                ("SEQHDR  ", np.array([step], dtype=int32)),
+                ("MINISTEP", np.array([0], dtype=int32)),
+                (
+                    "PARAMS  ",
+                    np.array(
+                        [dt * (step + 1), *[vectors[key][step] for key in keys]],
+                        dtype=np.float32,
+                    ),
+                ),
+            )
+        ],
     )
-    smspec.to_file(f"{eclbase}.SMSPEC")
-    unsmry.to_file(f"{eclbase}.UNSMRY")
 
 
 def load_parameters(filename: str) -> dict:

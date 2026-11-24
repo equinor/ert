@@ -769,7 +769,7 @@ def test_that_substitutions_are_applied_to_zonemap_filename(
         )
 
 
-@pytest.mark.filterwarnings("ignore:.*contains a RFT key but no forward model step")
+@pytest.mark.filterwarnings("ignore:.*contains an RFT key but no forward model step")
 def test_that_missing_egrid_with_locations_raises_invalid_response_file(
     mock_resfo_file,
 ):
@@ -1079,8 +1079,8 @@ def _rft_responses_for_approximation(
     layers = [  # depth  pressure    swat    sgas
               (   5.0,    100.0,     0.1,     0.2),  # layer 1  # ruff: ignore[whitespace-after-open-bracket, multiple-spaces-after-comma]
               (  15.0,    200.0,     0.2,     0.3),  # layer 2  # ruff: ignore[whitespace-after-open-bracket, multiple-spaces-after-comma]
-              (  25.0,     None,  np.nan,  np.nan),  # layer 3  # ruff: ignore[whitespace-after-open-bracket, multiple-spaces-after-comma, multiple-spaces-before-keyword]
-              (  35.0,     None,    None,    None),  # layer 4  # ruff: ignore[whitespace-after-open-bracket, multiple-spaces-after-comma, multiple-spaces-before-keyword]
+              (  25.0,     None,  np.nan,  np.nan),  # layer 3  # ruff: ignore[whitespace-after-open-bracket, multiple-spaces-after-comma]
+              (  35.0,     None,    None,    None),  # layer 4  # ruff: ignore[whitespace-after-open-bracket, multiple-spaces-after-comma]
               (  45.0,    200.0,     0.2,     0.3),  # layer 5  # ruff: ignore[whitespace-after-open-bracket, multiple-spaces-after-comma]
               (  55.0,   1000.0,     0.3,     0.2),  # layer 6  # ruff: ignore[whitespace-after-open-bracket, multiple-spaces-after-comma]
     ]
@@ -1359,6 +1359,7 @@ def test_rft_value_approximation(
     ("rft_response_config", "rft_obs_config"),
     [(False, True), (True, False), (True, True)],
 )
+@pytest.mark.filterwarnings("ignore:Config contains an RFT key but no forward model")
 def test_that_approximate_missing_rft_values_keyword_sets_interpolation_to_true_on_rft_config(  # ruff: ignore[line-too-long]
     approximate_missing_rft_values_config,
     expected_setting,
@@ -1485,7 +1486,7 @@ def _collect_rft_response_warnings(
 def test_that_simple_rft_key_with_response_doesnt_warn(
     setup_mock_resfo_file,
 ):
-    """Simple means a RFT key not containing any wildcards in this context"""
+    """Simple means an RFT key not containing any wildcards in this context"""
     warnings_ = _collect_rft_response_warnings(
         wells=[_MOCK_RESFO_RFT_WELL],
         times=[_MOCK_RESFO_RFT_TIME],

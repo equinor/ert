@@ -69,7 +69,6 @@ class EverestMainWindow(QMainWindow):
         )
         event_queue, event_monitor_thread = client.setup_event_queue_from_ws_endpoint(
             experiment_id=experiment_id,
-            refresh_interval=0.02,
             open_timeout=40,
             websocket_recv_timeout=1.0,
         )

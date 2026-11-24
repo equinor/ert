@@ -5,13 +5,14 @@ import logging
 import warnings
 from argparse import ArgumentParser
 from collections.abc import Callable, Mapping, Sequence
-from typing import TYPE_CHECKING, Any, Literal, TypeVar, overload
+from typing import TYPE_CHECKING, Any, Literal, TypeVar, overload, override
 
 import pluggy
 from pydantic import BaseModel, Field
 from typing_extensions import TypedDict
 
 from ert.config import (
+    EcosystemPlugin,
     ForwardModelStepDocumentation,
     ForwardModelStepPlugin,
     KnownQueueOptions,
@@ -32,8 +33,22 @@ _PLUGIN_NAMESPACE = "ert"
 hook_implementation = pluggy.HookimplMarker(_PLUGIN_NAMESPACE)
 hook_specification = pluggy.HookspecMarker(_PLUGIN_NAMESPACE)
 
+_SINGLE_IMPLEMENTATION_ATTR = "single_implementation_hook"
+
+
+def single_implementation[F: Callable[..., object]](hookspec: F) -> F:
+    """Mark a hook specification as allowing at most one plugin implementation.
+
+    The plugin manager refuses to register a plugin that would give the hook
+    a second implementation.
+    """
+    setattr(hookspec, _SINGLE_IMPLEMENTATION_ATTR, True)
+    return hookspec
+
 
 if TYPE_CHECKING:
+    from ert.run_models.event import StatusEvents
+
     from .plugin_response import PluginMetadata, PluginResponse
 K = TypeVar("K")
 V = TypeVar("V")
@@ -79,6 +94,25 @@ class ErtPluginManager(pluggy.PluginManager):
 
         self._log_handles: list[logging.Handler] | None = None
 
+    @override
+    def register(self, plugin: object, name: str | None = None) -> str | None:
+        plugin_name = super().register(plugin, name)
+        if plugin_name is None:
+            return None
+        for hook_caller in self.get_hookcallers(plugin) or []:
+            if hook_caller.spec is None or not getattr(
+                hook_caller.spec.function, _SINGLE_IMPLEMENTATION_ATTR, False
+            ):
+                continue
+            hook_impls = hook_caller.get_hookimpls()
+            if len(hook_impls) > 1:
+                self.unregister(name=plugin_name)
+                raise ValueError(
+                    f"Only one plugin may implement the {hook_caller.name!r} hook, "
+                    f"got {[impl.plugin_name for impl in hook_impls]!r}"
+                )
+        return plugin_name
+
     def __str__(self) -> str:
         self_str = "ERT Plugin manager:\n"
         for plugin in self.get_plugins():
@@ -100,6 +134,17 @@ class ErtPluginManager(pluggy.PluginManager):
             resp.data for resp in self.hook.installable_forward_model_steps()
         ]
         return [fm_step for fm_steps in fm_steps_listed for fm_step in fm_steps]
+
+    @property
+    def ecosystem_plugin(self) -> type[EcosystemPlugin] | None:
+        plugins = [resp.data for resp in self.hook.ecosystem_plugin()]
+        if len(plugins) > 1:
+            names = sorted(plugin.__name__ for plugin in plugins)
+            raise ValueError(
+                f"Only one ecosystem plugin can be installed, found {len(plugins)}: "
+                f"{names}"
+            )
+        return plugins[0] if plugins else None
 
     @staticmethod
     def _evaluate_config_hook(hook: pluggy.HookCaller, config_name: str) -> str | None:
@@ -176,13 +221,6 @@ class ErtPluginManager(pluggy.PluginManager):
             if len(plugin_response) == 0:
                 return None
 
-            if len(plugin_response) > 1:
-                plugin_names = [
-                    plugin.plugin_metadata.plugin_name for plugin in plugin_response
-                ]
-                raise ValueError(
-                    f"Only one site configuration is allowed, got {plugin_names}"
-                )
             return ErtRuntimePlugins.model_validate(plugin_response[0].data)
         except AttributeError:
             return None
@@ -345,14 +383,27 @@ class ErtPluginManager(pluggy.PluginManager):
 
     def get_ip_address(self) -> str:
         ip_address: list[str] = self.hook.get_ip_address()
-        if len(ip_address) > 1:
-            raise ValueError(
-                f"Only one plugin should provide the IP address, got {ip_address}"
-            )
         if not ip_address:
             return net_utils.get_ip_address()
 
         return ip_address[0]
+
+    @property
+    def has_status_event_listener(self) -> bool:
+        return bool(self.hook.on_status_event.get_hookimpls())
+
+    def notify_status_event(
+        self, *, experiment_run_id: str, event: StatusEvents
+    ) -> None:
+        try:
+            self.hook.on_status_event(
+                experiment_run_id=experiment_run_id, event=event.model_copy(deep=True)
+            )
+        except Exception:
+            # Log flooding potential tracked in https://github.com/equinor/ert/issues/14908
+            logger.exception(
+                f"Status event plugin failed for experiment run '{experiment_run_id}'"
+            )
 
     def add_span_processor_to_trace_provider(self) -> None:
         span_processors = self.hook.add_span_processor()
@@ -365,6 +416,9 @@ class ErtRuntimePlugins(BaseModel, extra="forbid"):
         default_factory=dict
     )
     installed_workflow_jobs: Mapping[str, WorkflowJob] = Field(default_factory=dict)
+    installed_ecosystem_plugins: Mapping[str, EcosystemPlugin] = Field(
+        default_factory=dict
+    )
     queue_options: KnownQueueOptions | None = Field(
         default_factory=LocalQueueOptions, discriminator="name"
     )
@@ -406,9 +460,16 @@ def get_site_plugins(
         fm_step = fm_step_subclass()  # type: ignore
         all_forward_model_steps[fm_step.name] = fm_step
 
+    all_ecosystem_plugins: dict[str, EcosystemPlugin] = {}
+    ecosystem_plugin_subclass = plugin_manager.ecosystem_plugin
+    if ecosystem_plugin_subclass is not None:
+        ecosystem_plugin = ecosystem_plugin_subclass()  # type: ignore[call-arg]
+        all_ecosystem_plugins[ecosystem_plugin.name] = ecosystem_plugin
+
     return ErtRuntimePlugins(
         installed_forward_model_steps=all_forward_model_steps,
         installed_workflow_jobs=all_workflow_jobs,
+        installed_ecosystem_plugins=all_ecosystem_plugins,
         queue_options=site_configurations.queue_options
         if site_configurations
         else None,

@@ -29,22 +29,66 @@ Highlighted changes
 Version 27.0
 ------------
 
+Parameter localization overview table
+#####################################
+
+The *Multiple data assimilation* and *Manual update* panels now contain a
+**Parameter Localizations** table summarizing how parameters will be updated.
+Each row shows an update strategy (e.g. "Global"), a parameter type
+(e.g. "GenKW" or "Field") and the number of parameters with that
+combination.
+
+Each GEN_KW parameter counts individually, while each FIELD
+and SURFACE counts as one, regardless of its number of grid cells or nodes.
+Parameters that are not updated are listed as "Non-updatable".
+Rows are sorted alphabetically.
+
+.. image:: images/v27/parameter_localization_table.png
+
+The table is meant as a quick overview; for details about each parameter,
+click **Show parameters** to open the :ref:`parameter viewer <parameter_viewer>`.
+
+
 Single update mode for ES-MDA, Ensemble Smoother deprecated
 ###########################################################
 
-ES-MDA now has a **Single update** option, which runs one update with weight 1.
-This gives the same result as the Ensemble Smoother, which is now deprecated
-and will be removed in a future release.
-
-In the GUI, select *Multiple data assimilation* and check **Single update**:
-
-.. image:: images/v27/single_update_mode.png
-
-From the command line, use the ``--single-update`` flag:
+ES-MDA now has a ``--single-update`` command line flag, which runs one update
+with weight 1. This gives the same result as the Ensemble Smoother, which is now
+deprecated and will be removed in a future release.
 
 .. code-block:: text
 
     ert es_mda --single-update config.ert
+
+
+Field update comparison plot
+############################
+
+This adds possibility to compare prior and posterior field parameters to
+show the strength of the update by computing the difference of the mean
+across realizations.
+
+The plot requires to select two ensembles and it sorts them
+by creation time to maintain consistent ordering.
+
+.. image:: images/v27/field_update_comparison.png
+
+
+Workflow output in the GUI
+##########################
+
+Output from workflow jobs is now shown in a new *Workflows* tab, so you no
+longer need to read the ERT log. While an experiment is running, the tab in
+the run dialog lists each job with its hook, workflow, status and time.
+Selecting a job shows its stdout and stderr. Use the *Iteration* dropdown to
+see the jobs for a given iteration.
+
+Output from hooked workflows is stored with the experiment. To see it after
+the run, select the experiment in *Manage experiments* and open its
+*Workflows* tab.
+
+.. image:: images/v27/workflows_tab.png
+
 
 Version 26.0
 ------------

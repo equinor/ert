@@ -12,62 +12,64 @@ List of keywords
 Table of keywords
 =================
 
-======================================================================   ======================================  ==============================  ==============================================================================================================================================
-Keyword name                                                             Required                                Default value                   Purpose
-======================================================================   ======================================  ==============================  ==============================================================================================================================================
-:ref:`ANALYSIS_SET_VAR <analysis_set_var>`                               NO                                                                      Set analysis module internal state variable
-:ref:`APPROXIMATE_MISSING_RFT_VALUES <approximate_missing_rft_values>`   NO                                      FALSE                           Interpolate/extrapolate RFT values for observation locations with missing simulator responses
-:ref:`CASE_TABLE <case_table>`                                           NO                                                                      Deprecated
-:ref:`CREATE_WORKFLOW_FROM_JOB <create_workflow_from_job>`               NO                                                                      Define and register a single-job workflow inline
-:ref:`DATA_FILE <data_file>`                                             NO                                                                      Provide an ECLIPSE data file for the problem
-:ref:`DATA_KW <data_kw>`                                                 NO                                                                      Replace strings in ECLIPSE .DATA files
-:ref:`DEFINE <define>`                                                   NO                                                                      Define keywords with config scope
-:ref:`DESIGN_MATRIX <design_matrix>`                                     NO                                                                      Add design matrix parameters from a spreadsheet
-:ref:`ECLBASE <eclbase>`                                                 NO                                                                      Define a name for the ECLIPSE simulations.
-:ref:`ENKF_ALPHA <enkf_alpha>`                                           NO                                      3.0                             Parameter controlling outlier behaviour in EnKF algorithm
-:ref:`ENKF_TRUNCATION <enkf_truncation>`                                 NO                                      0.98                            Cutoff used on singular value spectrum
-:ref:`ENSPATH <enspath>`                                                 NO                                      storage                         Folder used for storage of simulation results
-:ref:`FIELD <field>`                                                     NO                                                                      Adds grid parameters
-:ref:`FORWARD_MODEL <forward_model>`                                     NO                                                                      Add the running of a job to the simulation forward model
-:ref:`GEN_DATA <gen_data>`                                               NO                                                                      Specify a general type of data created/updated by the forward model
-:ref:`GEN_KW <gen_kw>`                                                   NO                                                                      Add a scalar parameter
-:ref:`GRID <grid>`                                                       NO                                                                      Provide an ECLIPSE grid for the reservoir model
-:ref:`HOOK_WORKFLOW <hook_workflow>`                                     NO                                                                      Install a workflow to be run automatically
-:ref:`HOOK_WORKFLOW_JOB <hook_workflow_job>`                             NO                                                                      Define a single-job workflow inline and hook it to a runtime step
-:ref:`INCLUDE <include>`                                                 NO                                                                      Include contents from another ert config
-:ref:`INSTALL_JOB <install_job>`                                         NO                                                                      Install a job for use in a forward model
-:ref:`INVERSION <inversion_algorithm>`                                   NO                                                                      Deprecated. Set inversion method for analysis module
-:ref:`JOBNAME <jobname>`                                                 NO                                      <CONFIG_FILE>-<IENS>            Name used for simulation files.
-:ref:`LOAD_WORKFLOW <load_workflow>`                                     NO                                                                      Load a workflow into ERT
-:ref:`LOAD_WORKFLOW_JOB <load_workflow_job>`                             NO                                                                      Load a workflow job into ERT
-:ref:`LOCALIZATION <localization>`                                       NO                                      False                           Enable experimental adaptive localization correlation (Deprecated)
-:ref:`LOCALIZATION_CORRELATION_THRESHOLD <local_corr_threshold>`         NO                                      min(1, 3/sqrt(N))               Specifying adaptive localization correlation threshold
-:ref:`MAX_RUNNING <max_running>`                                         NO                                      0                               Set the maximum number of simultaneously submitted and running realizations a positive integer (> 0) is required
-:ref:`MAX_RUNTIME <max_runtime>`                                         NO                                      0                               Set the maximum runtime in seconds for a realization (0 means no runtime limit)
-:ref:`MAX_SUBMIT <max_submit>`                                           NO                                      2                               How many times the queue system should retry a simulation
-:ref:`MIN_REALIZATIONS <min_realizations>`                               NO                                      0                               Set the number of minimum realizations that has to succeed in order for the run to continue (0 means identical to NUM_REALIZATIONS - all must pass).
-:ref:`NUM_CPU <num_cpu>`                                                 NO                                      1                               Set the number of CPUs. Interpretation varies depending on context
-:ref:`NUM_REALIZATIONS <num_realizations>`                               YES                                                                     Set the number of reservoir realizations to use
-:ref:`OBS_CONFIG <obs_config>`                                           NO                                                                      File specifying observations with uncertainties
-:ref:`QUEUE_OPTION <queue_option>`                                       NO                                                                      Set options for an ERT queue system
-:ref:`QUEUE_SYSTEM <queue_system>`                                       NO                                      LOCAL_DRIVER                    System used for running simulation jobs
-:ref:`RANDOM_SEED <random_seed>`                                         NO                                                                      Set a fixed integer seed to gain reproducibility and avoid randomness.
-:ref:`REALIZATION_MEMORY <realization_memory>`                           NO                                                                      Set the expected memory requirements for a realization
-:ref:`RFT <rft>`                                                         NO                                                                      Specify which RFT data to load from simulator output
-:ref:`RUNPATH <runpath>`                                                 NO                                      realization-<IENS>/iter-<ITER>  Directory to run simulations; simulations/realization-<IENS>/iter-<ITER>
-:ref:`RUNPATH_FILE <runpath_file>`                                       NO                                      .ert_runpath_list               Name of file with path for all forward models that ERT has run. To be used by user defined scripts to find the realizations
-:ref:`RUN_TEMPLATE <run_template>`                                       NO                                                                      Install arbitrary files in the runpath directory
-:ref:`SEISMIC <seismic>`                                                 NO                                                                      Specify which Seismic data to load from fmu-sim2seis simulator output
-:ref:`SETENV <setenv>`                                                   NO                                                                      You can modify the UNIX environment with SETENV calls
-:ref:`STD_CUTOFF <std_cutoff>`                                           NO                                      1e-6                            Determines the threshold for ensemble variation in a measurement
-:ref:`STOP_LONG_RUNNING <stop_long_running>`                             NO                                      FALSE                           Stop long running realizations after minimum number of realizations (MIN_REALIZATIONS) have run
-:ref:`SUBMIT_SLEEP <submit_sleep>`                                       NO                                      0.0                             Determines for how long in seconds the system will sleep between submitting jobs.
-:ref:`SUMMARY <summary>`                                                 NO                                                                      Add summary vectors for internalization
-:ref:`SURFACE <surface>`                                                 NO                                                                      Surface parameter read from RMS IRAP file
-:ref:`UPDATE_LOG_PATH <update_log_path>`                                 NO                                      update_log                      Summary of the update steps are stored in this directory
-:ref:`WORKFLOW_JOB_DIRECTORY <workflow_job_directory>`                   NO                                                                      Directory containing workflow jobs
-:ref:`ZONEMAP <zonemap>`                                                 NO                                                                      Map grid layers to geological zone names for RFT validation
-======================================================================   ======================================  ==============================  ==============================================================================================================================================
+======================================================================   ======================================  ==========================================  ==============================================================================================================================================
+Keyword name                                                             Required                                Default value                               Purpose
+======================================================================   ======================================  ==========================================  ==============================================================================================================================================
+:ref:`ANALYSIS_SET_VAR <analysis_set_var>`                               NO                                                                                  Set analysis module internal state variable
+:ref:`APPROXIMATE_MISSING_RFT_VALUES <approximate_missing_rft_values>`   NO                                      FALSE                                       Interpolate/extrapolate RFT values for observation locations with missing simulator responses
+:ref:`CASE <case>`                                                       NO                                                                                  Name of the case, equivalent to DEFINE <CASE>
+:ref:`CASE_TABLE <case_table>`                                           NO                                                                                  Deprecated
+:ref:`CREATE_WORKFLOW_FROM_JOB <create_workflow_from_job>`               NO                                                                                  Define and register a single-job workflow inline
+:ref:`DATA_FILE <data_file>`                                             NO                                                                                  Provide an ECLIPSE data file for the problem
+:ref:`DATA_KW <data_kw>`                                                 NO                                                                                  Replace strings in ECLIPSE .DATA files
+:ref:`DEFINE <define>`                                                   NO                                                                                  Define keywords with config scope
+:ref:`DESIGN_MATRIX <design_matrix>`                                     NO                                                                                  Add design matrix parameters from a spreadsheet
+:ref:`ECLBASE <eclbase>`                                                 NO                                                                                  Define a name for the ECLIPSE simulations.
+:ref:`ENKF_ALPHA <enkf_alpha>`                                           NO                                      3.0                                         Parameter controlling outlier behaviour in EnKF algorithm
+:ref:`ENKF_TRUNCATION <enkf_truncation>`                                 NO                                      0.98                                        Cutoff used on singular value spectrum
+:ref:`ENSPATH <enspath>`                                                 NO                                      storage                                     Folder used for storage of simulation results
+:ref:`FIELD <field>`                                                     NO                                                                                  Adds grid parameters
+:ref:`FORWARD_MODEL <forward_model>`                                     NO                                                                                  Add the running of a job to the simulation forward model
+:ref:`GEN_DATA <gen_data>`                                               NO                                                                                  Specify a general type of data created/updated by the forward model
+:ref:`GEN_KW <gen_kw>`                                                   NO                                                                                  Add a scalar parameter
+:ref:`GRID <grid>`                                                       NO                                                                                  Provide an ECLIPSE grid for the reservoir model
+:ref:`HOOK_WORKFLOW <hook_workflow>`                                     NO                                                                                  Install a workflow to be run automatically
+:ref:`HOOK_WORKFLOW_JOB <hook_workflow_job>`                             NO                                                                                  Define a single-job workflow inline and hook it to a runtime step
+:ref:`INCLUDE <include>`                                                 NO                                                                                  Include contents from another ert config
+:ref:`INSTALL_JOB <install_job>`                                         NO                                                                                  Install a job for use in a forward model
+:ref:`INVERSION <inversion_algorithm>`                                   NO                                                                                  Deprecated. Set inversion method for analysis module
+:ref:`JOBNAME <jobname>`                                                 NO                                      <CONFIG_FILE>-<IENS>                        Name used for simulation files.
+:ref:`LOAD_WORKFLOW <load_workflow>`                                     NO                                                                                  Load a workflow into ERT
+:ref:`LOAD_WORKFLOW_JOB <load_workflow_job>`                             NO                                                                                  Load a workflow job into ERT
+:ref:`LOCALIZATION <localization>`                                       NO                                      False                                       Enable experimental adaptive localization correlation (Deprecated)
+:ref:`LOCALIZATION_CORRELATION_THRESHOLD <local_corr_threshold>`         NO                                      min(1, 3/sqrt(N))                           Specifying adaptive localization correlation threshold
+:ref:`MAX_RUNNING <max_running>`                                         NO                                      0                                           Set the maximum number of simultaneously submitted and running realizations a positive integer (> 0) is required
+:ref:`MAX_RUNTIME <max_runtime>`                                         NO                                      0                                           Set the maximum runtime in seconds for a realization (0 means no runtime limit)
+:ref:`MAX_SUBMIT <max_submit>`                                           NO                                      1                                           How many times the queue system should retry a simulation
+:ref:`MIN_REALIZATIONS <min_realizations>`                               NO                                      0                                           Set the number of minimum realizations that has to succeed in order for the run to continue (0 means identical to NUM_REALIZATIONS - all must pass).
+:ref:`NUM_CPU <num_cpu>`                                                 NO                                      1                                           Set the number of CPUs. Interpretation varies depending on context
+:ref:`NUM_REALIZATIONS <num_realizations>`                               YES                                                                                 Set the number of reservoir realizations to use
+:ref:`OBS_CONFIG <obs_config>`                                           NO                                                                                  File specifying observations with uncertainties
+:ref:`QUEUE_OPTION <queue_option>`                                       NO                                                                                  Set options for an ERT queue system
+:ref:`QUEUE_SYSTEM <queue_system>`                                       NO                                      LOCAL                                       System used for running simulation jobs
+:ref:`RANDOM_SEED <random_seed>`                                         NO                                                                                  Set a fixed integer seed to gain reproducibility and avoid randomness.
+:ref:`REALIZATION_MEMORY <realization_memory>`                           NO                                                                                  Set the expected memory requirements for a realization
+:ref:`RFT <rft>`                                                         NO                                                                                  Specify which RFT data to load from simulator output
+:ref:`RUNPATH <runpath>`                                                 NO                                      <SCRATCH>/realization-<IENS>/iter-<ITER>    Directory to run simulations
+:ref:`RUNPATH_FILE <runpath_file>`                                       NO                                      .ert_runpath_list                           Name of file with path for all forward models that ERT has run. To be used by user defined scripts to find the realizations
+:ref:`RUN_TEMPLATE <run_template>`                                       NO                                                                                  Install arbitrary files in the runpath directory
+:ref:`SCRATCH <scratch>`                                                 NO                                      simulations                                 Base directory of the default RUNPATH, equivalent to DEFINE <SCRATCH>
+:ref:`SEISMIC <seismic>`                                                 NO                                                                                  Specify which Seismic data to load from fmu-sim2seis simulator output
+:ref:`SETENV <setenv>`                                                   NO                                                                                  You can modify the UNIX environment with SETENV calls
+:ref:`STD_CUTOFF <std_cutoff>`                                           NO                                      1e-6                                        Determines the threshold for ensemble variation in a measurement
+:ref:`STOP_LONG_RUNNING <stop_long_running>`                             NO                                      FALSE                                       Stop long running realizations after minimum number of realizations (MIN_REALIZATIONS) have run
+:ref:`SUBMIT_SLEEP <submit_sleep>`                                       NO                                      0.0                                         Determines for how long in seconds the system will sleep between submitting jobs.
+:ref:`SUMMARY <summary>`                                                 NO                                                                                  Add summary vectors for internalization
+:ref:`SURFACE <surface>`                                                 NO                                                                                  Surface parameter read from RMS IRAP file
+:ref:`UPDATE_LOG_PATH <update_log_path>`                                 NO                                      update_log                                  Summary of the update steps are stored in this directory
+:ref:`WORKFLOW_JOB_DIRECTORY <workflow_job_directory>`                   NO                                                                                  Directory containing workflow jobs
+:ref:`ZONEMAP <zonemap>`                                                 NO                                                                                  Map grid layers to geological zone names for RFT validation
+======================================================================   ======================================  ==========================================  ==============================================================================================================================================
 
 
 
@@ -142,6 +144,32 @@ Note that redefining a key to a different value takes effect for the rest of the
 In the above example, the environment variable VAR is set to 3 while the environment variable
 VAR2 is set to 4.
 
+.. _case:
+
+CASE
+----
+
+``CASE`` sets the name of the case. ``CASE my_case`` is equivalent to
+``DEFINE <CASE> my_case``. It is used by ecosystem plugins, see
+:ref:`ECOSYSTEM <ecosystem>`.
+
+.. _scratch:
+
+SCRATCH
+-------
+
+``SCRATCH`` sets the base directory for runpaths. ``SCRATCH /my/scratch`` is
+equivalent to ``DEFINE <SCRATCH> /my/scratch``. It defaults to ``simulations``, and
+the default :ref:`RUNPATH <runpath>` is ``<SCRATCH>/realization-<IENS>/iter-<ITER>``.
+
+*Example:*
+
+::
+
+        CASE my_case
+        SCRATCH /my/scratch
+        ECOSYSTEM FMU
+
 .. _data_file:
 
 DATA_FILE
@@ -213,6 +241,12 @@ where:
 
    When a parameter name overlaps between DESIGN_MATRIX and GEN_KW, the PRIORITY setting determines which source's update behavior takes precedence.
    Default is `FALSE`.
+
+   .. note::
+
+      Setting ``UPDATE:TRUE`` is an advanced feature and will include design matrix parameters in history matching.
+      When using the option the user is responsible for making sure that the initial parameter distribution is compatible
+      with parameters sampled by ert, which uses a standard normal distribution. The default is ``UPDATE:FALSE``
 
   Columns containing non-numeric (categorical) values, e.g. text labels, cannot be updated
   when they are sourced from the design matrix, even if ``UPDATE:TRUE`` is set. When
@@ -313,9 +347,18 @@ If the :ref:`design_sheet` contains column `REAL`, ert will automatically set th
 specified in `REAL` column; i.e.; 0,1 and 3 in the example. If the `REAL` column is not present, ert will enumerate individual rows
 as realization; i.e. 0,1 and 2 in the example.
 
+The design matrix ensemble size is the highest ``REAL`` value plus one, that is including
+any missing realization indices. ERT limits the ensemble size to the smaller of this
+design matrix ensemble size and ``NUM_REALIZATIONS``; only indices present in ``REAL`` and within that
+ensemble are active. For example, with ``REAL`` values 1, 4 and 8 and
+``NUM_REALIZATIONS 6``, the ensemble has six realizations and realizations 1
+and 4 are active. A CLI or GUI realization selection can further restrict these
+active realizations.
+
 Multiple :code:`DESIGN_MATRIX` keywords can be added to the configuration file and ert will validate that
-the parameter names are either unique or the values need to be the same for the overlapping parameters
-in the different instances of the keyword.
+the parameter names are unique across the different instances of the keyword. A keyword that is repeated
+with the same file and options is only read once. The ``PRIORITY`` and ``UPDATE`` options of each keyword
+only apply to the parameters read by that keyword.
 
 In case there is a different number of realizations in each instance, the intersection of the active realizations will be used
 and ert will raise a warning. If there are no common active realizations, ert will produce a ConfigValidationError.
@@ -590,6 +633,10 @@ Setting this number lower than the peak memory consumption of each realization p
 the realization at risk of being killed in an out-of-memory situation. Setting this
 number higher than needed will give longer wait times in the queue.
 
+When running on a cluster queue system, ERT warns after the ensemble has been
+evaluated if any realization used more memory than REALIZATION_MEMORY, and
+suggests a value 10% above the highest memory usage it recorded.
+
 For the local queue system, this keyword has no effect. In that scenario, you
 can use MAX_RUNNING to choke the memory consumption.
 
@@ -639,6 +686,9 @@ ENSPATH is set to "storage".
         ENSPATH /mnt/my_big_enkf_disk
 
 The ENSPATH keyword is optional.
+
+Only one ERT GUI can use a storage folder at a time, including when several
+configuration files share the same ENSPATH. See :ref:`one_gui_per_storage`.
 
 .. _install_job:
 
@@ -712,7 +762,8 @@ RUNPATH
 The RUNPATH keyword should give the name of the folders where the ECLIPSE
 simulations are executed. It should contain <IENS> and <ITER>, which
 will be replaced by the realization number and iteration number when ERT creates the folders.
-By default, RUNPATH is set to "simulations/realization-<IENS>/iter-<ITER>".
+By default, RUNPATH is set to "<SCRATCH>/realization-<IENS>/iter-<ITER>",
+which is "simulations/realization-<IENS>/iter-<ITER>" when :ref:`SCRATCH <scratch>` is not set.
 
 Deprecated syntax still allow use of two `%d` specifiers. Use of more than two `%d` specifiers,
 using multiple `<IENS>` or `<ITER>` keywords or mixing styles is prohibited.
@@ -2102,6 +2153,23 @@ FORWARD_MODEL
 
     In available steps in ERT you can see a list of the steps which are available.
 
+
+.. _ecosystem:
+
+ECOSYSTEM
+---------
+
+The :code:`ECOSYSTEM` keyword selects an ecosystem plugin installed through
+the :doc:`plugin system </getting_started/howto/plugin_system>`
+Syntax::
+
+   ECOSYSTEM <plugin_name> [<OPTION>:<value> ...]
+
+*Example:*
+
+::
+
+   ECOSYSTEM FMU UPLOAD:AUTOMATIC
 
 .. _queue_system:
 

@@ -207,11 +207,17 @@ class PlotWidget(QWidget):
             text_artist.set_picker(True)
 
     def _editable_text_artists(self) -> list[Text]:
+        figure_title = self._figure.get_suptitle()
+        titles = [
+            text_artist
+            for text_artist in self._figure.texts
+            if figure_title and text_artist.get_text() == figure_title
+        ] or [axes.title for axes in self._figure.axes]
         return [
             text_artist
             for axes in self._figure.axes
-            for text_artist in (axes.xaxis.label, axes.yaxis.label, axes.title)
-        ]
+            for text_artist in (axes.xaxis.label, axes.yaxis.label)
+        ] + titles
 
     def _clear_hovered_text_artist(self) -> None:
         if (
@@ -262,6 +268,5 @@ class PlotWidget(QWidget):
                 self.axisLabelEditRequested.emit("y")
                 return
 
-            if event.artist is axes.title:
-                self.titleEditRequested.emit()
-                return
+        if event.artist in self._editable_text_artists():
+            self.titleEditRequested.emit()

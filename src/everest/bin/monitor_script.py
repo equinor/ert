@@ -16,6 +16,7 @@ from .utils import (
     ArgParseFormatter,
     get_experiment_status,
     handle_keyboard_interrupt,
+    log_enabled_flags,
     setup_logging,
 )
 
@@ -26,6 +27,7 @@ def monitor_entry(args: list[str] | None = None) -> None:
     options = parser.parse_args(args)
 
     with setup_logging(options):
+        log_enabled_flags("monitor", options)
         if threading.current_thread() is threading.main_thread():
             signal.signal(
                 signal.SIGINT,
@@ -64,14 +66,6 @@ def _build_args_parser() -> argparse.ArgumentParser:
         "--debug",
         action="store_true",
         help="Display debug information in the terminal.",
-    )
-    arg_parser.add_argument(
-        "--show-all-jobs",
-        action="store_true",
-        help=(
-            "This option no longer has an effect, "
-            "and will be removed in a future version."
-        ),
     )
 
     return arg_parser

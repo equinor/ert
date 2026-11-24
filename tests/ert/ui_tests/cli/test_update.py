@@ -109,12 +109,20 @@ GENERAL_OBSERVATION POLY_OBS_{i} {{
 poly_eval = """\
 #!/usr/bin/env python3
 import json
-import numpy as np
 json_raw = json.load(open("parameters.json"))
 coeffs = {{k: v["value"] for k, v in json_raw.items()}}
-c = [np.array(coeffs[f"coeff_" + str(i)]) for i in range(len(coeffs))]
+c = [coeffs[f"coeff_" + str(i)] for i in range(len(coeffs))]
+
+
+def polyval(x):
+    y = 0.0
+    for coeff in c:
+        y = y * x + coeff
+    return y
+
+
 with open("poly.out", "w", encoding="utf-8") as f:
-    f.write("\\n".join(map(str, [np.polyval(c, x) for x in range({num_points})])))
+    f.write("\\n".join(map(str, [polyval(x) for x in range({num_points})])))
 """
 
 POLY_EVAL = "EXECUTABLE poly_eval.py"

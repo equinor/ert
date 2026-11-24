@@ -17,6 +17,8 @@ from pydantic.dataclasses import dataclass
 from _ert.events import (
     EnsembleEvaluationWarning,
     ForwardModelStepChecksum,
+    ForwardModelStepFailure,
+    ForwardModelStepSuccess,
     RealizationEvent,
     RealizationFailed,
     RealizationStoppedLongRunning,
@@ -69,7 +71,10 @@ class Scheduler:
         self,
         driver: Driver,
         realizations: Sequence[Realization] | None = None,
-        manifest_queue: asyncio.Queue[ForwardModelStepChecksum] | None = None,
+        manifest_queue: asyncio.Queue[
+            ForwardModelStepChecksum | ForwardModelStepSuccess | ForwardModelStepFailure
+        ]
+        | None = None,
         ensemble_evaluator_queue: asyncio.Queue[SnapshotInputEvent] | None = None,
         *,
         max_submit: int = 1,
@@ -110,6 +115,7 @@ class Scheduler:
         self._ens_id = ens_id
 
         self.checksum: dict[str, dict[str, Any]] = {}
+        self.std_stream_paths: dict[int, set[Path]] = {}
         self._realization_ids_to_kill: list[int] = []
         self._kill_task: asyncio.Task[None] | None = None
         self._stop_kill_task = asyncio.Event()
@@ -136,15 +142,14 @@ class Scheduler:
         for task in pending:
             logger.debug(f"Task {task.get_name()} was not killed properly!")
 
-    def mark_job_as_being_killed_by_evaluator(self, real_id: int) -> None:
-        """Mark the job as being killed by the evaluator"""
-        self._jobs[real_id]._started_killing_by_evaluator = True
+    def mark_terminate_message_sent_to_job(self, real_id: int) -> None:
+        self._jobs[real_id]._terminate_message_sent_by_evaluator = True
 
     def confirm_job_killed_by_evaluator(self, real_id: int) -> None:
         """Set the job as killed by the evaluator, if the flag for \
             evaluator started killing job is already set.
         """
-        if self._jobs[real_id]._started_killing_by_evaluator:
+        if self._jobs[real_id]._terminate_message_sent_by_evaluator:
             self._jobs[int(real_id)]._was_killed_by_evaluator.set()
 
     async def _update_avg_job_runtime(self) -> None:
@@ -208,6 +213,10 @@ class Scheduler:
                     name=f"orphan-watchdog-{iens}",
                 )
                 self._watchdog_tasks.append(task)
+            elif isinstance(event, ForwardModelStepSuccess | ForwardModelStepFailure):
+                self.std_stream_paths.setdefault(int(event.real), set()).update(
+                    Path(path) for path in event.std_stream_paths.values()
+                )
             self._manifest_queue.task_done()
 
     async def _kill_if_driver_lags(self, iens: int) -> None:

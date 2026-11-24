@@ -476,8 +476,8 @@ def test_that_seismic_misfit_plot_omits_median_annotations_when_box_plot_disable
         plot_context,
         {
             ensemble: pd.DataFrame(
-                {"0": [110.0], "5": [180.0]},
-                index=pd.Index([0], name="Realization"),
+                {"0": [110.0, 120.0], "5": [180.0, 190.0]},
+                index=pd.Index([0, 1], name="Realization"),
             )
         },
         observation_data=pd.DataFrame(
@@ -515,8 +515,8 @@ def test_that_seismic_misfit_plot_skips_ensembles_with_no_misfit_data(
         plot_context,
         {
             ensembles[0]: pd.DataFrame(
-                {"0": [110.0], "5": [180.0]},
-                index=pd.Index([0], name="Realization"),
+                {"0": [110.0, 120.0], "5": [180.0, 190.0]},
+                index=pd.Index([0, 1], name="Realization"),
             ),
             ensembles[1]: pd.DataFrame(
                 {"99": [1.0], "100": [2.0]},
@@ -586,8 +586,8 @@ def test_that_misfit_plot_colors_follow_ensemble_selection_color_indexes(
         plot_context,
         {
             ensemble: pd.DataFrame(
-                {column: [1.0] for column in columns},
-                index=pd.Index([0], name="Realization"),
+                {column: [1.0, 2.0] for column in columns},
+                index=pd.Index([0, 1], name="Realization"),
             )
             for ensemble in (iter_3, iter_2, iter_1, iter_0)
         },

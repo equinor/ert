@@ -18,7 +18,7 @@ from uuid import UUID, uuid4
 import polars as pl
 import xarray as xr
 from filelock import FileLock, Timeout
-from pydantic import BaseModel, Field, TypeAdapter
+from pydantic import BaseModel, Field, TypeAdapter, ValidationError
 
 import ert.storage
 from ert.config import ErtConfig
@@ -33,7 +33,8 @@ from .realization_storage_state import RealizationStorageState
 logger = logging.getLogger(__name__)
 
 
-_LOCAL_STORAGE_VERSION = 42
+_BLOB_URI_PATTERN = re.compile(r"^[0-9a-f]{8}\.blob$")
+_LOCAL_STORAGE_VERSION = 43
 
 
 def open_storage(
@@ -140,37 +141,42 @@ class LocalStorage(BaseMode):
         if mode.can_write:
             self._acquire_lock()
 
-        self._experiments: dict[UUID, LocalExperiment] = {}
-        self._ensembles: dict[UUID, LocalEnsemble] = {}
-        self._index: _Index = _Index()
+        try:  # ruff: ignore[too-many-statements-in-try-clause]
+            self._experiments: dict[UUID, LocalExperiment] = {}
+            self._ensembles: dict[UUID, LocalEnsemble] = {}
+            self._index: _Index = _Index()
 
-        try:
-            self.version = _storage_version(self.path)
-        except FileNotFoundError as err:
-            # No index json, will have a problem if other components of storage exists
-            errors = []
-            if (self.path / self.EXPERIMENTS_PATH).exists():
-                errors.append(
-                    f"experiments path: {(self.path / self.EXPERIMENTS_PATH)}"
+            try:
+                self.version = _storage_version(self.path)
+            except FileNotFoundError as err:
+                # A missing index is only valid for empty storage.
+                errors = []
+                if (self.path / self.EXPERIMENTS_PATH).exists():
+                    errors.append(
+                        f"experiments path: {(self.path / self.EXPERIMENTS_PATH)}"
+                    )
+                if (self.path / self.ENSEMBLES_PATH).exists():
+                    errors.append(f"ensemble path: {self.path / self.ENSEMBLES_PATH}")
+                if errors:
+                    raise ValueError(f"No index.json, but found: {errors}") from err
+                self.version = _LOCAL_STORAGE_VERSION
+
+            if self.check_migration_needed(Path(self.path)) and not self.can_write:
+                raise RuntimeError(
+                    f"Cannot open storage '{self.path}' in read-only mode: "
+                    f"Storage version {self.version} is too old. "
+                    f"Run ert to initiate migration."
                 )
-            if (self.path / self.ENSEMBLES_PATH).exists():
-                errors.append(f"ensemble path: {self.path / self.ENSEMBLES_PATH}")
-            if errors:
-                raise ValueError(f"No index.json, but found: {errors}") from err
-            self.version = _LOCAL_STORAGE_VERSION
 
-        if self.check_migration_needed(Path(self.path)) and not self.can_write:
-            raise RuntimeError(
-                f"Cannot open storage '{self.path}' in read-only mode: "
-                f"Storage version {self.version} is too old. "
-                f"Run ert to initiate migration."
-            )
+            if not stage_for_migration:
+                self.reload()
 
-        if not stage_for_migration:
-            self.reload()
-
+                if mode.can_write:
+                    self._save_index()
+        except BaseException:
             if mode.can_write:
-                self._save_index()
+                self._release_lock()
+            raise
 
     @staticmethod
     def check_migration_needed(storage_dir: Path) -> bool:
@@ -649,6 +655,7 @@ class LocalStorage(BaseMode):
             to40,
             to41,
             to42,
+            to43,
         )
 
         try:  # ruff: ignore[too-many-statements-in-try-clause]
@@ -720,6 +727,7 @@ class LocalStorage(BaseMode):
                     39: to40,
                     40: to41,
                     41: to42,
+                    42: to43,
                 }
                 for from_version in range(version, _LOCAL_STORAGE_VERSION):
                     migrations[from_version].migrate(self.path)
@@ -767,10 +775,14 @@ class LocalStorage(BaseMode):
         blob_info: BlobInfo,
         file_type: str,
         blob_dir: Path,
+        uri: str | None = None,
     ) -> BlobStorageData:
-        """Create a blob record and persist its data and JSON sidecar."""
-        blob_id = uuid4().hex[:8]
-        uri = f"{blob_id}.blob"
+        """Create a blob record and persist its data and JSON sidecar.
+
+        If *uri* is given, an existing blob with that uri is overwritten.
+        """
+        if uri is None:
+            uri = f"{uuid4().hex[:8]}.blob"
         instance = BlobStorageData(
             uri=uri,
             file_size=len(data),
@@ -780,6 +792,34 @@ class LocalStorage(BaseMode):
         )
         blob_dir.mkdir(parents=True, exist_ok=True)
         self._write_transaction(blob_dir / uri, data)
+        self._write_transaction(
+            blob_dir / f"{uri}.json",
+            instance.model_dump_json(indent=2).encode("utf-8"),
+        )
+        return instance
+
+    @require_write
+    def save_dataframe_to_blob(
+        self,
+        *,
+        name: str,
+        dataframe: pl.DataFrame,
+        blob_info: BlobInfo,
+        blob_dir: Path,
+        uri: str | None = None,
+    ) -> BlobStorageData:
+        if uri is None:
+            uri = f"{uuid4().hex[:8]}.blob"
+        blob_dir.mkdir(parents=True, exist_ok=True)
+        blob_filename = blob_dir / uri
+        self._to_parquet_transaction(blob_filename, dataframe)
+        instance = BlobStorageData(
+            uri=uri,
+            file_size=blob_filename.stat().st_size,
+            file_type="application/parquet",
+            name=name,
+            blob_info=blob_info,
+        )
         self._write_transaction(
             blob_dir / f"{uri}.json",
             instance.model_dump_json(indent=2).encode("utf-8"),
@@ -797,13 +837,34 @@ class LocalStorage(BaseMode):
         adapter: TypeAdapter[BlobStorageData] = TypeAdapter(BlobStorageData)
         results = []
         for json_path in blob_dir.glob("*.json"):
-            meta = adapter.validate_json(json_path.read_bytes())
+            try:
+                meta = adapter.validate_json(json_path.read_bytes())
+            except ValidationError as e:
+                logger.warning(
+                    "Failed to validate blob metadata for blob_type %s from %s: %s",
+                    blob_type,
+                    json_path,
+                    e,
+                )
+                continue
             if blob_type is None or meta.blob_info.blob_type == blob_type:
                 results.append(meta)
         return results
 
     def load_blob(self, blob_dir: Path, uri: str) -> bytes:
         """Return raw bytes for the blob identified by *uri* inside *blob_dir*."""
+        uri_path = Path(uri)
+        if uri_path.is_absolute() or uri_path.name != uri:
+            msg = f"Invalid blob URI path: {uri}"
+            logger.warning(msg)
+            raise ValueError(msg)
+        if not _BLOB_URI_PATTERN.fullmatch(uri):
+            msg = (
+                f"Invalid blob URI pattern: {uri}. "
+                f"Must match pattern: {_BLOB_URI_PATTERN.pattern}"
+            )
+            logger.warning(msg)
+            raise ValueError(msg)
         resolved_dir = blob_dir.resolve()
         blob_path = (resolved_dir / uri).resolve()
         try:

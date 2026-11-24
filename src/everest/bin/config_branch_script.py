@@ -5,7 +5,7 @@ from pathlib import Path
 from textwrap import dedent
 from typing import Any
 
-from everest.bin.utils import setup_logging
+from everest.bin.utils import log_enabled_flags, setup_logging
 from everest.config import EverestConfig
 from everest.config_file_loader import load_yaml
 from everest.util._utils import get_everest_experiment
@@ -121,6 +121,7 @@ def config_branch_entry(args: list[str] | None = None) -> None:
     parser = _build_args_parser()
     options = parser.parse_args(args)
     with setup_logging(options):
+        log_enabled_flags("branch", options)
         config_file, _, yml_config = options.config
         config = EverestConfig.load_file(config_file)
 

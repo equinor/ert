@@ -33,6 +33,7 @@ from PyQt6.QtWidgets import (
 from _ert.events import EnsembleEvaluationWarning
 from ert.config import ErrorInfo, WarningInfo
 from ert.ensemble_evaluator import (
+    ConnectionLostEvent,
     EndEvent,
     FullSnapshotEvent,
     SnapshotUpdateEvent,
@@ -259,9 +260,8 @@ class RunDialog(QFrame):
         experiment_id = experiment_type + " : " + date_time
 
         self._experiment_name_label = QLabel(self)
-        self._experiment_name_label.setText(experiment_id)
         self._experiment_name_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.setProperty("experiment_name", experiment_id)
+        self.set_experiment_name(experiment_id)
 
         self._total_progress_bar = QProgressBar(self)
         self._total_progress_bar.setRange(0, 100)
@@ -381,6 +381,7 @@ class RunDialog(QFrame):
 
         self.setMinimumSize(1200, 600)
         self._is_rerunning_failed_realizations = False
+        self._connection_lost = False
         self.flag_experiment_done = False
 
         self._latest_iteration = 0
@@ -389,17 +390,10 @@ class RunDialog(QFrame):
         return self.flag_experiment_done
 
     def _add_dynamic_tab(self, widget: QWidget, label: str) -> int:
-        # If the currently selected tab is the most recently added dynamic
-        # tab, keep following along as new tabs are added; otherwise the
-        # user has navigated elsewhere and we leave their selection alone.
-        last_index = self._tab_widget.count() - 1
-        follow_new_tab = (
-            last_index >= 0
-            and not isinstance(self._tab_widget.widget(last_index), WorkflowLogWidget)
-            and self._tab_widget.currentIndex() == last_index
-        )
+        # Follow new tabs while the last tab is selected. The Workflows tab is
+        # always first, so it is only last when it is the sole, auto-selected tab.
         tab_index = self._tab_widget.addTab(widget, label)
-        if follow_new_tab:
+        if self._tab_widget.currentIndex() == self._tab_widget.count() - 2:
             self._tab_widget.setCurrentIndex(tab_index)
         return tab_index
 
@@ -471,10 +465,15 @@ class RunDialog(QFrame):
                 text += f", assigned to host: {exec_hosts}"
             self._fm_step_label.setText(text)
 
+    def set_experiment_name(self, experiment_name: str) -> None:
+        self._experiment_name_label.setText(experiment_name)
+        self.setProperty("experiment_name", experiment_name)
+
     def setup_event_monitoring(
         self, *, rerun_failed_realizations: bool = False
     ) -> None:
         self.flag_experiment_done = False
+        self._connection_lost = False
         if rerun_failed_realizations is False:
             self._snapshot_model.reset()
             self._tab_widget.clear()
@@ -526,7 +525,8 @@ class RunDialog(QFrame):
         self.kill_button.setEnabled(False)
         self.kill_button.setText("Terminate experiment")
         self.rerun_button.setEnabled(
-            self._run_model_api.has_failed_realizations()
+            not self._connection_lost
+            and self._run_model_api.has_failed_realizations()
             and self._run_model_api.supports_rerunning_failed_realizations
         )
         self._notifier.set_is_experiment_running(False)
@@ -600,6 +600,10 @@ class RunDialog(QFrame):
         match event:
             case StartEvent():
                 self._start_time = event.timestamp
+            case ConnectionLostEvent(msg=msg):
+                self._connection_lost = True
+                self.experiment_done.emit(True, msg)
+                self._ticker.stop()
             case EndEvent(failed=failed, msg=msg):
                 self.experiment_done.emit(failed, msg)
                 self._ticker.stop()
@@ -664,10 +668,9 @@ class RunDialog(QFrame):
                     initial_status_text="Preparing runpaths...",
                     completed_action="created",
                 )
-                tab_index = self._tab_widget.addTab(
+                self._add_dynamic_tab(
                     runpath_creation_progress_widget, "Creating runpaths..."
                 )
-                self._tab_widget.setCurrentIndex(tab_index)
                 runpath_creation_progress_widget.start(event.total_runpaths_to_create)
             case FinishedTotalRunPathCreationEvent():
                 last_index = self._tab_widget.count() - 1
@@ -741,6 +744,11 @@ class RunDialog(QFrame):
         self._is_rerunning_failed_realizations = True
         self.rerun_failed_realizations_experiment.emit()
         self.set_show_warning_button_to_initial_state()
+
+    def restore_controls_after_failed_rerun_request(self) -> None:
+        self._is_rerunning_failed_realizations = False
+        self.kill_button.setEnabled(False)
+        self.rerun_button.setEnabled(True)
 
     @override
     def hideEvent(self, event: QHideEvent | None) -> None:

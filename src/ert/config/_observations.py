@@ -833,7 +833,7 @@ class RFTObservation(BaseObservation):
                         observation_dict.context,
                         _invalid_rft_localization_key_error,
                     )
-                    east, north, radius = extract_localization_values(value)
+                    _, _, radius = extract_localization_values(value)
                     radius = (
                         radius if radius is not None else DEFAULT_LOCALIZATION_RADIUS
                     )

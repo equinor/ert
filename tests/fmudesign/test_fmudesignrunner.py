@@ -2,6 +2,7 @@ import argparse
 import re
 import sys
 from argparse import Namespace
+from functools import partial
 from pathlib import Path
 from unittest.mock import MagicMock
 
@@ -14,7 +15,6 @@ from fmudesign import (
     fmudesignrunner,
 )
 from fmudesign.fmudesignrunner import (
-    Example,
     get_parser,
     subcommand_init,
     subcommand_run,
@@ -29,7 +29,7 @@ def test_that_given_unknown_command_run_is_inserted_at_position_one(monkeypatch)
 
     assert sys.argv[1] == "foo"
 
-    mock_args = MagicMock(func=lambda _: None)
+    mock_args = MagicMock(func=partial(lambda _: None))
     monkeypatch.setattr(argparse.ArgumentParser, "parse_args", lambda _: mock_args)
     fmudesignrunner.main()
 
@@ -184,21 +184,6 @@ def test_that_subcommand_run_raises_when_config_is_equal_to_destination(use_tmpd
         subcommand_run(args, parser_run)
 
 
-def test_that_subcommand_init_raises_if_example_doesnt_exist(monkeypatch):
-    _, subparsers = get_parser()
-    parser_init = subparsers.choices["init"]
-    monkeypatch.setattr(
-        fmudesignrunner,
-        "EXAMPLES",
-        [Example("foo.xlsx", description="")],
-    )
-    config_file = "foo.xlsx"
-    with pytest.raises(
-        AssertionError, match=f"Example file '{config_file}' does not exist"
-    ):
-        subcommand_init(Namespace(file="config.xlsx"), parser_init)
-
-
 def test_that_subcommand_init_raises_if_config_is_not_provided(capsys):
     _, subparsers = get_parser()
     parser_init = subparsers.choices["init"]
@@ -214,12 +199,10 @@ def test_that_subcommand_init_raises_if_config_is_not_provided(capsys):
 def test_that_subcommand_init_raises_if_config_does_not_exist_among_examples(capsys):
     _, subparsers = get_parser()
     parser_init = subparsers.choices["init"]
-    with pytest.raises(SystemExit) as sys_exit:
+    with pytest.raises(
+        FmudesignError, match=r"Error on 'config.xlsx'. Not found among:"
+    ):
         subcommand_init(Namespace(file="config.xlsx"), parser_init)
-    assert sys_exit.value.code == 1
-
-    stdout = capsys.readouterr().out
-    assert "Error on 'config.xlsx'. Not found among:" in stdout
 
 
 def test_that_subcommand_init_raises_if_file_already_exists(use_tmpdir, capsys):
@@ -228,12 +211,10 @@ def test_that_subcommand_init_raises_if_file_already_exists(use_tmpdir, capsys):
     existing_file = "fmudesign_ex_montecarlo.xlsx"
     Path(existing_file).touch()
 
-    with pytest.raises(SystemExit) as sys_exit:
+    with pytest.raises(
+        FmudesignError, match=f"Error on '{existing_file}'. Already exists."
+    ):
         subcommand_init(Namespace(file=existing_file), parser_init)
-    assert sys_exit.value.code == 1
-
-    stdout = capsys.readouterr().out
-    assert f"Error on '{existing_file}'. Already exists." in stdout
 
 
 def test_that_subcommand_init_creates_example_file(use_tmpdir, capsys):
@@ -241,13 +222,10 @@ def test_that_subcommand_init_creates_example_file(use_tmpdir, capsys):
     parser_init = subparsers.choices["init"]
     example_file = "fmudesign_ex_montecarlo.xlsx"
 
-    with pytest.raises(SystemExit) as sys_exit:
-        subcommand_init(Namespace(file=example_file), parser_init)
-    assert sys_exit.value.code == 0
+    subcommand_init(Namespace(file=example_file), parser_init)
 
-    stdout = capsys.readouterr().out
     assert Path(example_file).is_file()
-    assert f"Created file {example_file!r}." in stdout
+    assert f"Created file {example_file!r}." in capsys.readouterr().out
 
 
 def test_that_subcommand_init_creates_auxiliary_files(use_tmpdir, capsys):
@@ -256,9 +234,7 @@ def test_that_subcommand_init_creates_auxiliary_files(use_tmpdir, capsys):
     example_file = "ex2_correlations.xlsx"
     auxiliary_file = "ex2_doe1.xlsx"
 
-    with pytest.raises(SystemExit) as sys_exit:
-        subcommand_init(Namespace(file=example_file), parser_init)
-    assert sys_exit.value.code == 0
+    subcommand_init(Namespace(file=example_file), parser_init)
 
     stdout = capsys.readouterr().out
     assert Path(example_file).is_file()
@@ -299,10 +275,9 @@ def test_that_init_copies_nothing_when_auxiliary_destination_exists(
     parser, _ = fmudesignrunner.get_parser()
     args = parser.parse_args(["init", "ex2_correlations.xlsx"])
 
-    with pytest.raises(SystemExit) as exc_info:
+    with pytest.raises(FmudesignError, match="Already exists"):
         args.func(args)
 
-    assert exc_info.value.code == 1
     assert not Path("ex2_correlations.xlsx").exists()
     assert auxiliary_path.read_bytes() == original_content
 
@@ -337,3 +312,19 @@ def test_that_non_numeric_distribution_parameter_is_treated_as_handled_fmudesign
     output = capsys.readouterr().out
     assert "fmudesign failed with" in output
     assert "not convertible to number: abc" in output
+
+
+def test_that_init_subcommand_fmudesign_error_is_caught_as_handled_exception_in_main(
+    use_tmpdir, monkeypatch, caplog, capsys
+):
+    not_example_file = "foo.xlsx"
+    monkeypatch.setattr(sys, "argv", ["fmudesign", "init", not_example_file])
+
+    with pytest.raises(SystemExit):
+        fmudesignrunner.main()
+
+    assert "fmudesign crashed unexpectedly" not in caplog.text
+
+    stdout = capsys.readouterr().out
+    assert "fmudesign failed with" in stdout
+    assert "Error on 'foo.xlsx'. Not found among" in stdout

@@ -89,7 +89,7 @@ def test_create_runpath_load_scalar_keys_performance(
         df = df.insert_column(
             0, pl.Series("realization", np.arange(reals, dtype=np.int32))
         )
-        df.write_parquet(ensemble.mount_point / "SCALAR.parquet")
+        ensemble.save_parameters(df)
 
         active = [True] * reals
         counter = itertools.count()

@@ -1,6 +1,8 @@
 import io
 import json
+import logging
 from pathlib import Path
+from unittest.mock import Mock
 
 import numpy as np
 import polars as pl
@@ -22,6 +24,7 @@ from ert.storage.blob_data import (
     BlobType,
     MatrixStorageData,
     ObservationReportData,
+    ScalarsData,
     UpdateStatus,
 )
 from ert.storage.local_ensemble import (
@@ -172,7 +175,7 @@ def test_that_load_scalar_keys_raises_key_error_for_missing_parameters(tmp_path)
         )
         ensemble = storage.create_ensemble(experiment.id, ensemble_size=5, name="test")
 
-        with pytest.raises(KeyError, match="No SCALAR dataset in storage"):
+        with pytest.raises(KeyError, match="No scalar dataset in storage"):
             ensemble.load_scalar_keys(keys=["param1"])
 
 
@@ -493,32 +496,83 @@ def test_that_save_blob_rejects_malformed_blob_events(
         ),
     ],
 )
-def test_that_load_blobs_rejects_malformed_blob_metadata(
+def test_that_load_blob_metadata_skips_malformed_metadata_and_logs_a_warning(
     tmp_path,
     metadata,
+    caplog,
+    monkeypatch,
 ):
     with open_storage(tmp_path, mode="w") as storage:
         experiment = storage.create_experiment()
         ensemble = storage.create_ensemble(
             experiment, ensemble_size=1, iteration=0, name="prior"
         )
-        blob_dir = ensemble._path / "blobs"
-        blob_dir.mkdir()
-        (blob_dir / "metadata.blob.json").write_bytes(metadata)
+        ensemble.save_blob(
+            AnalysisCompleteEvent(
+                data=DataSection(header=["observation_key"], data=[("OBS_1",)]),
+                update_algorithm="ensemble_smoother",
+            )
+        )
+        metadata_path = ensemble._path / "blobs" / "malformed.blob.json"
+        metadata_path.write_bytes(metadata)
 
-        with pytest.raises(ValidationError):
-            ensemble.load_blob_metadata()
+        real_glob = Path.glob
+
+        def malformed_first(self, pattern):
+            return iter(
+                sorted(
+                    real_glob(self, pattern),
+                    key=lambda path: path.name != metadata_path.name,
+                )
+            )
+
+        with (
+            monkeypatch.context() as patch,
+            caplog.at_level(logging.WARNING, logger="ert.storage.local_storage"),
+        ):
+            # patch the glob results so that the malformed metadata comes first
+            patch.setattr(Path, "glob", malformed_first)
+            blobs = ensemble.load_blob_metadata()
+
+        assert [blob.name for blob in blobs] == ["observation_report"]
+        assert (
+            f"Failed to validate blob metadata for blob_type None from {metadata_path}"
+            in caplog.text
+        )
+
+
+@pytest.mark.parametrize(
+    ("uri_template", "expected_exception"),
+    [
+        pytest.param("abcdef12.blob", FileNotFoundError, id="missing-file"),
+        pytest.param("../index.json", ValueError, id="parent-directory"),
+        pytest.param("{ensemble_path}/index.json", ValueError, id="absolute-path"),
+    ],
+)
+def test_that_load_blob_distinguishes_missing_blobs_from_invalid_uris(
+    tmp_path,
+    uri_template,
+    expected_exception,
+):
+    with open_storage(tmp_path, mode="w") as storage:
+        experiment = storage.create_experiment()
+        ensemble = storage.create_ensemble(
+            experiment, ensemble_size=1, iteration=0, name="prior"
+        )
+        uri = uri_template.format(ensemble_path=ensemble._path)
+
+        with pytest.raises(expected_exception):
+            ensemble.load_blob(uri)
 
 
 @pytest.mark.parametrize(
     "uri_template",
     [
-        pytest.param("missing.blob", id="missing-file"),
         pytest.param("../index.json", id="parent-directory"),
         pytest.param("{ensemble_path}/index.json", id="absolute-path"),
     ],
 )
-def test_that_load_blob_raises_file_not_found_for_invalid_uri(
+def test_that_load_blob_rejects_invalid_paths(
     tmp_path,
     uri_template,
 ):
@@ -528,9 +582,41 @@ def test_that_load_blob_raises_file_not_found_for_invalid_uri(
             experiment, ensemble_size=1, iteration=0, name="prior"
         )
         uri = uri_template.format(ensemble_path=ensemble._path)
-
-        with pytest.raises(FileNotFoundError):
+        with pytest.raises(ValueError, match="Invalid blob URI path"):
             ensemble.load_blob(uri)
+
+
+@pytest.mark.parametrize(
+    "uri",
+    [
+        pytest.param("ABCDEF12.blob", id="uppercase-hex"),
+        pytest.param("Abcdef12.blob", id="mixed-hex"),
+        pytest.param("abcef1.blob", id="short-hex"),
+        pytest.param("abcdef12.blob.json", id="metadata-sidecar"),
+    ],
+)
+def test_that_load_blob_rejects_existing_files_with_invalid_uri_before_resolving_path(
+    tmp_path,
+    monkeypatch,
+    uri,
+):
+    with open_storage(tmp_path, mode="w") as storage:
+        experiment = storage.create_experiment()
+        ensemble = storage.create_ensemble(
+            experiment, ensemble_size=1, iteration=0, name="prior"
+        )
+        blob_dir = ensemble._path / "blobs"
+        blob_dir.mkdir()
+        (blob_dir / uri).write_bytes(b"existing blob")
+
+        resolve = Mock()
+        with monkeypatch.context() as patch:
+            patch.setattr(Path, "resolve", resolve)
+
+            with pytest.raises(ValueError, match="Invalid blob URI pattern"):
+                ensemble.load_blob(uri)
+
+        resolve.assert_not_called()
 
 
 def test_that_sparse_and_dense_matrix_blobs_can_be_saved_and_loaded(tmp_path):
@@ -721,3 +807,50 @@ def test_that_reading_absent_batch_dataframe_returns_none(tmp_path):
         assert ensemble.batch_objectives is None
         assert ensemble.batch_constraint_gradient is None
         assert not ensemble.has_function_results
+
+
+def _create_scalar_ensemble(storage):
+    experiment = storage.create_experiment(
+        experiment_config={
+            "parameter_configuration": [
+                GenKwConfig(
+                    name=name,
+                    group="group",
+                    distribution={"name": "uniform", "min": 0, "max": 1},
+                ).model_dump(mode="json")
+                for name in ("param1", "param2")
+            ]
+        }
+    )
+    return storage.create_ensemble(experiment.id, ensemble_size=3, name="test")
+
+
+def test_that_scalars_are_stored_as_a_single_scalars_blob(tmp_path):
+    with open_storage(tmp_path, mode="w") as storage:
+        ensemble = _create_scalar_ensemble(storage)
+
+        ensemble.save_parameters(
+            pl.DataFrame({"realization": [0, 1], "param1": [1.0, 2.0]})
+        )
+
+        [blob] = ensemble.load_blob_metadata(BlobType.SCALARS)
+        assert isinstance(blob.blob_info, ScalarsData)
+        assert blob.file_type == "application/parquet"
+        assert blob.file_size == len(ensemble.load_blob(blob.uri))
+
+
+def test_that_save_parameters_appends_to_the_scalars_blob(tmp_path):
+    with open_storage(tmp_path, mode="w") as storage:
+        ensemble = _create_scalar_ensemble(storage)
+
+        ensemble.save_parameters(
+            pl.DataFrame({"realization": [0, 1], "param1": [1.0, 2.0]})
+        )
+        ensemble.save_parameters(
+            pl.DataFrame({"realization": [0, 1], "param2": [3.0, 4.0]})
+        )
+
+        assert len(ensemble.load_blob_metadata(BlobType.SCALARS)) == 1
+        df = ensemble.load_scalar_keys()
+        assert df["param1"].to_list() == [1.0, 2.0]
+        assert df["param2"].to_list() == [3.0, 4.0]
