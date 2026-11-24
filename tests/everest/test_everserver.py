@@ -685,13 +685,13 @@ def test_that_start_experiment_mutes_config_warnings(authorized_client, monkeypa
     assert not any(issubclass(w.category, ConfigWarning) for w in caught_warnings)
 
 
-async def test_that_started_everest_experiment_passes_status_events_and_id_to_notifier(
+async def test_that_started_everest_experiment_passes_status_events_to_notifier(
     monkeypatch,
 ):
     received_events = []
 
-    def notify_status_event(*, experiment_run_id, event):
-        received_events.append((experiment_run_id, event))
+    def notify_status_event(*, experiment_run_id, config_path, event):
+        received_events.append((experiment_run_id, config_path, event))
 
     events = [
         RunModelStatusEvent(iteration=0, ensemble_id=uuid.uuid4(), msg="running"),
@@ -718,7 +718,7 @@ async def test_that_started_everest_experiment_passes_status_events_and_id_to_no
         patch("ert.server.endpoints.experiment_runs.EvaluatorServerConfig"),
     ):
         response = await start_experiment(
-            MagicMock(),
+            MagicMock(config_directory="/project/everest"),
             background_tasks,
             get_site_plugins(ErtPluginManager(plugins=[])),
             notify_status_event,
@@ -729,7 +729,9 @@ async def test_that_started_everest_experiment_passes_status_events_and_id_to_no
     await wait_until_all_status_events_are_delivered(
         registry[experiment_id].status_event_forwarder
     )
-    assert received_events == [(experiment_id, event) for event in events]
+    assert received_events == [
+        (experiment_id, "/project/everest", event) for event in events
+    ]
 
 
 async def test_that_everest_experiment_started_without_notifier_has_no_forwarder(

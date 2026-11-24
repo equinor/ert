@@ -288,7 +288,7 @@ async def start_experiment(
     experiment_id = str(uuid.uuid4())
     experiment_state = ExperimentRunnerState(
         status_event_forwarder=create_status_event_forwarder(
-            notify_status_event, experiment_id
+            notify_status_event, experiment_id, config.config_directory
         )
     )
     _experiments[experiment_id] = experiment_state

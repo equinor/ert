@@ -172,7 +172,7 @@ async def register(
         run_path=request.config.runpath_config.runpath_format_string,
         storage_path=request.config.ens_path,
         status_event_forwarder=create_status_event_forwarder(
-            notify_status_event, config_id
+            notify_status_event, config_id, request.config.config_path
         ),
     )
     _experiments[config_id] = experiment_state

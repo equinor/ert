@@ -393,11 +393,13 @@ class ErtPluginManager(pluggy.PluginManager):
         return bool(self.hook.on_status_event.get_hookimpls())
 
     def notify_status_event(
-        self, *, experiment_run_id: str, event: StatusEvents
+        self, *, experiment_run_id: str, config_path: str, event: StatusEvents
     ) -> None:
         try:
             self.hook.on_status_event(
-                experiment_run_id=experiment_run_id, event=event.model_copy(deep=True)
+                experiment_run_id=experiment_run_id,
+                config_path=config_path,
+                event=event.model_copy(deep=True),
             )
         except Exception:
             # Log flooding potential tracked in https://github.com/equinor/ert/issues/14908

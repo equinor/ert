@@ -10,7 +10,9 @@ if TYPE_CHECKING:
 
 @single_implementation
 @hook_specification
-def on_status_event(experiment_run_id: str, event: StatusEvents) -> None:
+def on_status_event(
+    experiment_run_id: str, config_path: str, event: StatusEvents
+) -> None:
     """Called for every status event emitted by a running experiment.
 
     Implementations are called in a worker thread, so they do not delay the
@@ -29,10 +31,15 @@ def on_status_event(experiment_run_id: str, event: StatusEvents) -> None:
     events for the experiment run, and can delay events for other
     experiment runs and the shutdown of the server.
 
-    Only one implementation is allowed.
+    Only one implementation is allowed. Implementations may omit parameters
+    they do not need.
 
     :param experiment_run_id: UUID identifying the experiment run that
         emitted the event. Reruns of failed realizations reuse the ID. This
         is not the ID of the experiment in storage.
+    :param config_path: Absolute path of the directory containing the config
+        file of the experiment. For Ert this is the value of
+        ``<CONFIG_PATH>``, and for Everest the directory of the Everest
+        config file.
     :param event: The emitted status event.
     """
