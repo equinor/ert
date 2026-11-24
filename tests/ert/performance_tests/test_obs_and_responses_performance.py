@@ -10,10 +10,12 @@ import polars as pl
 import pytest
 
 from ert.analysis import (
+    build_strategy_map,
     enif_update,
     smoother_update,
 )
 from ert.config import (
+    ESSettings,
     GenDataConfig,
     GenKwConfig,
     ObservationSettings,
@@ -527,12 +529,23 @@ def setup_es_benchmark(tmp_path, request):
         )
 
 
+def _strategy_map(prior):
+    es_settings = ESSettings()
+    return build_strategy_map(
+        parameters=prior.experiment.update_parameters,
+        param_configs=prior.experiment.parameter_configuration,
+        enkf_truncation=es_settings.enkf_truncation,
+        correlation_threshold=es_settings.correlation_threshold,
+    )
+
+
 @pytest.mark.memory_test
 @pytest.mark.skipif(
     sys.platform.startswith("darwin"), reason="Currently failing on mac"
 )
 def test_memory_performance_of_doing_es_update(setup_es_benchmark, tmp_path):
     _, prior, posterior, _, expected_performance = setup_es_benchmark
+    strategy_map = _strategy_map(prior)
     with memray.Tracker(tmp_path / "memray.bin"):
         smoother_update(
             prior,
@@ -540,7 +553,7 @@ def test_memory_performance_of_doing_es_update(setup_es_benchmark, tmp_path):
             prior.experiment.observation_keys,
             ObservationSettings(),
             rng=np.random.default_rng(42),
-            strategy_map={},
+            strategy_map=strategy_map,
         )
 
     stats = memray._memray.compute_statistics(str(tmp_path / "memray.bin"))
@@ -554,6 +567,8 @@ def test_speed_performance_of_doing_es_update(setup_es_benchmark, benchmark):
     if alias != "small":
         pytest.skip()
 
+    strategy_map = _strategy_map(prior)
+
     def run():
         smoother_update(
             prior,
@@ -561,7 +576,7 @@ def test_speed_performance_of_doing_es_update(setup_es_benchmark, benchmark):
             prior.experiment.observation_keys,
             ObservationSettings(),
             rng=np.random.default_rng(42),
-            strategy_map={},
+            strategy_map=strategy_map,
         )
 
     benchmark(run)
