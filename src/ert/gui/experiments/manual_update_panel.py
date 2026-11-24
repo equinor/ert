@@ -67,7 +67,6 @@ class ManualUpdatePanel(ExperimentConfigPanel):
             else f"Manual update of {notifier.current_ensemble.name}",
         )
         self._experiment_name_field.setMinimumWidth(250)
-        layout.addRow("Experiment name:", self._experiment_name_field)
 
         self._update_method_dropdown = QComboBox()
         self._update_method_dropdown.addItems(
@@ -131,6 +130,7 @@ class ManualUpdatePanel(ExperimentConfigPanel):
             runpath,
             self._number_of_realizations_label,
             self._active_realizations_field,
+            experiment_name=self._experiment_name_field,
         )
 
         self.build_layout()

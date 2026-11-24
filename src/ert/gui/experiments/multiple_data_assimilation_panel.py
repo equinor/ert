@@ -139,7 +139,6 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
         self._experiment_name_field = create_experiment_name_field(
             self.notifier.storage, ES_MDA_MODE
         )
-        layout.addRow("Experiment name:", self._experiment_name_field)
 
         self._ensemble_selector = create_prior_ensemble_selector(notifier)
         self._previous_ensemble_realizations_validator = EnsembleRealizationsArgument(
@@ -206,7 +205,10 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
         self._active_realizations_field.setObjectName("active_realizations_box")
         self._initial_active_realizations = active_realizations
         self.add_common_settings(
-            runpath, number_of_realizations_container, self._active_realizations_field
+            runpath,
+            number_of_realizations_container,
+            self._active_realizations_field,
+            experiment_name=self._experiment_name_field,
         )
 
         self._connect_signals()

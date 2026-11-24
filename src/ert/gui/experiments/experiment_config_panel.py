@@ -32,17 +32,17 @@ def _create_form() -> QFormLayout:
 class ExperimentConfigPanel(QWidget):
     """Settings for one experiment type, laid out as a grid of cards.
 
-    A double width card holds the "Options" and "Update settings"
-    accordions, and a card to its right holds the settings common to all
-    experiment types (see :meth:`add_common_settings`).
+    A double width card on the left holds the settings common to all
+    experiment types (see :meth:`add_common_settings`), and a card to its
+    right holds the "Options" and "Update settings" accordions.
 
     Subclasses add rows to ``options_layout`` and ``update_settings_layout``
     and call :meth:`build_layout` when done. To keep the options in the same
     order across experiment types, add them in this order (skipping the ones
     that do not apply):
 
-    experiment name, ensemble name, update method, source ensemble, prior
-    ensemble, ensemble format, weights, design matrix.
+    ensemble name, update method, source ensemble, prior ensemble, ensemble
+    format, weights, design matrix.
     """
 
     experiment_configuration_changed = Signal()
@@ -66,9 +66,16 @@ class ExperimentConfigPanel(QWidget):
         runpath: str,
         number_of_realizations: QWidget,
         active_realizations: QWidget,
+        experiment_name: QWidget | None = None,
     ) -> None:
-        self.common_layout.setRowWrapPolicy(QFormLayout.RowWrapPolicy.WrapAllRows)
-        self.common_layout.addRow("Runpath:", CopyableLabel(text=runpath, wrap=True))
+        self.common_layout.setRowWrapPolicy(QFormLayout.RowWrapPolicy.DontWrapRows)
+        # Center labels on their fields so label and value text share a baseline.
+        self.common_layout.setLabelAlignment(
+            Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
+        )
+        if experiment_name is not None:
+            self.common_layout.addRow("Experiment name:", experiment_name)
+        self.common_layout.addRow("Runpath:", CopyableLabel(text=runpath, elide=True))
         self.common_layout.addRow("Number of realizations:", number_of_realizations)
         self.common_layout.addRow("Active realizations:", active_realizations)
 
@@ -103,7 +110,7 @@ class ExperimentConfigPanel(QWidget):
             main_layout.setContentsMargins(16, 12, 16, 12)
             main_layout.addWidget(self._wrap(self.options_layout))
         main_layout.addStretch(1)
-        grid.addWidget(main_card, 0, 0, 1, 2)
+        grid.addWidget(main_card, 0, 2)
 
         if self.common_layout.rowCount() > 0:
             common_card = create_card()
@@ -112,7 +119,7 @@ class ExperimentConfigPanel(QWidget):
             common_layout.addWidget(create_card_title("Common settings"))
             common_layout.addWidget(self._wrap(self.common_layout))
             common_layout.addStretch(1)
-            grid.addWidget(common_card, 0, 2)
+            grid.addWidget(common_card, 0, 0, 1, 2)
 
     @staticmethod
     def _wrap(layout: QFormLayout) -> QWidget:

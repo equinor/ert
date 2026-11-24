@@ -81,7 +81,6 @@ class EnsembleInformationFilterPanel(ExperimentConfigPanel):
         self._experiment_name_field = create_experiment_name_field(
             self.notifier.storage, ENIF_MODE
         )
-        layout.addRow("Experiment name:", self._experiment_name_field)
 
         number_of_realizations_container, number_of_realizations_label = (
             create_number_of_realizations_container(len(active_realizations))
@@ -97,7 +96,10 @@ class EnsembleInformationFilterPanel(ExperimentConfigPanel):
             active_realizations
         )
         self.add_common_settings(
-            runpath, number_of_realizations_container, self._active_realizations_field
+            runpath,
+            number_of_realizations_container,
+            self._active_realizations_field,
+            experiment_name=self._experiment_name_field,
         )
 
         self._parameter_configuration = merge_design_matrix_parameters(
