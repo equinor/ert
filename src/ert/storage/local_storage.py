@@ -241,7 +241,8 @@ class LocalStorage(BaseMode):
 
         This method is used to refresh the state of the storage to reflect any
         changes made to the underlying file system since the storage was last
-        accessed.
+        accessed. Experiments and ensembles fetched before the reload may hold
+        outdated cached values, and should be fetched again.
         """
 
         self._index = self._load_index()
