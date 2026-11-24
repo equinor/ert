@@ -236,6 +236,12 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
         )
         self._ensemble_selector.currentIndexChanged.connect(self._realizations_from_fs)
         self._ensemble_selector.currentIndexChanged.connect(
+            self.experiment_configuration_changed
+        )
+        self._select_prior_ensemble_box.toggled.connect(
+            self.experiment_configuration_changed
+        )
+        self._ensemble_selector.currentIndexChanged.connect(
             self._parameter_configuration_changed
         )
         self._ensemble_selector.currentIndexChanged.connect(self.update_experiment_name)
@@ -309,6 +315,12 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
                 and not self._ensemble_selector.selected_ensemble.relative_weights
             )
         )
+
+    @override
+    def get_selected_ensemble(self) -> Ensemble | None:
+        if not self._select_prior_ensemble_box.isChecked():
+            return None
+        return self._ensemble_selector.selected_ensemble
 
     def select_prior_toggled(self) -> None:
         self._select_prior_ensemble_box.setEnabled(

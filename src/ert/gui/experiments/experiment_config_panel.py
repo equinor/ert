@@ -20,6 +20,7 @@ from ert.gui.ertwidgets.card import CARD_SPACING, create_card, create_card_title
 if TYPE_CHECKING:
     from ert.config import ParameterConfig
     from ert.run_models import RunModel
+    from ert.storage import Ensemble
 
 
 def _create_form() -> QFormLayout:
@@ -142,6 +143,12 @@ class ExperimentConfigPanel(QWidget):
         if self._parameter_configuration_getter is None:
             return None
         return self._parameter_configuration_getter()
+
+    def get_selected_ensemble(self) -> Ensemble | None:
+        """The ensemble whose stored parameters and observations the
+        experiment uses instead of those in the config file, if any.
+        """
+        return None
 
     def isConfigurationValid(self) -> bool:
         return True

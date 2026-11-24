@@ -90,6 +90,13 @@ class EvaluateEnsemblePanel(ExperimentConfigPanel):
             self.experiment_configuration_changed
         )
         self._ensemble_selector.currentIndexChanged.connect(self._realizations_from_fs)
+        self._ensemble_selector.currentIndexChanged.connect(
+            self.experiment_configuration_changed
+        )
+
+    @override
+    def get_selected_ensemble(self) -> Ensemble | None:
+        return self._ensemble_selector.selected_ensemble
 
     @override
     def isConfigurationValid(self) -> bool:

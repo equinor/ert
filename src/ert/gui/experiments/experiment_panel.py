@@ -24,8 +24,10 @@ from ert.config import parameter_config
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.gui.detect_mode import is_dark_mode
 from ert.gui.ertnotifier import ErtNotifier
-from ert.gui.ertwidgets import wait_cursor
+from ert.gui.ertwidgets import ErtSummary, wait_cursor
 from ert.gui.ertwidgets.card import CARD_SPACING
+from ert.gui.ertwidgets.chip import DataSource
+from ert.gui.ertwidgets.models.ertsummary import count_observations
 from ert.gui.ertwidgets.suggestor.suggestor import (
     DARK_GREEN,
     DARK_GREY,
@@ -577,18 +579,42 @@ class ExperimentPanel(QWidget):
             self.experiment_type_changed.emit(widget)
 
     def _update_parameter_summary(self) -> None:
+        """Show the parameters and observations the selected experiment type
+        will use, from the config file or from a selected ensemble.
+        """
         # Experiment panels are added before the summary is created.
         if not hasattr(self, "configuration_summary"):
             return
         current_model = self.get_current_experiment_type()
         if current_model is None:
             return
-        parameters = self._experiment_widgets[
-            current_model
-        ].get_parameter_configuration()
+        panel = self._experiment_widgets[current_model]
+        summary = self.configuration_summary
+        parameters = panel.get_parameter_configuration()
+        ensemble = panel.get_selected_ensemble()
+
+        if ensemble is None:
+            summary.set_parameter_configuration(
+                parameters
+                if parameters is not None
+                else self.config.parameter_configurations_with_design_matrix
+            )
+            summary.set_observations(ErtSummary(self.config).getObservations())
+            return
+
+        experiment = ensemble.experiment
         if parameters is None:
-            parameters = self.config.parameter_configurations_with_design_matrix
-        self.configuration_summary.set_parameter_configuration(parameters)
+            parameters = list(experiment.parameter_configuration.values())
+        source = DataSource.SELECTED_ENSEMBLE
+        summary.set_parameter_configuration(parameters, source, ensemble.name)
+        summary.set_observations(
+            count_observations(
+                (obs["name"], obs["type"])
+                for obs in experiment.experiment_config.get("observations", [])
+            ),
+            source,
+            ensemble.name,
+        )
 
     def validationStatusChanged(self) -> None:
         widget = self._experiment_widgets[self.get_current_experiment_type()]
