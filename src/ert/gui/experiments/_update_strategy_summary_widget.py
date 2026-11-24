@@ -6,6 +6,7 @@ from PyQt6.QtCore import QSize, Qt
 from PyQt6.QtWidgets import (
     QAbstractItemView,
     QAbstractScrollArea,
+    QComboBox,
     QHeaderView,
     QSizePolicy,
     QTableWidget,
@@ -13,7 +14,11 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from ert.config.parameter_config import ParameterConfig, ParameterType
+from ert.config.parameter_config import (
+    LocalizationType,
+    ParameterConfig,
+    ParameterType,
+)
 from ert.gui.ertwidgets.models.parameter_configuration_state_model import (
     ParameterConfigurationStateModel,
 )
@@ -28,7 +33,12 @@ _TOOLTIP = (
     "Each Field or Surface counts as one configuration, "
     "regardless of its number of grid cells."
 )
+_PARAMETER_TYPES_BY_DISPLAY_NAME = {
+    name: ParameterType(key) for key, name in _PARAMETER_TYPE_DISPLAY_NAMES.items()
+}
+_NOT_EDITABLE_TOOLTIP = "Update strategy is defined by the selected ensemble"
 _SummaryRow = tuple[str, str, str]
+_NON_UPDATABLE = "Non-updatable"
 
 
 class UpdateStrategySummaryWidget(QTableWidget):
@@ -36,9 +46,12 @@ class UpdateStrategySummaryWidget(QTableWidget):
         self,
         parameter_state: ParameterConfigurationStateModel,
         parent: QWidget | None = None,
+        *,
+        editable: bool = True,
     ) -> None:
         super().__init__(parent)
         self._parameter_state = parameter_state
+        self._editable = editable
         self.setObjectName("update_strategy_summary_widget")
         self.setAccessibleName("Update strategy counts by parameter type")
         self.setColumnCount(3)
@@ -78,8 +91,39 @@ class UpdateStrategySummaryWidget(QTableWidget):
         for row_index, row in enumerate(rows):
             for column_index, value in enumerate(row):
                 self.setItem(row_index, column_index, QTableWidgetItem(value))
+            self._set_strategy_cell(row_index, row)
 
         self.updateGeometry()
+
+    def _set_strategy_cell(self, row_index: int, row: _SummaryRow) -> None:
+        strategy_name, type_name, _ = row
+        parameter_type = _PARAMETER_TYPES_BY_DISPLAY_NAME.get(type_name)
+        if parameter_type is None or strategy_name == _NON_UPDATABLE:
+            self.removeCellWidget(row_index, 0)
+            return
+        if not self._editable or self._parameter_state.has_prior:
+            self.removeCellWidget(row_index, 0)
+            self.item(row_index, 0).setToolTip(_NOT_EDITABLE_TOOLTIP)
+            return
+
+        combobox = QComboBox()
+        combobox.setObjectName(parameter_type)
+        for localization_type in parameter_type.supported_localization_types:
+            combobox.addItem(localization_type.value.capitalize(), localization_type)
+        combobox.setCurrentIndex(combobox.findText(strategy_name))
+        combobox.currentIndexChanged.connect(
+            lambda index, box=combobox, ptype=parameter_type: self._on_strategy_chosen(
+                ptype, box.itemData(index)
+            )
+        )
+        self.setCellWidget(row_index, 0, combobox)
+
+    def _on_strategy_chosen(
+        self, parameter_type: ParameterType, strategy: LocalizationType
+    ) -> None:
+        self._parameter_state.apply_update_strategies(
+            {**self._parameter_state.update_strategies, parameter_type: strategy}
+        )
 
     @override
     def sizeHint(self) -> QSize:
@@ -107,7 +151,7 @@ def _summarize_parameters(
 
     return sorted(
         (
-            strategy.value.capitalize() if strategy is not None else "Non-updatable",
+            strategy.value.capitalize() if strategy is not None else _NON_UPDATABLE,
             _PARAMETER_TYPE_DISPLAY_NAMES.get(parameter_type, parameter_type),
             f"{count:,}",
         )

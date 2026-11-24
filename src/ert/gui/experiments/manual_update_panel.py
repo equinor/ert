@@ -98,9 +98,7 @@ class ManualUpdatePanel(ExperimentConfigPanel):
         )
         self._analysis_module_edit = AnalysisModuleEdit(
             es_settings=analysis_config.es_settings,
-            get_update_strategies=lambda: self._param_state.update_strategies,
             ensemble_size=0,
-            can_edit_update_strategies=lambda: False,
         )
         self._analysis_module_edit.setObjectName("ensemble_smoother_edit")
         self._analysis_module_edit.setEnabled(False)
@@ -109,7 +107,7 @@ class ManualUpdatePanel(ExperimentConfigPanel):
         self._update_strategy_label = QLabel("Parameter Localizations")
         self._update_strategy_label.setObjectName("update_strategy_label")
         self._update_strategy_summary_widget = UpdateStrategySummaryWidget(
-            self._param_state, self
+            self._param_state, self, editable=False
         )
         self._update_strategy_label.setToolTip(
             self._update_strategy_summary_widget.toolTip()
@@ -137,10 +135,6 @@ class ManualUpdatePanel(ExperimentConfigPanel):
         self._connect_signals()
 
     def _connect_signals(self) -> None:
-        self._analysis_module_edit.update_strategies_changed.connect(
-            self._param_state.apply_update_strategies
-        )
-        self._param_state.changed.connect(self._analysis_module_edit.refresh)
         self._active_realizations_field.getValidationSupport().validationChanged.connect(
             self.experiment_configuration_changed
         )

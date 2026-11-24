@@ -175,11 +175,9 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
 
         self._analysis_module_edit = AnalysisModuleEdit(
             es_settings=analysis_config.es_settings,
-            get_update_strategies=lambda: self._param_state.update_strategies,
             ensemble_size=sum(
                 active_realizations
             ),  # only use active realizations for setting threshold
-            can_edit_update_strategies=lambda: not self._param_state.has_prior,
         )
         self.update_settings_layout.addRow(self._analysis_module_edit)
 
@@ -223,11 +221,7 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
         self.build_layout()
 
     def _connect_signals(self) -> None:
-        self._analysis_module_edit.update_strategies_changed.connect(
-            self._param_state.apply_update_strategies
-        )
         self._param_state.changed.connect(self.experiment_configuration_changed)
-        self._param_state.changed.connect(self._analysis_module_edit.refresh)
         self._select_prior_ensemble_box.toggled.connect(self.select_prior_toggled)
         self._select_prior_ensemble_box.toggled.connect(self.update_experiment_edit)
         self._ensemble_selector.ensemble_populated.connect(self.select_prior_toggled)
