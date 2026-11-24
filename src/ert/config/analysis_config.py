@@ -16,7 +16,7 @@ from fmudesign import DesignMatrix as FmudesignDesignMatrix
 from fmudesign import excel_to_config
 
 from .analysis_module import ESSettings
-from .design_matrix import DesignMatrix, DesignMatrixConfig
+from .design_matrix import DesignMatrix, DesignMatrixConfig, DesignMatrixOptions
 from .parsing import (
     ConfigDict,
     ConfigKeys,
@@ -325,10 +325,30 @@ class AnalysisConfig:
         fmu_design_configuration = config_dict.get(ConfigKeys.FMU_DESIGN, [])
         if fmu_design_configuration:
             fmu_design_file = fmu_design_configuration[0]
+            fmu_design_options = DesignMatrixOptions.from_config_list(
+                ConfigKeys.FMU_DESIGN, fmu_design_configuration
+            )
+            sheet_arguments = {
+                "design_input_sheet": fmu_design_options.design_sheet,
+                "default_val_sheet": fmu_design_options.default_sheet,
+            }
+            design = FmudesignDesignMatrix(
+                excel_to_config(
+                    fmu_design_file,
+                    **{k: v for k, v in sheet_arguments.items() if v is not None},
+                )
+            )
+            origin = (
+                f"{Path(fmu_design_file).name} "
+                f"({sheet_arguments['design_input_sheet'] or 'designinput'} "
+                f"{sheet_arguments['default_val_sheet'] or 'defaultvalues'})"
+            )
             design_matrices.append(
                 DesignMatrix.from_design(
-                    FmudesignDesignMatrix(excel_to_config(fmu_design_file)),
-                    origin=Path(fmu_design_file).name,
+                    design,
+                    origin=origin,
+                    priority_source=fmu_design_options.priority_source,
+                    update=fmu_design_options.update,
                     gen_kw_update_strategy=parameter_type_update_strategies.get(
                         ParameterType.GEN_KW
                     ),
