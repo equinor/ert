@@ -1701,6 +1701,7 @@ def _substitutions_from_dict(config_dict: ConfigDict) -> dict[str, str]:
     substitutions = dict(config_dict.get("DEFINE", []))
     for key, value in make_pre_defines():
         substitutions.setdefault(key, value)
+    substitutions.setdefault("<USER>", os.environ.get("USER", "$USER"))
     substitutions["<RUNPATH_FILE>"] = config_dict.get(
         ConfigKeys.RUNPATH_FILE, ErtConfig.DEFAULT_RUNPATH_FILE
     )
