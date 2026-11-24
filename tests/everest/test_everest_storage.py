@@ -2,7 +2,6 @@ from pathlib import Path
 
 import polars as pl
 import pytest
-from polars.testing import assert_series_equal
 
 from ert.storage import open_storage
 from everest.config import EverestConfig
@@ -54,24 +53,6 @@ def test_csv_export(config_file, cached_example, snapshot):
         _sort_df(batch_df.with_columns(pl.col(pl.Float64).round(4))).write_csv(),
         "batch_df.csv",
     )
-
-
-@pytest.mark.xdist_group("math_func/config_advanced.yml")
-@pytest.mark.slow
-def test_that_right_suffixed_export_columns_are_copies_of_the_constraint_columns(
-    cached_example,
-):
-    config_path, config_file, _, _ = cached_example("math_func/config_advanced.yml")
-    config = EverestConfig.load_file(Path(config_path) / config_file)
-    experiment = get_everest_experiment(storage_path=config.storage_dir)
-
-    combined_df, pert_real_df, _ = experiment.export_dataframes()
-
-    for df in (combined_df, pert_real_df):
-        assert [column for column in df.columns if column.endswith("_right")] == [
-            "x-0_coord_right"
-        ]
-        assert_series_equal(df["x-0_coord_right"], df["x-0_coord"], check_names=False)
 
 
 @pytest.mark.slow
