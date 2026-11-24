@@ -3,6 +3,7 @@ import time
 from pathlib import Path
 
 import numpy as np
+import polars as pl
 import pytest
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (
@@ -547,6 +548,63 @@ def test_ensemble_observations_view_on_empty_ensemble(qtbot):
 
     # Expect only one figure, the one for the observation
     assert len(ensemble_widget._figure.get_axes()) == 1
+
+
+@pytest.mark.usefixtures("copy_poly_case")
+def test_that_observation_plot_shows_responses_saved_after_ensemble_was_selected(
+    qtbot,
+):
+    config = ErtConfig.from_file("poly.ert")
+    notifier = ErtNotifier()
+    notifier.set_storage(config.ens_path)
+
+    with notifier.write_storage() as storage:
+        ensemble_id = (
+            storage.create_experiment(
+                experiment_config={
+                    "response_configuration": [
+                        rc.model_dump(mode="json")
+                        for rc in config.ensemble_config.response_configuration
+                    ],
+                    "observations": [
+                        od.model_dump(mode="json")
+                        for od in config.observation_declarations
+                    ],
+                }
+            )
+            .create_ensemble(name="default", ensemble_size=1)
+            .id
+        )
+
+    tool = ManageExperimentsPanel(config, notifier, 1)
+    storage_widget = tool.findChild(StorageWidget)
+    storage_widget._tree_view.expandAll()
+    model = storage_widget._tree_view.model()
+    storage_widget._tree_view.setCurrentIndex(model.index(0, 0, model.index(0, 0)))
+    ensemble_widget = tool.findChild(EnsembleWidget)
+    ensemble_widget._tab_widget.setCurrentIndex(_EnsembleWidgetTabs.OBSERVATIONS_TAB)
+
+    def plotted_categories() -> list[str]:
+        (axes,) = ensemble_widget._figure.get_axes()
+        return [label.get_text() for label in axes.get_xticklabels()]
+
+    assert plotted_categories() == ["Observation"]
+
+    with notifier.write_storage() as storage:
+        storage.get_ensemble(ensemble_id).save_response(
+            "gen_data",
+            pl.DataFrame(
+                {
+                    "response_key": "POLY_RES",
+                    "report_step": pl.Series([0] * 10, dtype=pl.UInt16),
+                    "index": pl.Series(range(10), dtype=pl.UInt16),
+                    "values": pl.Series(range(10), dtype=pl.Float32),
+                }
+            ),
+            0,
+        )
+
+    assert plotted_categories() == ["Observation", "Responses"]
 
 
 def test_realization_view(
