@@ -13,6 +13,7 @@ import pytest
 import xtgeo
 
 from ert.analysis import (
+    build_strategy_map,
     enif_update,
     smoother_update,
 )
@@ -65,6 +66,13 @@ def test_memory_smoothing(poly_template):
             name="posterior",
             prior_ensemble=prior_ens,
         )
+        es_settings = ert_config.analysis_config.es_settings
+        strategy_map = build_strategy_map(
+            parameters=experiment.update_parameters,
+            param_configs=experiment.parameter_configuration,
+            enkf_truncation=es_settings.enkf_truncation,
+            correlation_threshold=es_settings.correlation_threshold,
+        )
         with memray.Tracker(poly_template / "memray.bin"):
             smoother_update(
                 prior_ens,
@@ -72,7 +80,7 @@ def test_memory_smoothing(poly_template):
                 list(experiment.observation_keys),
                 ObservationSettings(),
                 rng=np.random.default_rng(42),
-                strategy_map={},
+                strategy_map=strategy_map,
             )
 
     stats = memray._memray.compute_statistics(str(poly_template / "memray.bin"))
