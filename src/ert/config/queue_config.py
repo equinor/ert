@@ -36,6 +36,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 NonEmptyString = Annotated[str, pydantic.StringConstraints(min_length=1)]
+NonNegativeInt32 = Annotated[int, Field(ge=0, le=2**30)]
 
 
 def activate_script() -> str:
@@ -368,7 +369,7 @@ class QueueConfig(BaseModelWithContextSupport):
         default_factory=LocalQueueOptions, discriminator="name"
     )
     stop_long_running: bool = False
-    max_runtime: int | None = None
+    max_runtime: NonNegativeInt32 | None = None
     realization_memory_is_site_default: bool = False
 
     @staticmethod
@@ -470,17 +471,33 @@ class QueueConfig(BaseModelWithContextSupport):
             if tags:
                 selected_queue_options.project_code = "+".join(tags)
 
-        return QueueConfig(
-            max_submit=max_submit,
-            queue_system=selected_queue_system,
-            queue_options=selected_queue_options,
-            stop_long_running=bool(stop_long_running),
-            max_runtime=config_dict.get(ConfigKeys.MAX_RUNTIME),
-            realization_memory_is_site_default=(
-                "realization_memory" in selected_site_queue_options_dict
-                and "realization_memory" not in usr_queue_options_dict
-            ),
-        )
+        try:
+            return QueueConfig(
+                max_submit=max_submit,
+                queue_system=selected_queue_system,
+                queue_options=selected_queue_options,
+                stop_long_running=bool(stop_long_running),
+                max_runtime=config_dict.get(ConfigKeys.MAX_RUNTIME),
+                realization_memory_is_site_default=(
+                    "realization_memory" in selected_site_queue_options_dict
+                    and "realization_memory" not in usr_queue_options_dict
+                ),
+            )
+        except pydantic.ValidationError as exception:
+            raise ConfigValidationError.from_collected(
+                [
+                    ConfigValidationError.with_context(
+                        f"{
+                            ','.join(
+                                e.upper() for e in error['loc'] if isinstance(e, str)
+                            )
+                        }: "
+                        f"{error['msg']}. Got input '{error['input']}'.",
+                        error["input"],
+                    )
+                    for error in exception.errors()
+                ]
+            ) from None
 
     @staticmethod
     def _validate_config_dict(

@@ -438,10 +438,30 @@ def test_default_max_runtime_is_unlimited():
     assert QueueConfig().max_runtime is None
 
 
-@given(st.integers(min_value=1))
+@given(st.integers(min_value=0, max_value=2**30))
 def test_max_runtime_is_set_from_corresponding_keyword(value):
-    assert QueueConfig.from_dict({ConfigKeys.MAX_RUNTIME: value}).max_runtime == value
-    assert QueueConfig(max_runtime=value).max_runtime == value
+    assert (
+        QueueConfig.from_dict({ConfigKeys.MAX_RUNTIME: value}).max_runtime
+        == QueueConfig(max_runtime=value).max_runtime
+        == value
+    )
+
+
+@pytest.mark.parametrize(
+    ("max_runtime", "error_message"),
+    [
+        (-1, "Input should be greater than or equal to 0"),
+        (2**30 + 1, "Input should be less than or equal to 1073741824"),
+    ],
+)
+def test_that_max_runtime_below_zero_or_above_max_is_reported_at_its_line(
+    max_runtime, error_message
+):
+    with pytest.raises(
+        ConfigValidationError,
+        match=rf"Line 2 \(Column \d+-\d+\): MAX_RUNTIME: {error_message}",
+    ):
+        ErtConfig.from_file_contents(f"NUM_REALIZATIONS 1\nMAX_RUNTIME {max_runtime}\n")
 
 
 def test_that_site_queue_options_are_ignored_with_differing_user_queue_system_arg():
