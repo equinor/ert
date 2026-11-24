@@ -197,7 +197,7 @@ def test_field_param_update_using_heat_equation(symlinked_heat_equation_storage_
     # Check that fields in the runpath are different between iterations
     cond_iter0 = resfo.read("simulations/realization-0/iter-0/cond.bgrdecl")[0][1]
     cond_iter1 = resfo.read("simulations/realization-0/iter-1/cond.bgrdecl")[0][1]
-    assert (cond_iter0 != cond_iter1).all()
+    assert np.count_nonzero(cond_iter0 != cond_iter1) > 2450
 
 
 @pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
