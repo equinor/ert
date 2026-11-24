@@ -146,6 +146,8 @@ class AdaptiveLocalizationUpdate:
         )
 
         threshold = self._correlation_threshold_fn(self._ensemble_size)
+        # A single parameter is one task, so worker processes only add overhead
+        n_jobs = 1 if num_params == 1 else NUM_JOBS_ADAPTIVE_LOC
 
         def correlation_callback(
             corr_XY: npt.NDArray[np.float64],
@@ -164,7 +166,7 @@ class AdaptiveLocalizationUpdate:
                 X=X_local,
                 correlation_callback=correlation_callback,
                 overwrite=True,
-                n_jobs=NUM_JOBS_ADAPTIVE_LOC,
+                n_jobs=n_jobs,
             )
         elapsed = time.perf_counter() - start_time
 
