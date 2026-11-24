@@ -8,7 +8,13 @@ import xtgeo
 from scipy.ndimage import gaussian_filter
 
 from ert.analysis import build_strategy_map, smoother_update
-from ert.config import ESSettings, Field, GenDataConfig, ObservationSettings
+from ert.config import (
+    ESSettings,
+    Field,
+    GenDataConfig,
+    LocalizationType,
+    ObservationSettings,
+)
 from ert.field_utils import Shape
 
 
@@ -102,6 +108,7 @@ def test_and_benchmark_adaptive_localization_with_fields(
             },
         ],
     )
+    config.update_strategy = LocalizationType.ADAPTIVE
 
     experiment = storage.create_experiment(
         experiment_config={
@@ -153,7 +160,7 @@ def test_and_benchmark_adaptive_localization_with_fields(
         prior_ensemble=prior_ensemble,
     )
 
-    es_settings = ESSettings(localization=True)
+    es_settings = ESSettings()
     strategy_map = build_strategy_map(
         parameters=[param_group],
         param_configs=prior_ensemble.experiment.parameter_configuration,
@@ -179,8 +186,9 @@ def test_and_benchmark_adaptive_localization_with_fields(
     ]
     # Make sure some, but not all parameters were updated.
     assert not np.allclose(prior_da, posterior_da)
-    # All parameters would be updated with a global update so this would fail.
-    assert np.isclose(prior_da, posterior_da).sum() > 0
+    # A global update would change nearly all parameters.
+    fraction_unchanged = np.isclose(prior_da, posterior_da).mean()
+    assert fraction_unchanged > 0.5
     # The std for the ensemble should decrease
     assert float(
         prior_ensemble.calculate_std_dev_for_parameter_group(param_group).sum()
