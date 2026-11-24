@@ -1,5 +1,5 @@
 from .ecosystem_plugins import ecosystem_plugin
-from .event_listener import on_status_event
+from .event_listener import on_status_event, status_event_context
 from .forward_model_steps import (
     forward_model_configuration,
     installable_forward_model_steps,
@@ -27,4 +27,5 @@ __all__ = [
     "legacy_ertscript_workflow",
     "on_status_event",
     "site_configurations",
+    "status_event_context",
 ]

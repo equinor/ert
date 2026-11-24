@@ -24,6 +24,7 @@ from ert.server.endpoints.experiment_runs import (
     ExperimentRunnerState,
     _experiments,
     _get_experiment,
+    get_status_event_context_getter,
     get_status_event_notifier,
     verify_auth,
 )
@@ -109,7 +110,9 @@ async def test_that_start_uses_the_registered_model_and_config_id(
     create_model = Mock(return_value=model)
     monkeypatch.setattr(ert_runner, "create_model", create_model)
 
-    registration = await ert_runner.register(request, Mock())
+    registration = await ert_runner.register(
+        request, Mock(), AsyncMock(return_value={})
+    )
     writer.close.assert_not_called()
     assert model._storage is writer
     config_id = json.loads(bytes(registration.body))["config_id"]
@@ -133,13 +136,13 @@ async def test_that_start_uses_the_registered_model_and_config_id(
 
 
 @pytest.mark.asyncio
-async def test_that_registered_ert_experiment_passes_status_events_and_id_to_notifier(
+async def test_that_registered_ert_experiment_passes_status_events_id_and_context(
     monkeypatch: pytest.MonkeyPatch,
 ):
     received_events = []
 
-    def notify_status_event(*, experiment_run_id, event):
-        received_events.append((experiment_run_id, event))
+    def notify_status_event(*, experiment_run_id, context, event):
+        received_events.append((experiment_run_id, context, event))
 
     monkeypatch.setattr(ert_runner, "_experiments", {})
     events = [
@@ -159,7 +162,7 @@ async def test_that_registered_ert_experiment_passes_status_events_and_id_to_not
     request = ert_runner.StartErtExperimentRequest.model_construct(
         config=Mock(
             spec=ErtConfig,
-            config_path="config.ert",
+            config_path="/project/ert/model",
             runpath_config=SimpleNamespace(runpath_format_string="runpath"),
             ens_path="storage",
         ),
@@ -168,13 +171,19 @@ async def test_that_registered_ert_experiment_passes_status_events_and_id_to_not
         ),
     )
 
-    registration = await ert_runner.register(request, notify_status_event)
+    get_status_event_context = AsyncMock(return_value={"asset": "drogon"})
+    registration = await ert_runner.register(
+        request, notify_status_event, get_status_event_context
+    )
     config_id = json.loads(bytes(registration.body))["config_id"]
     state = ert_runner._get_ert_experiment(config_id)
     await ert_runner.run_ert(state)
 
     await wait_until_all_status_events_are_delivered(state.status_event_forwarder)
-    assert received_events == [(config_id, event) for event in events]
+    get_status_event_context.assert_awaited_once_with("/project/ert/model")
+    assert received_events == [
+        (config_id, {"asset": "drogon"}, event) for event in events
+    ]
 
 
 @pytest.mark.asyncio
@@ -195,7 +204,7 @@ async def test_that_ert_experiment_registered_without_notifier_has_no_forwarder(
         ),
     )
 
-    registration = await ert_runner.register(request, None)
+    registration = await ert_runner.register(request, None, AsyncMock(return_value={}))
 
     config_id = json.loads(bytes(registration.body))["config_id"]
     assert ert_runner._get_ert_experiment(config_id).status_event_forwarder is None
@@ -220,9 +229,46 @@ async def test_that_status_event_notifier_passes_events_to_listening_plugin():
     )
     assert notifier is not None
     event = EndEvent(failed=False, msg="done")
-    notifier(experiment_run_id="e_id", event=event)
+    notifier(experiment_run_id="e_id", context={}, event=event)
 
     assert received_events == [("e_id", event)]
+
+
+@pytest.mark.asyncio
+async def test_that_status_event_context_is_empty_when_no_plugin_listens():
+    context_hook = Mock(return_value={"asset": "drogon"})
+
+    class ContextPlugin:
+        @plugin(name="context_plugin")
+        def status_event_context(config_path):
+            return context_hook(config_path)
+
+    get_context = await get_status_event_context_getter(
+        ErtPluginManager(plugins=[ContextPlugin])
+    )
+
+    assert await get_context("/project/ert/model") == {}
+    context_hook.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_that_status_event_context_is_computed_when_a_plugin_listens():
+    class EventPlugin:
+        @plugin(name="event_plugin")
+        def status_event_context(config_path):
+            return {"config_path": config_path}
+
+        @plugin(name="event_plugin")
+        def on_status_event(experiment_run_id, context, event):
+            pass
+
+    get_context = await get_status_event_context_getter(
+        ErtPluginManager(plugins=[EventPlugin])
+    )
+
+    assert await get_context("/project/ert/model") == {
+        "config_path": "/project/ert/model"
+    }
 
 
 @pytest.mark.asyncio
@@ -285,7 +331,7 @@ async def test_that_model_creation_error_does_not_register_a_state(
     )
 
     with pytest.raises(ValueError, match="Invalid config"):
-        await ert_runner.register(request, Mock())
+        await ert_runner.register(request, Mock(), AsyncMock(return_value={}))
     assert not registry
 
 
@@ -308,7 +354,7 @@ async def test_that_config_validation_error_on_registration_gives_http_422(
     )
 
     with pytest.raises(ert_runner.HTTPException) as error:
-        await ert_runner.register(request, Mock())
+        await ert_runner.register(request, Mock(), AsyncMock(return_value={}))
 
     assert error.value.status_code == 422
     assert "Ensemble size must be positive" in error.value.detail
@@ -341,7 +387,7 @@ async def test_that_failed_registration_releases_partially_initialized_storage(
     )
 
     with pytest.raises(RuntimeError, match="Invalid prior ensemble") as error:
-        await ert_runner.register(request, Mock())
+        await ert_runner.register(request, Mock(), AsyncMock(return_value={}))
 
     assert error.value.__traceback__ is not None
     assert not registry

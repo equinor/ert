@@ -13,7 +13,7 @@ import traceback
 import uuid
 import warnings
 from base64 import b64decode
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Awaitable, Callable, Mapping
 from contextlib import ExitStack
 from queue import SimpleQueue
 from typing import Annotated
@@ -207,6 +207,23 @@ async def get_status_event_notifier(
     return plugin_manager.notify_status_event
 
 
+type StatusEventContextGetter = Callable[[str], Awaitable[Mapping[str, str]]]
+
+
+async def get_status_event_context_getter(
+    plugin_manager: Annotated[ErtPluginManager, Depends(get_plugin_manager)],
+) -> StatusEventContextGetter:
+    async def get_status_event_context(config_path: str) -> Mapping[str, str]:
+        if not plugin_manager.has_status_event_listener:
+            return {}
+        # The plugin may do file IO, which must not block the event loop
+        return await asyncio.to_thread(
+            plugin_manager.get_status_event_context, config_path
+        )
+
+    return get_status_event_context
+
+
 async def _with_runtime_plugins(
     plugin_manager: Annotated[ErtPluginManager, Depends(get_plugin_manager)],
 ) -> AsyncIterator[ErtRuntimePlugins]:
@@ -284,11 +301,16 @@ async def start_experiment(
     notify_status_event: Annotated[
         StatusEventNotifier | None, Depends(get_status_event_notifier)
     ],
+    get_status_event_context: Annotated[
+        StatusEventContextGetter, Depends(get_status_event_context_getter)
+    ],
 ) -> JSONResponse:
     experiment_id = str(uuid.uuid4())
     experiment_state = ExperimentRunnerState(
         status_event_forwarder=create_status_event_forwarder(
-            notify_status_event, experiment_id
+            notify_status_event,
+            experiment_id,
+            await get_status_event_context(config.config_directory),
         )
     )
     _experiments[experiment_id] = experiment_state
