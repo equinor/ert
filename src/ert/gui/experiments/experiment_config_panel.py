@@ -9,6 +9,7 @@ from PyQt6.QtCore import pyqtSlot as Slot
 from PyQt6.QtWidgets import (
     QFormLayout,
     QGridLayout,
+    QSizePolicy,
     QVBoxLayout,
     QWidget,
 )
@@ -121,6 +122,16 @@ class ExperimentConfigPanel(QWidget):
             common_layout.addWidget(self._wrap(self.common_layout))
             common_layout.addStretch(1)
             grid.addWidget(common_card, 0, 0, 1, 2)
+            # QGridLayout drops the spacing next to a column holding only a
+            # spanned item; an invisible widget in that column keeps the three
+            # columns aligned with the summary cards below.
+            column_anchor = QWidget()
+            column_anchor.setSizePolicy(
+                QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Ignored
+            )
+            column_anchor.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
+            grid.addWidget(column_anchor, 0, 1)
+            column_anchor.lower()
 
     @staticmethod
     def _wrap(layout: QFormLayout) -> QWidget:
