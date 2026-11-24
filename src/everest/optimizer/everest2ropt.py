@@ -69,27 +69,26 @@ def _parse_objectives(
     weights: list[float] = [
         1.0 if weight is None else weight for weight in objective_functions.weights
     ]
-    function_estimator_indices: list[int] = []
-    function_estimators: list = []  # type: ignore
+    realization_aggregator_indices: list[int] = []
+    realization_aggregators: list = []  # type: ignore
 
     for objective_type in objective_functions.objective_types:
         # If any objective specifies an objective type, we have to specify
-        # function estimators in ropt to implement these types. This is done by
-        # supplying a list of estimators and for each objective an index into
-        # that list:
-        function_estimator_idx = next(
+        # realization aggregators in ropt to implement these types. Supply a
+        # list of realization aggregators and an index for each objective:
+        realization_aggregator_idx = next(
             (
                 idx
-                for idx, estimator in enumerate(function_estimators)
-                if estimator["method"] == objective_type
+                for idx, realization_aggregator in enumerate(realization_aggregators)
+                if realization_aggregator["method"] == objective_type
             ),
             None,
         )
-        # If not, make a new estimator:
-        if function_estimator_idx is None:
-            function_estimator_idx = len(function_estimators)
-            function_estimators.append({"method": objective_type})
-        function_estimator_indices.append(function_estimator_idx)
+        # If not, make a new aggregator:
+        if realization_aggregator_idx is None:
+            realization_aggregator_idx = len(realization_aggregators)
+            realization_aggregators.append({"method": objective_type})
+        realization_aggregator_indices.append(realization_aggregator_idx)
 
     ropt_objectives: dict[str, Any] = {
         "weights": weights,
@@ -110,13 +109,13 @@ def _parse_objectives(
             for objective_type in objective_functions.objective_types
         ],
     }
-    ropt_function_estimators: list[dict[str, Any]] = []
-    if function_estimators:
+    ropt_realization_aggregators: list[dict[str, Any]] = []
+    if realization_aggregators:
         # Only needed if we specified at least one objective type:
-        ropt_objectives["function_estimators"] = function_estimator_indices
-        ropt_function_estimators = function_estimators
+        ropt_objectives["realization_aggregators"] = realization_aggregator_indices
+        ropt_realization_aggregators = realization_aggregators
 
-    return ropt_objectives, ropt_function_estimators
+    return ropt_objectives, ropt_realization_aggregators
 
 
 def _get_bounds(
@@ -306,7 +305,7 @@ def everest2ropt(
 ) -> tuple[dict[str, Any], list[float]]:
     auto_scale = optimization is not None and optimization.auto_scale
     ropt_variables, ropt_samplers = _parse_controls(controls, random_seed)
-    ropt_objectives, ropt_function_estimators = _parse_objectives(
+    ropt_objectives, ropt_realization_aggregators = _parse_objectives(
         objective_functions, auto_scale
     )
     ropt_linear_constraints = _parse_input_constraints(
@@ -364,8 +363,8 @@ def everest2ropt(
         ropt_config["gradient"] = ropt_gradient
     if ropt_realization_filters:
         ropt_config["realization_filter"] = ropt_realization_filters
-    if ropt_function_estimators:
-        ropt_config["function_estimator"] = ropt_function_estimators
+    if ropt_realization_aggregators:
+        ropt_config["realization_aggregator"] = ropt_realization_aggregators
     if ropt_samplers:
         ropt_config["sampler"] = ropt_samplers
 

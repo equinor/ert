@@ -5,11 +5,6 @@
     "parallel": true,
     "verbose": true
   },
-  "function_estimator": [
-    {
-      "method": "mean"
-    }
-  ],
   "gradient": {
     "merge_realizations": false,
     "number_of_perturbations": 5,
@@ -31,14 +26,14 @@
   },
   "objectives": {
     "auto_scale": false,
-    "function_estimators": [
-      0
-    ],
     "maximize": [
       true
     ],
     "offsets": [
       0.0
+    ],
+    "realization_aggregators": [
+      0
     ],
     "scales": [
       1.0
@@ -53,6 +48,11 @@
     "stderr": "optimizer.stderr",
     "stdout": "optimizer.stdout"
   },
+  "realization_aggregator": [
+    {
+      "method": "mean"
+    }
+  ],
   "realizations": {
     "realization_min_success": 1,
     "weights": [
