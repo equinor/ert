@@ -165,7 +165,15 @@ Experiment constants
 .. topic:: USER
 
     Will be replaced with the value of the ``$USER`` environment variable.
-    Equivalent to ``DEFINE <USER> $USER``.
+    Equivalent to ``DEFINE <USER> $USER``, except that it can be overridden
+    by defining ``<USER>`` in the configuration file:
+
+    ::
+
+       DEFINE <USER> my_user
+
+    With this, ``<USER>`` is replaced with ``my_user`` regardless of the
+    ``$USER`` environment variable.
 
 .. _ms_exp_variables:
 

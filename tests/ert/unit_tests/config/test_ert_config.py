@@ -57,6 +57,7 @@ from ert.config.seismic_config import SeismicConfig
 from ert.plugins import ErtPluginManager, ErtRuntimePlugins, get_site_plugins
 from ert.shared import ert_share_path
 from ert.storage import LocalEnsemble, Storage
+from ert.substitutions import Substitutions
 from tests.ert.conftest import _create_design_matrix
 
 from .config_dict_generator import config_generators
@@ -3679,3 +3680,21 @@ def test_that_ecosystem_arguments_must_be_options():
         match=r"Line 2.*Option argument should be of the form 'key':'value', got 'B'",
     ):
         ErtConfig.from_file_contents("NUM_REALIZATIONS 1\nECOSYSTEM A B\n")
+
+
+def test_that_config_resolves_nested_substitutions_regardless_of_order(
+    monkeypatch,
+):
+    monkeypatch.setenv("USER", "foo")
+    custom_user = "bar"
+    ert_config = ErtConfig.from_file_contents(
+        "NUM_REALIZATIONS 1\n"
+        "DEFINE <CASEPATH> scratch/<USER>/snakeoil\n"
+        f"DEFINE <USER> {custom_user}\n"
+    )
+
+    assert ert_config.substitutions["<USER>"] == custom_user
+    assert (
+        Substitutions(ert_config.substitutions).substitute("<CASEPATH>")
+        == f"scratch/{custom_user}/snakeoil"
+    )
