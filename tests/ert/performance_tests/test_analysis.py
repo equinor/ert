@@ -27,7 +27,7 @@ def test_and_benchmark_adaptive_localization_with_fields(
 
     num_grid_cells = 250
     num_parameters = num_grid_cells * num_grid_cells
-    num_observations = 10
+    num_observations = 200
     num_ensemble = 20
 
     # Create a tridiagonal matrix that maps responses to parameters.
