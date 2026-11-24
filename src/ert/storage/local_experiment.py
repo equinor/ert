@@ -801,25 +801,13 @@ class LocalExperiment(BaseMode):
             try_append_perturbation_dfs(
                 ens.iteration,
                 ens.perturbation_objectives,
-                ens.perturbation_constraints,
-            )
-
-            try_append_realization_dfs(
-                ens.iteration,
-                ens.realization_objectives,
-                ens.realization_controls,
-                ens.realization_constraints,
-            )
-
-            try_append_perturbation_dfs(
-                ens.iteration,
                 ens.perturbation_controls,
                 ens.perturbation_constraints,
             )
 
             try_append_realization_dfs(
                 ens.iteration,
-                ens.realization_controls,
+                ens.realization_objectives,
                 ens.realization_controls,
                 ens.realization_constraints,
             )
