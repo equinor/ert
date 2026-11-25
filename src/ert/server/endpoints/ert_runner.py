@@ -38,9 +38,11 @@ from everest.everserver.server import ExperimentState, ExperimentStatus
 
 from .experiment_runs import (
     ExperimentRunnerState,
+    StatusEventContextGetter,
     _experiments,
     _with_runtime_plugins,
     authenticated,
+    get_status_event_context_getter,
     get_status_event_notifier,
 )
 
@@ -152,6 +154,9 @@ async def register(
     notify_status_event: Annotated[
         StatusEventNotifier | None, Depends(get_status_event_notifier)
     ],
+    get_status_event_context: Annotated[
+        StatusEventContextGetter, Depends(get_status_event_context_getter)
+    ],
 ) -> JSONResponse:
     config_id = str(uuid.uuid4())
     status_queue: SimpleQueue[StatusEvents] = SimpleQueue()
@@ -172,7 +177,9 @@ async def register(
         run_path=request.config.runpath_config.runpath_format_string,
         storage_path=request.config.ens_path,
         status_event_forwarder=create_status_event_forwarder(
-            notify_status_event, config_id
+            notify_status_event,
+            config_id,
+            await get_status_event_context(request.config.config_path),
         ),
     )
     _experiments[config_id] = experiment_state

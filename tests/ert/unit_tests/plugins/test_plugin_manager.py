@@ -346,7 +346,13 @@ def test_that_forward_model_step_is_registered(tmpdir):
 
 
 @pytest.mark.parametrize(
-    "hook_name", ["get_ip_address", "on_status_event", "site_configurations"]
+    "hook_name",
+    [
+        "get_ip_address",
+        "on_status_event",
+        "site_configurations",
+        "status_event_context",
+    ],
 )
 def test_that_second_implementation_of_single_implementation_hook_is_rejected(
     hook_name,
@@ -396,19 +402,60 @@ def test_that_has_status_event_listener_is_true_with_implementing_plugin():
     assert ErtPluginManager(plugins=[EventListener]).has_status_event_listener
 
 
-def test_that_notify_status_event_passes_event_and_experiment_run_id_to_plugin():
+def test_that_notify_status_event_passes_event_id_and_context_to_plugin():
     received_events = []
 
     class EventListener:
         @plugin(name="event_listener")
-        def on_status_event(experiment_run_id, event):
-            received_events.append((experiment_run_id, event))
+        def on_status_event(experiment_run_id, context, event):
+            received_events.append((experiment_run_id, context, event))
 
     event = EndEvent(failed=False, msg="done")
     ErtPluginManager(plugins=[EventListener]).notify_status_event(
-        experiment_run_id="e_id", event=event
+        experiment_run_id="e_id", context={"asset": "drogon"}, event=event
     )
-    assert received_events == [("e_id", event)]
+    assert received_events == [("e_id", {"asset": "drogon"}, event)]
+
+
+def test_that_plugin_modifying_context_does_not_modify_the_original_context():
+    class ModifyingPlugin:
+        @plugin(name="event_listener")
+        def on_status_event(experiment_run_id, context, event):
+            context["asset"] = "modified by plugin"
+
+    context = {"asset": "drogon"}
+    ErtPluginManager(plugins=[ModifyingPlugin]).notify_status_event(
+        experiment_run_id="e_id", context=context, event=Mock()
+    )
+    assert context == {"asset": "drogon"}
+
+
+def test_that_status_event_context_is_returned_from_plugin():
+    class ContextPlugin:
+        @plugin(name="context_plugin")
+        def status_event_context(config_path):
+            return {"config_path": config_path}
+
+    assert ErtPluginManager(plugins=[ContextPlugin]).get_status_event_context(
+        "/project/ert/model"
+    ) == {"config_path": "/project/ert/model"}
+
+
+def test_that_status_event_context_is_empty_without_implementing_plugin():
+    assert ErtPluginManager(plugins=[]).get_status_event_context("/some/path") == {}
+
+
+def test_that_status_event_context_is_empty_and_logged_when_plugin_fails(caplog):
+    class FailingPlugin:
+        @plugin(name="context_plugin")
+        def status_event_context(config_path):
+            raise RuntimeError("kaboom!")
+
+    pm = ErtPluginManager(plugins=[FailingPlugin])
+    with caplog.at_level(logging.ERROR):
+        assert pm.get_status_event_context("/some/path") == {}
+    assert "Status event context plugin failed" in caplog.text
+    assert "kaboom!" in caplog.text
 
 
 def test_that_plugin_modifying_status_event_does_not_modify_the_original_event():
@@ -424,7 +471,7 @@ def test_that_plugin_modifying_status_event_does_not_modify_the_original_event()
         results={"objective": 1.0},
     )
     ErtPluginManager(plugins=[ModifyingPlugin]).notify_status_event(
-        experiment_run_id="e_id", event=event
+        experiment_run_id="e_id", context={}, event=event
     )
     assert event.results == {"objective": 1.0}
 
@@ -437,7 +484,7 @@ def test_that_notify_status_event_logs_instead_of_raising_plugin_exceptions(capl
 
     pm = ErtPluginManager(plugins=[FailingPlugin])
     with caplog.at_level(logging.ERROR):
-        pm.notify_status_event(experiment_run_id="e_id", event=Mock())
+        pm.notify_status_event(experiment_run_id="e_id", context={}, event=Mock())
     assert "Status event plugin failed for experiment run 'e_id'" in caplog.text
     assert "kaboom!" in caplog.text
 

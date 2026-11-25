@@ -341,6 +341,28 @@ Minimal example of logging the type of each event:
    def on_status_event(experiment_run_id, event):
        logger.info(f"Experiment run {experiment_run_id} emitted {event.event_type}")
 
+Status event context
+^^^^^^^^^^^^^^^^^^^^
+A listener that needs information about the experiment run with every event,
+for example something derived from the location of the config file, can
+implement ``status_event_context``. It is called once per experiment run, and
+the returned mapping is passed as ``context`` to every ``on_status_event``
+call for that run.
+
+.. autofunction:: ert.plugins.hook_specifications.event_listener.status_event_context
+
+.. code-block:: python
+
+   import ert
+
+   @ert.plugin(name="event_logger")
+   def status_event_context(config_path):
+       return {"config_path": config_path}
+
+   @ert.plugin(name="event_logger")
+   def on_status_event(experiment_run_id, context, event):
+       logger.info(f"{context['config_path']} emitted {event.event_type}")
+
 End events and reruns
 ^^^^^^^^^^^^^^^^^^^^^
 Every run ends with an ``EndEvent``, also when the run fails or is cancelled.
