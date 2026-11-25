@@ -109,13 +109,12 @@ def test_that_update_begin_event_refers_to_posterior_and_links_prior(
 
     posterior = UpdateRunModel.update(update_model, prior, "posterior")
 
-    update_model.send_event.assert_called_once_with(
-        RunModelUpdateBeginEvent(
-            iteration=posterior.iteration,
-            ensemble_id=posterior.id,
-            prior_ensemble_id=prior.id,
-        )
-    )
+    update_model.send_event.assert_called_once()
+    (event,) = update_model.send_event.call_args.args
+    assert isinstance(event, RunModelUpdateBeginEvent)
+    assert event.iteration == posterior.iteration
+    assert event.ensemble_id == posterior.id
+    assert event.prior_ensemble_id == prior.id
 
 
 _DATA_SECTION = DataSection(

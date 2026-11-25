@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Annotated, Any, Literal
 from uuid import UUID
@@ -31,10 +31,10 @@ class RunModelEvent(EnsembleEvent):
     """Event emitted during an update step.
 
     `iteration` is the iteration of the posterior ensemble that was created from update.
-    `ensemble_id` is the posterior ensemble produced by the update.
     """
 
     model_config = ConfigDict(arbitrary_types_allowed=True, extra="forbid")
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(tz=UTC))
     iteration: int
 
 

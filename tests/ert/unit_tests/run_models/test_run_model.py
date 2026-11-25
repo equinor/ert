@@ -138,7 +138,9 @@ def test_run_model_does_not_support_rerun_failed_realizations(minimum_case):
     assert not brm.supports_rerunning_failed_realizations
 
 
-def test_status_when_rerunning_on_non_rerunnable_model(use_tmpdir):
+def test_status_when_rerunning_on_non_rerunnable_model(
+    use_tmpdir, mock_experiment_status_event_timestamp
+):
     brm = create_run_model()
     brm.status_queue = SimpleQueue()
     brm.start_simulations_thread(

@@ -1,11 +1,24 @@
 import gc
 import logging
 import os
-from unittest.mock import patch
+from datetime import UTC, datetime
+from unittest.mock import Mock, patch
 
 import pytest
 
 from ert.plugins import ErtRuntimePlugins
+
+
+@pytest.fixture
+def mock_experiment_status_event_timestamp(
+    monkeypatch: pytest.MonkeyPatch,
+) -> datetime:
+    timestamp = datetime(2026, 1, 1, tzinfo=UTC)
+    monkeypatch.setattr(
+        "ert.ensemble_evaluator.event.datetime",
+        Mock(now=Mock(return_value=timestamp)),
+    )
+    return timestamp
 
 
 def pytest_addoption(parser):
