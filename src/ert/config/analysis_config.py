@@ -332,12 +332,18 @@ class AnalysisConfig:
                 "design_input_sheet": fmu_design_options.design_sheet,
                 "default_val_sheet": fmu_design_options.default_sheet,
             }
-            design = FmudesignDesignMatrix(
-                excel_to_config(
-                    fmu_design_file,
-                    **{k: v for k, v in sheet_arguments.items() if v is not None},
+            try:
+                design = FmudesignDesignMatrix(
+                    excel_to_config(
+                        fmu_design_file,
+                        **{k: v for k, v in sheet_arguments.items() if v is not None},
+                    )
                 )
-            )
+            except ValueError as err:
+                raise ConfigValidationError(
+                    f"Error when generating design matrix with FMU_DESIGN:\n{err}",
+                    fmu_design_file,
+                ) from err
             origin = (
                 f"{Path(fmu_design_file).name} "
                 f"({sheet_arguments['design_input_sheet'] or 'designinput'} "

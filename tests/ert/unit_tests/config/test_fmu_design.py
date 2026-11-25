@@ -2,8 +2,9 @@ from pathlib import Path
 from textwrap import dedent
 
 import openpyxl
+import pytest
 
-from ert.config import ErtConfig
+from ert.config import ConfigValidationError, ErtConfig
 
 
 def write_fmu_design_workbook(
@@ -97,3 +98,13 @@ def test_that_sheet_names_can_be_provided_to_fmu_design_config_keyword(use_tmpdi
         design_matrix.origin
         == f"{design_file} ({custom_design_sheet} {custom_default_sheet})"
     )
+
+
+def test_that_missing_fmu_design_sheet_raises_config_validation_error(use_tmpdir):
+    design_file = "design.xlsx"
+    write_fmu_design_workbook(design_file)
+
+    with pytest.raises(ConfigValidationError, match="nosuchsheet"):
+        parse_ert_config_with_fmu_design(
+            f"FMU_DESIGN {design_file} DESIGN_SHEET:nosuchsheet"
+        )
