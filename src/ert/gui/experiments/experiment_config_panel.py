@@ -9,7 +9,6 @@ from PyQt6.QtCore import pyqtSlot as Slot
 from PyQt6.QtWidgets import (
     QFormLayout,
     QGridLayout,
-    QSizePolicy,
     QVBoxLayout,
     QWidget,
 )
@@ -34,9 +33,9 @@ def _create_form() -> QFormLayout:
 class ExperimentConfigPanel(QWidget):
     """Settings for one experiment type, laid out as a grid of cards.
 
-    A double width card on the left holds the settings common to all
-    experiment types (see :meth:`add_common_settings`), and a card to its
-    right holds the "{mode} settings" and "Update settings" accordions.
+    The first card holds the settings common to all experiment types (see
+    :meth:`add_common_settings`), followed by cards for the "{mode} settings"
+    and the "Update settings".
 
     Subclasses add rows to ``options_layout`` and ``update_settings_layout``
     and call :meth:`build_layout` when done. To keep the options in the same
@@ -62,6 +61,7 @@ class ExperimentConfigPanel(QWidget):
         self.common_layout = _create_form()
         self.options_accordion: Accordion | None = None
         self.update_settings_accordion: Accordion | None = None
+        self.update_settings_card: QWidget | None = None
         self.common_accordion: Accordion | None = None
 
     def add_common_settings(
@@ -89,55 +89,54 @@ class ExperimentConfigPanel(QWidget):
         for column in range(3):
             grid.setColumnStretch(column, 1)
 
-        main_card = create_card()
-        main_layout = QVBoxLayout(main_card)
-        main_layout.setSpacing(0)
+        column = 0
+        if self.common_layout.rowCount() > 0:
+            self.common_accordion = Accordion(
+                "Main settings", self._wrap(self.common_layout), expanded=True
+            )
+            self.common_accordion.setObjectName("common_accordion")
+            grid.addWidget(self._accordion_card(self.common_accordion), 0, column)
+            column += 1
+
         if accordions:
-            main_layout.setContentsMargins(0, 0, 0, 0)
             self.options_accordion = Accordion(
                 f"{self.__run_model.name()} settings",
                 self._wrap(self.options_layout),
                 expanded=True,
             )
             self.options_accordion.setObjectName("options_accordion")
-            main_layout.addWidget(self.options_accordion)
+            grid.addWidget(self._accordion_card(self.options_accordion), 0, column)
+            column += 1
             self.update_settings_accordion = Accordion(
                 "Update settings",
                 self._wrap(self.update_settings_layout),
                 expanded=False,
             )
             self.update_settings_accordion.setObjectName("update_settings_accordion")
-            self.update_settings_accordion.setVisible(
+            self.update_settings_card = self._accordion_card(
+                self.update_settings_accordion
+            )
+            self.update_settings_card.setVisible(
                 self.update_settings_layout.rowCount() > 0
             )
-            main_layout.addWidget(self.update_settings_accordion)
+            grid.addWidget(self.update_settings_card, 0, column)
         else:
-            main_layout.setContentsMargins(16, 12, 16, 12)
-            main_layout.addWidget(self._wrap(self.options_layout))
-        main_layout.addStretch(1)
-        grid.addWidget(main_card, 0, 2)
+            options_card = create_card()
+            options_layout = QVBoxLayout(options_card)
+            options_layout.setContentsMargins(16, 12, 16, 12)
+            options_layout.addWidget(self._wrap(self.options_layout))
+            options_layout.addStretch(1)
+            grid.addWidget(options_card, 0, column)
 
-        if self.common_layout.rowCount() > 0:
-            common_card = create_card()
-            common_layout = QVBoxLayout(common_card)
-            common_layout.setContentsMargins(0, 0, 0, 0)
-            self.common_accordion = Accordion(
-                "Main settings", self._wrap(self.common_layout), expanded=True
-            )
-            self.common_accordion.setObjectName("common_accordion")
-            common_layout.addWidget(self.common_accordion)
-            common_layout.addStretch(1)
-            grid.addWidget(common_card, 0, 0, 1, 2)
-            # QGridLayout drops the spacing next to a column holding only a
-            # spanned item; an invisible widget in that column keeps the three
-            # columns aligned with the summary cards below.
-            column_anchor = QWidget()
-            column_anchor.setSizePolicy(
-                QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Ignored
-            )
-            column_anchor.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
-            grid.addWidget(column_anchor, 0, 1)
-            column_anchor.lower()
+    @staticmethod
+    def _accordion_card(accordion: Accordion) -> QWidget:
+        card = create_card()
+        card_layout = QVBoxLayout(card)
+        card_layout.setContentsMargins(0, 0, 0, 0)
+        card_layout.setSpacing(0)
+        card_layout.addWidget(accordion)
+        card_layout.addStretch(1)
+        return card
 
     @staticmethod
     def _wrap(layout: QFormLayout) -> QWidget:

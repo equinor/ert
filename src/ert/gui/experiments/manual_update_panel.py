@@ -179,8 +179,8 @@ class ManualUpdatePanel(ExperimentConfigPanel):
     @Slot(str)
     def _on_update_method_changed(self, new_method: str) -> None:
         show_update_settings = new_method == "ES Update"
-        assert self.update_settings_accordion is not None
-        self.update_settings_accordion.setVisible(show_update_settings)
+        assert self.update_settings_card is not None
+        self.update_settings_card.setVisible(show_update_settings)
         self._analysis_module_edit.setVisible(show_update_settings)
         self._update_strategy_label.setVisible(show_update_settings)
         self._update_strategy_summary_widget.setVisible(show_update_settings)
