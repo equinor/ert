@@ -597,25 +597,28 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
 
         batch_success: dict[int, bool] = {}
         for result in results:
-            if isinstance(result, FunctionResults):
-                result_success = result.functions is not None
-            elif isinstance(result, GradientResults):
-                result_success = result.gradients is not None
-            else:
-                raise TypeError(f"Unsupported optimizer result type: {type(result)}")
+            match result:
+                case FunctionResults():
+                    result_success = result.functions is not None
+                case GradientResults():
+                    result_success = result.gradients is not None
+                case _:
+                    raise TypeError(
+                        f"Unsupported optimizer result type: {type(result)}"
+                    )
 
             if result.batch_id in batch_success:
                 batch_success[result.batch_id] &= result_success
             else:
                 batch_success[result.batch_id] = result_success
 
-        ensembles_by_iteration = {
+        ensembles_by_by_batch_id = {
             ensemble.iteration: ensemble for ensemble in self._experiment.ensembles
         }
         # This should remain the final write to storage for this batch:
         # `True` marks the batch as completed successfully.
         for batch_id, success in batch_success.items():
-            ensemble = ensembles_by_iteration.get(batch_id)
+            ensemble = ensembles_by_by_batch_id.get(batch_id)
             if ensemble is not None:
                 ensemble.save_everest_batch_success(success)
 
