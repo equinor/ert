@@ -23,6 +23,31 @@ from ert.gui.ertwidgets.models.parameter_configuration_state_model import (
     ParameterConfigurationStateModel,
 )
 
+# EDS table tokens (compact density)
+_TABLE_STYLE = """
+    QTableWidget {
+        background: #ffffff;
+        border: none;
+        color: #3d3d3d;
+        gridline-color: transparent;
+    }
+    QTableWidget::item {
+        padding: 0 16px;
+        border-bottom: 1px solid #dcdcdc;
+    }
+    QTableWidget::item:hover {
+        background: #eaeaea;
+    }
+    QHeaderView::section {
+        background: #f7f7f7;
+        border: none;
+        border-bottom: 2px solid #dcdcdc;
+        padding: 0 16px;
+        min-height: 32px;
+        color: #3d3d3d;
+    }
+"""
+_ROW_HEIGHT = 32
 _COLUMN_HEADERS = ("strategy", "parameter type", "count")
 _PARAMETER_TYPE_DISPLAY_NAMES: dict[str, str] = {
     ParameterType.GEN_KW: "GenKW",
@@ -66,20 +91,22 @@ class UpdateStrategySummaryWidget(QTableWidget):
         )
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        self.setAlternatingRowColors(True)
+        self.setShowGrid(False)
         horizontal_header = self.horizontalHeader()
         assert horizontal_header is not None
         horizontal_header.setSectionResizeMode(QHeaderView.ResizeMode.ResizeToContents)
         header_font = horizontal_header.font()
         header_font.setBold(True)
         horizontal_header.setFont(header_font)
-        horizontal_header.setStyleSheet(
-            "QHeaderView::section { border-bottom: 2px solid palette(mid); }"
+        horizontal_header.setDefaultAlignment(
+            Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
         )
+        self.setStyleSheet(_TABLE_STYLE)
         vertical_header = self.verticalHeader()
         assert vertical_header is not None
         vertical_header.setVisible(False)
-        vertical_header.setSectionResizeMode(QHeaderView.ResizeMode.ResizeToContents)
+        vertical_header.setSectionResizeMode(QHeaderView.ResizeMode.Fixed)
+        vertical_header.setDefaultSectionSize(_ROW_HEIGHT)
         self.setToolTip(_TOOLTIP)
         parameter_state.changed.connect(self._refresh)
         self._refresh()
