@@ -7,7 +7,8 @@ import pytest
 
 from ert.config import QueueSystem
 from ert.run_models.everest_run_model import ExperimentStatus
-from ert.storage import ExperimentState
+from ert.storage import ExperimentState, open_storage
+from ert.storage.local_experiment import ExperimentType
 from everest.bin.everest_script import everest_entry
 from everest.bin.kill_script import kill_entry
 from everest.bin.monitor_script import monitor_entry
@@ -455,3 +456,131 @@ def test_that_run_everest_prints_where_it_runs(
         assert "* Monitoring from this machine:" in captured
         assert expected_server_str in captured
         assert expected_simulator_str in captured
+
+
+def _write_everest_storage(output_dir: Path, simulation_dir: Path) -> None:
+    with open_storage(output_dir / "simulation_results", mode="w") as storage:
+        experiment = storage.create_experiment(
+            experiment_config={
+                "experiment_type": ExperimentType.EVEREST,
+                "simulation_dir": str(simulation_dir),
+            }
+        )
+        experiment.create_ensemble(ensemble_size=1, name="batch_0")
+
+
+def test_that_everest_run_rejects_a_missing_continue_from_folder(
+    capsys, change_to_tmpdir
+):
+    everest_config_with_defaults(
+        environment={"output_folder": "new", "continue_from": "old"}
+    ).write_to_file("config.yml")
+
+    with pytest.raises(SystemExit):
+        everest_entry(["config.yml"])
+
+    assert "The continue_from folder does not exist" in capsys.readouterr().err
+    assert not Path("new").exists()
+
+
+def test_that_everest_run_rejects_a_continue_from_folder_without_everest_results(
+    capsys, change_to_tmpdir
+):
+    Path("old").mkdir()
+    everest_config_with_defaults(
+        environment={"output_folder": "new", "continue_from": "old"}
+    ).write_to_file("config.yml")
+
+    with pytest.raises(SystemExit):
+        everest_entry(["config.yml"])
+
+    assert "No Everest results found" in capsys.readouterr().err
+    assert not Path("new").exists()
+
+
+@pytest.mark.parametrize(
+    ("continue_from", "environment", "old_simulation_dir", "message"),
+    [
+        pytest.param(
+            "everest_output",
+            {},
+            "everest_output/simulation_folder",
+            "Set environment.output_folder to a new folder",
+            id="default_output_folder",
+        ),
+        pytest.param(
+            "old",
+            {"output_folder": "link"},
+            "old/simulation_folder",
+            "Set environment.output_folder to a new folder",
+            id="symlink_to_old_output_folder",
+        ),
+        pytest.param(
+            "old",
+            {"output_folder": "old/new"},
+            "old/simulation_folder",
+            "overlaps",
+            id="new_output_folder_inside_old",
+        ),
+        pytest.param(
+            "old",
+            {"output_folder": "new", "simulation_folder": "../sims"},
+            "sims",
+            "overlaps",
+            id="shared_simulation_folder",
+        ),
+        pytest.param(
+            "old",
+            {"output_folder": "new"},
+            "new/simulation_folder",
+            "overlaps",
+            id="old_simulation_folder_inside_new_output_folder",
+        ),
+    ],
+)
+def test_that_everest_run_rejects_continue_from_with_overlapping_folders(
+    continue_from, environment, old_simulation_dir, message, capsys, change_to_tmpdir
+):
+    _write_everest_storage(Path(continue_from), Path.cwd() / old_simulation_dir)
+    Path("link").symlink_to("old")
+    everest_config_with_defaults(
+        environment={**environment, "continue_from": continue_from}
+    ).write_to_file("config.yml")
+    files_before = sorted(Path.cwd().rglob("*"))
+
+    with pytest.raises(SystemExit):
+        everest_entry(["config.yml"])
+
+    assert message in capsys.readouterr().err
+    assert sorted(Path.cwd().rglob("*")) == files_before
+
+
+@patch("everest.bin.everest_script.run_server_monitor_async")
+@patch("everest.bin.everest_script.start_server")
+@patch("everest.config.ServerConfig.get_server_context_from_conn_info")
+@patch(
+    "everest.bin.everest_script.ErtClient",
+    **{"get_client.side_effect": [TimeoutError(), DEFAULT]},
+)
+def test_that_everest_run_starts_when_continue_from_folders_do_not_overlap(
+    everest_script_api_mock,
+    get_server_context_from_conn_info_mock,
+    start_server_mock,
+    start_monitor_mock,
+    change_to_tmpdir,
+):
+    _write_everest_storage(
+        Path("everest_output"), Path.cwd() / "everest_output" / "simulation_folder"
+    )
+    everest_config_with_defaults(
+        environment={
+            "output_folder": "everest_output_2",
+            "continue_from": "everest_output",
+        }
+    ).write_to_file("config.yml")
+
+    everest_entry(["config.yml"])
+
+    start_server_mock.assert_called_once()
+    assert Path("everest_output", "simulation_results").is_dir()
+    assert Path("everest_output_2").is_dir()

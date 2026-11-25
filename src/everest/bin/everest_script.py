@@ -8,6 +8,7 @@ import socket
 import threading
 import time
 from functools import partial
+from itertools import product
 from pathlib import Path
 from textwrap import dedent
 
@@ -20,11 +21,12 @@ from ert.scheduler import create_driver
 from ert.scheduler.driver import Driver, FailedSubmit
 from ert.scheduler.event import StartedEvent
 from ert.services.ert_client import ErtClient
-from ert.storage.local_experiment import ExperimentState
+from ert.storage import ErtStorageException, open_storage
+from ert.storage.local_experiment import ExperimentState, ExperimentType
 from ert.trace import get_traceparent, trace
 from ert.utils import makedirs_if_needed
 from everest.config import EverestConfig, ServerConfig
-from everest.strings import EVEREST
+from everest.strings import EVEREST, STORAGE_DIR
 from everest.util import (
     version_info,
 )
@@ -91,6 +93,11 @@ def everest_entry(args: list[str] | None = None) -> None:
 
     options = parser.parse_args(args)
 
+    try:
+        _check_continue_from(options.config)
+    except ValueError as err:
+        parser.error(str(err))
+
     makedirs_if_needed(Path(options.config.output_dir), roll_if_exists=True)
     with setup_logging(options):
         logger.info(version_info())
@@ -153,6 +160,60 @@ def everest_entry(args: list[str] | None = None) -> None:
             asyncio.run(run_with_interrupt_handler())
         except KeyboardInterrupt:
             handle_keyboard_interrupt(signal.SIGINT, None, options)
+
+
+def _check_continue_from(config: EverestConfig) -> None:
+    continue_from = config.continue_from_dir
+    if continue_from is None:
+        return
+
+    old_output_dir = Path(continue_from).resolve()
+    if not old_output_dir.is_dir():
+        raise ValueError(f"The continue_from folder does not exist: {old_output_dir}")
+    old_simulation_dir = _recorded_simulation_dir(old_output_dir / STORAGE_DIR)
+
+    new_output_dir = Path(config.output_dir).resolve()
+    if new_output_dir == old_output_dir:
+        raise ValueError(
+            "The output folder is the same as the continue_from folder: "
+            f"{new_output_dir}\nSet environment.output_folder to a new folder."
+        )
+
+    new_dirs = (new_output_dir, Path(config.simulation_dir).resolve())
+    old_dirs = (old_output_dir, old_simulation_dir)
+    for new_dir, old_dir in product(new_dirs, old_dirs):
+        if new_dir.is_relative_to(old_dir) or old_dir.is_relative_to(new_dir):
+            raise ValueError(
+                f"The folder {new_dir} of this run overlaps the folder {old_dir} "
+                "of the run in continue_from."
+            )
+
+
+def _recorded_simulation_dir(storage_dir: Path) -> Path:
+    if not storage_dir.is_dir():
+        raise ValueError(f"No Everest results found in {storage_dir}")
+    try:
+        with open_storage(storage_dir, mode="r") as storage:
+            experiment = next(
+                (
+                    experiment
+                    for experiment in storage.experiments
+                    if experiment.experiment_type == ExperimentType.EVEREST
+                ),
+                None,
+            )
+            simulation_dir = (
+                None
+                if experiment is None
+                else experiment.experiment_config.get("simulation_dir")
+            )
+    except (ErtStorageException, OSError, NotImplementedError) as err:
+        raise ValueError(
+            f"Cannot read Everest results in {storage_dir}: {err}"
+        ) from err
+    if simulation_dir is None:
+        raise ValueError(f"No Everest results found in {storage_dir}")
+    return Path(simulation_dir).resolve()
 
 
 def _build_args_parser() -> argparse.ArgumentParser:
