@@ -28,12 +28,13 @@ from ert.ensemble_evaluator import EndEvent, EvaluatorServerConfig
 from ert.namespace import Namespace
 from ert.run_models import StatusEvents
 from ert.run_models.model_factory import create_model
-from ert.run_models.run_model import RunModel
+from ert.run_models.run_model import ErtRunError, RunModel
 from ert.server.common import ErtRunnerEndpoints
 from ert.server.status_event_forwarder import (
     StatusEventNotifier,
     create_status_event_forwarder,
 )
+from ert.storage import ErtStorageException, ErtStoragePermissionError
 from everest.everserver.server import ExperimentState, ExperimentStatus
 
 from .experiment_runs import (
@@ -159,11 +160,18 @@ async def register(
         run_model = await asyncio.to_thread(
             create_model, request.config, cast(Namespace, request.args), status_queue
         )
-    except ConfigValidationError as e:
-        raise HTTPException(
-            status_code=422,
-            detail=str(e),
-        ) from e
+    except (ConfigValidationError, ErtRunError) as e:
+        logging.getLogger(__name__).exception(f"Failed to register experiment: {e}")
+        raise HTTPException(422, str(e)) from e
+    except ErtStoragePermissionError as e:
+        logging.getLogger(__name__).exception(f"Failed to register experiment: {e}")
+        raise HTTPException(403, str(e)) from e
+    except ErtStorageException as e:
+        logging.getLogger(__name__).exception(f"Failed to register experiment: {e}")
+        raise HTTPException(423, str(e)) from e
+    except Exception as e:
+        logging.getLogger(__name__).exception(f"Failed to register experiment: {e}")
+        raise HTTPException(500, str(e)) from e
 
     experiment_state = ErtExperimentRunnerState(
         run_model=run_model,

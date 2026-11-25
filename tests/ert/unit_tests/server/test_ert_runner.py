@@ -18,7 +18,7 @@ from ert.ensemble_evaluator import EndEvent, EvaluatorServerConfig
 from ert.plugins import ErtPluginManager, ErtRuntimePlugins, plugin
 from ert.run_models import SingleTestRun
 from ert.run_models.event import RunModelStatusEvent
-from ert.run_models.run_model import RunModel
+from ert.run_models.run_model import ErtRunError, RunModel
 from ert.server.endpoints import ert_runner
 from ert.server.endpoints.experiment_runs import (
     ExperimentRunnerState,
@@ -28,7 +28,12 @@ from ert.server.endpoints.experiment_runs import (
     verify_auth,
 )
 from ert.server.status_event_forwarder import StatusEventForwarder
-from ert.storage import LocalStorage, open_storage
+from ert.storage import (
+    ErtStorageException,
+    ErtStoragePermissionError,
+    LocalStorage,
+    open_storage,
+)
 from everest.everserver.server import ExperimentState, ExperimentStatus
 from tests.ert.utils import wait_until_all_status_events_are_delivered
 
@@ -287,21 +292,29 @@ async def test_that_model_creation_error_does_not_register_a_state(
         ),
     )
 
-    with pytest.raises(ValueError, match="Invalid config"):
+    with pytest.raises(ert_runner.HTTPException, match="Invalid config"):
         await ert_runner.register(request, Mock())
     assert not registry
 
 
 @pytest.mark.asyncio
-async def test_that_config_validation_error_on_registration_gives_http_422(
-    monkeypatch: pytest.MonkeyPatch,
+@pytest.mark.parametrize(
+    ("error_type", "status_code"),
+    [
+        (ConfigValidationError, 422),
+        (ErtRunError, 422),
+        (ErtStoragePermissionError, 403),
+        (ErtStorageException, 423),
+        (RuntimeError, 500),
+    ],
+)
+async def test_that_registration_errors_give_http_status_with_the_error_message(
+    monkeypatch: pytest.MonkeyPatch, error_type: type[Exception], status_code: int
 ):
-    registry: dict[str, ert_runner.ErtExperimentRunnerState] = {}
-    monkeypatch.setattr(ert_runner, "_experiments", registry)
     monkeypatch.setattr(
         ert_runner,
         "create_model",
-        Mock(side_effect=ConfigValidationError("Ensemble size must be positive")),
+        Mock(side_effect=error_type("Could not create the run model")),
     )
     request = ert_runner.StartErtExperimentRequest.model_construct(
         config=Mock(spec=ErtConfig),
@@ -313,9 +326,32 @@ async def test_that_config_validation_error_on_registration_gives_http_422(
     with pytest.raises(ert_runner.HTTPException) as error:
         await ert_runner.register(request, Mock())
 
-    assert error.value.status_code == 422
-    assert "Ensemble size must be positive" in error.value.detail
-    assert not registry
+    assert error.value.status_code == status_code
+    assert error.value.detail == "Could not create the run model"
+
+
+@pytest.mark.asyncio
+async def test_that_unexpected_registration_error_is_logged_with_its_traceback(
+    monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+):
+    monkeypatch.setattr(
+        ert_runner, "create_model", Mock(side_effect=RuntimeError("Unexpected failure"))
+    )
+    request = ert_runner.StartErtExperimentRequest.model_construct(
+        config=Mock(spec=ErtConfig),
+        args=ert_runner.RunArgs(
+            mode="ensemble_experiment", experiment_name="registration-test"
+        ),
+    )
+
+    with pytest.raises(ert_runner.HTTPException):
+        await ert_runner.register(request, Mock())
+
+    logged = [record for record in caplog.records if record.name == ert_runner.__name__]
+    assert len(logged) == 1
+    assert logged[0].levelname == "ERROR"
+    assert "Unexpected failure" in logged[0].getMessage()
+    assert logged[0].exc_info is not None
 
 
 @pytest.mark.asyncio
@@ -343,10 +379,13 @@ async def test_that_failed_registration_releases_partially_initialized_storage(
         ),
     )
 
-    with pytest.raises(RuntimeError, match="Invalid prior ensemble") as error:
+    with pytest.raises(ert_runner.HTTPException) as error:
         await ert_runner.register(request, Mock())
 
-    assert error.value.__traceback__ is not None
+    assert error.value.status_code == 500
+    assert error.value.detail == "Invalid prior ensemble"
+    assert isinstance(error.value.__cause__, RuntimeError)
+    assert error.value.__cause__.__traceback__ is not None
     assert not registry
     with open_storage(minimum_case.ens_path, mode="w") as storage:
         assert storage.can_write
