@@ -16,7 +16,7 @@ from PyQt6.QtWidgets import (
 
 from ert.gui.ertwidgets import CopyableLabel
 from ert.gui.ertwidgets.accordion import Accordion
-from ert.gui.ertwidgets.card import CARD_SPACING, create_card, create_card_title
+from ert.gui.ertwidgets.card import CARD_SPACING, create_card
 
 if TYPE_CHECKING:
     from ert.config import ParameterConfig
@@ -62,6 +62,7 @@ class ExperimentConfigPanel(QWidget):
         self.common_layout = _create_form()
         self.options_accordion: Accordion | None = None
         self.update_settings_accordion: Accordion | None = None
+        self.common_accordion: Accordion | None = None
 
     def add_common_settings(
         self,
@@ -119,9 +120,12 @@ class ExperimentConfigPanel(QWidget):
         if self.common_layout.rowCount() > 0:
             common_card = create_card()
             common_layout = QVBoxLayout(common_card)
-            common_layout.setContentsMargins(16, 12, 16, 12)
-            common_layout.addWidget(create_card_title("General settings"))
-            common_layout.addWidget(self._wrap(self.common_layout))
+            common_layout.setContentsMargins(0, 0, 0, 0)
+            self.common_accordion = Accordion(
+                "Main settings", self._wrap(self.common_layout), expanded=True
+            )
+            self.common_accordion.setObjectName("common_accordion")
+            common_layout.addWidget(self.common_accordion)
             common_layout.addStretch(1)
             grid.addWidget(common_card, 0, 0, 1, 2)
             # QGridLayout drops the spacing next to a column holding only a
