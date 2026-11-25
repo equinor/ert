@@ -1,3 +1,4 @@
+import re
 from datetime import date
 from pathlib import Path
 
@@ -937,3 +938,36 @@ def test_that_empty_parameter_name_with_decimals_is_dropped_in_config(use_tmpdir
     _write_config_workbook(wb_path, design_input=design_input)
     config = excel_to_config(wb_path)
     assert config.decimals == {"foo": 3}
+
+
+def test_that_non_existent_input_file_raises_fmudesign_error(use_tmpdir):
+    file = "design.xlsx"
+
+    with pytest.raises(FmudesignError, match=re.escape(f"{file}' is not a file")):
+        excel_to_config(str(file))
+
+
+def test_that_invalid_input_file_extension_raises_fmudesign_error(tmp_path):
+    input_path = tmp_path / "design.txt"
+    input_path.touch()
+
+    with pytest.raises(
+        FmudesignError, match=re.escape("must have file extension .xlsx")
+    ):
+        excel_to_config(str(input_path))
+
+
+def test_that_empty_input_file_raises_fmudesign_error(tmp_path):
+    input_path = tmp_path / "design.xlsx"
+    input_path.touch()
+
+    with pytest.raises(FmudesignError, match=re.escape("is not a valid .xlsx file")):
+        excel_to_config(str(input_path))
+
+
+def test_that_corrupted_xlsx_file_raises_fmudesign_error(tmp_path):
+    input_path = tmp_path / "design.xlsx"
+    input_path.write_bytes(b"foo bar")
+
+    with pytest.raises(FmudesignError, match=re.escape("is not a valid .xlsx file")):
+        excel_to_config(str(input_path))

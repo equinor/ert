@@ -136,3 +136,34 @@ def test_that_mix_typed_colum_in_fmu_design_design_matrix_is_cast_to_str(
     assert fault_position.dtype == pl.String
     assert fault_position.to_list() == ["-1", "west"]
     assert "FAULT_POSITION" in design_matrix.categorical_parameters
+
+
+def test_that_non_existing_design_file_raises_config_validation_error(use_tmpdir):
+    design_file = "design.xlsx"
+
+    with pytest.raises(
+        ConfigValidationError, match=f'Cannot find file or directory "{design_file}"'
+    ):
+        parse_ert_config_with_fmu_design(f"FMU_DESIGN {design_file}")
+
+
+def test_that_empty_fmu_design_file_raises_config_validation_error(use_tmpdir):
+    design_file = "design.xlsx"
+    Path(design_file).touch()
+
+    with pytest.raises(
+        ConfigValidationError, match=f"{design_file}.* not a valid .xlsx file"
+    ):
+        parse_ert_config_with_fmu_design(f"FMU_DESIGN {design_file}")
+
+
+def test_that_invalid_fmu_design_file_extension_raises_config_validation_error(
+    use_tmpdir,
+):
+    design_file = "design.txt"
+    Path(design_file).touch()
+
+    with pytest.raises(
+        ConfigValidationError, match=f"must have file extension .xlsx; .*{design_file}"
+    ):
+        parse_ert_config_with_fmu_design(f"FMU_DESIGN {design_file}")
