@@ -937,3 +937,16 @@ def test_that_empty_parameter_name_with_decimals_is_dropped_in_config(use_tmpdir
     _write_config_workbook(wb_path, design_input=design_input)
     config = excel_to_config(wb_path)
     assert config.decimals == {"foo": 3}
+
+
+def test_that_missing_sensname_column_in_designinput_raises_error(use_tmpdir):
+    design_input = pd.DataFrame(
+        data=[
+            ["name", "numreal", "type", "param_name"],
+            ["rms_seed", "", "seed", ""],
+        ]
+    )
+    input_path = _write_config_workbook("designinput.xlsx", design_input=design_input)
+
+    with pytest.raises(FmudesignError, match="sensname"):
+        excel_to_config(input_path)
