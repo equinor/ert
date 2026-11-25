@@ -9,6 +9,8 @@ from .snapshot import EnsembleSnapshot
 
 
 class EnsembleEvent(BaseModel):
+    """`ensemble_id` is the posterior ensemble produced by the update."""
+
     ensemble_id: UUID
 
 
