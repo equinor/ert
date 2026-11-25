@@ -2,6 +2,7 @@ from pathlib import Path
 from textwrap import dedent
 
 import openpyxl
+import polars as pl
 import pytest
 
 from ert.config import ConfigValidationError, ErtConfig
@@ -12,6 +13,7 @@ def write_fmu_design_workbook(
     *,
     design_sheet: str = "designinput",
     default_sheet: str = "defaultvalues",
+    design_values: str = "faults,,scenario,FAULT_POSITION,east,-1,west,1",
     default_values: str = "FAULT_POSITION,0\nOWC,2650",
 ) -> None:
     sheets = {
@@ -23,10 +25,9 @@ def write_fmu_design_workbook(
             background,None
             distribution_seed,None"""
         ),
-        design_sheet: dedent(
-            """\
-            sensname,numreal,type,param_name,senscase1,value1,senscase2,value2
-            faults,,scenario,FAULT_POSITION,east,-1,west,1"""
+        design_sheet: (
+            "sensname,numreal,type,param_name,senscase1,value1,senscase2,value2\n"
+            f"{design_values}"
         ),
         default_sheet: f"param_name,default_values\n{default_values}",
     }
@@ -116,3 +117,22 @@ def test_that_realization_row_in_fmu_design_raises_config_validation_error(
 
     with pytest.raises(ConfigValidationError, match="reserved internal keyword"):
         parse_ert_config_with_fmu_design(f"FMU_DESIGN {design_file}")
+
+
+def test_that_mix_typed_colum_in_fmu_design_design_matrix_is_cast_to_str(
+    use_tmpdir,
+):
+    design_file = "design.xlsx"
+    write_fmu_design_workbook(
+        design_file,
+        design_values="faults,,scenario,FAULT_POSITION,east,-1,west,west",
+    )
+
+    ert_config = parse_ert_config_with_fmu_design(f"FMU_DESIGN {design_file}")
+
+    design_matrix = ert_config.analysis_config.design_matrix
+
+    fault_position = design_matrix.design_matrix_df.get_column("FAULT_POSITION")
+    assert fault_position.dtype == pl.String
+    assert fault_position.to_list() == ["-1", "west"]
+    assert "FAULT_POSITION" in design_matrix.categorical_parameters
