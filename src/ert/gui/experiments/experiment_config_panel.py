@@ -36,7 +36,7 @@ class ExperimentConfigPanel(QWidget):
 
     A double width card on the left holds the settings common to all
     experiment types (see :meth:`add_common_settings`), and a card to its
-    right holds the "Options" and "Update settings" accordions.
+    right holds the "{mode} settings" and "Update settings" accordions.
 
     Subclasses add rows to ``options_layout`` and ``update_settings_layout``
     and call :meth:`build_layout` when done. To keep the options in the same
@@ -94,7 +94,9 @@ class ExperimentConfigPanel(QWidget):
         if accordions:
             main_layout.setContentsMargins(0, 0, 0, 0)
             self.options_accordion = Accordion(
-                "Options", self._wrap(self.options_layout), expanded=True
+                f"{self.__run_model.name()} settings",
+                self._wrap(self.options_layout),
+                expanded=True,
             )
             self.options_accordion.setObjectName("options_accordion")
             main_layout.addWidget(self.options_accordion)
@@ -118,7 +120,7 @@ class ExperimentConfigPanel(QWidget):
             common_card = create_card()
             common_layout = QVBoxLayout(common_card)
             common_layout.setContentsMargins(16, 12, 16, 12)
-            common_layout.addWidget(create_card_title("Common settings"))
+            common_layout.addWidget(create_card_title("General settings"))
             common_layout.addWidget(self._wrap(self.common_layout))
             common_layout.addStretch(1)
             grid.addWidget(common_card, 0, 0, 1, 2)
