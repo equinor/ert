@@ -12,6 +12,7 @@ def write_fmu_design_workbook(
     *,
     design_sheet: str = "designinput",
     default_sheet: str = "defaultvalues",
+    default_values: str = "FAULT_POSITION,0\nOWC,2650",
 ) -> None:
     sheets = {
         "general_input": dedent(
@@ -27,12 +28,7 @@ def write_fmu_design_workbook(
             sensname,numreal,type,param_name,senscase1,value1,senscase2,value2
             faults,,scenario,FAULT_POSITION,east,-1,west,1"""
         ),
-        default_sheet: dedent(
-            """\
-            param_name,default_values
-            FAULT_POSITION,0
-            OWC,2650"""
-        ),
+        default_sheet: f"param_name,default_values\n{default_values}",
     }
 
     workbook = openpyxl.Workbook(write_only=True)
@@ -108,3 +104,15 @@ def test_that_missing_fmu_design_sheet_raises_config_validation_error(use_tmpdir
         parse_ert_config_with_fmu_design(
             f"FMU_DESIGN {design_file} DESIGN_SHEET:nosuchsheet"
         )
+
+
+def test_that_realization_row_in_fmu_design_raises_config_validation_error(
+    use_tmpdir,
+):
+    design_file = "design.xlsx"
+    write_fmu_design_workbook(
+        design_file, default_values="FAULT_POSITION,0\nrealization,100"
+    )
+
+    with pytest.raises(ConfigValidationError, match="reserved internal keyword"):
+        parse_ert_config_with_fmu_design(f"FMU_DESIGN {design_file}")
