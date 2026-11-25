@@ -9,7 +9,15 @@ from typing import override
 from PyQt6.QtCore import QCoreApplication, QEvent, QSize, Qt
 from PyQt6.QtCore import pyqtSignal as Signal
 from PyQt6.QtCore import pyqtSlot as Slot
-from PyQt6.QtGui import QAction, QCloseEvent, QCursor, QIcon, QMouseEvent
+from PyQt6.QtGui import (
+    QAction,
+    QCloseEvent,
+    QColor,
+    QCursor,
+    QIcon,
+    QMouseEvent,
+    QPalette,
+)
 from PyQt6.QtWidgets import (
     QButtonGroup,
     QFrame,
@@ -35,8 +43,9 @@ from ert.plugins import ErtRuntimePlugins
 from ert.trace import get_trace_id
 
 from .detect_mode import is_dark_mode
+from .eds_colors import DARK_GREY, MEDIUM_GREEN, TEXT_DEFAULT
 from .experiments import ExperimentPanel, RunDialog
-from .icon_utils import load_icon
+from .icon_utils import load_icon, load_stateful_icon
 
 logger = logging.getLogger(__name__)
 BUTTON_STYLE_SHEET: str = """
@@ -50,14 +59,6 @@ BUTTON_STYLE_SHEET: str = """
         right: 10px; bottom: 5px;
     }
 """
-
-BUTTON_STYLE_SHEET_LIGHT: str = (
-    BUTTON_STYLE_SHEET
-    + """
-    QToolButton:hover {background-color: rgba(50, 50, 50, 50);}
-    QToolButton:checked {background-color: rgba(50, 50, 50, 120);}
-    """
-)
 
 BUTTON_STYLE_SHEET_DARK: str = (
     BUTTON_STYLE_SHEET
@@ -117,10 +118,27 @@ class ErtMainWindow(QMainWindow):
             self.side_frame.setStyleSheet("background-color: rgb(64, 64, 64);")
             logger.info("Running Ert with dark mode")
         else:
-            self.side_frame.setStyleSheet("background-color: lightgray;")
+            self.central_widget.setObjectName("central_widget")
+            palette = self.palette()
+            for role in (
+                QPalette.ColorRole.WindowText,
+                QPalette.ColorRole.Text,
+                QPalette.ColorRole.ButtonText,
+            ):
+                palette.setColor(QPalette.ColorGroup.Active, role, QColor(TEXT_DEFAULT))
+                palette.setColor(
+                    QPalette.ColorGroup.Inactive, role, QColor(TEXT_DEFAULT)
+                )
+                palette.setColor(QPalette.ColorGroup.Disabled, role, QColor(DARK_GREY))
+            self.setPalette(palette)
+            self.side_frame.setObjectName("side_frame")
             logger.info("Running Ert with light mode")
 
         self.vbox_layout = QVBoxLayout(self.side_frame)
+        if not is_dark_mode():
+            # EDS sidebar items span the full width with no gaps between them.
+            self.vbox_layout.setContentsMargins(0, 0, 2, 0)
+            self.vbox_layout.setSpacing(0)
         self.side_frame.setLayout(self.vbox_layout)
 
         self.central_panels_map: dict[str, QWidget] = {}
@@ -128,13 +146,17 @@ class ErtMainWindow(QMainWindow):
         self._plot_window: PlotWindow | None = None
         self._manage_experiments_panel: ManageExperimentsPanel | None = None
         self.experiment_button = self._add_sidebar_button(
-            "Start experiment", load_icon("library_add.svg")
+            "Start experiment", self._sidebar_icon("library_add.svg")
         )
-        plot_button = self._add_sidebar_button("Create plot", load_icon("timeline.svg"))
+        plot_button = self._add_sidebar_button(
+            "Create plot", self._sidebar_icon("timeline.svg")
+        )
         plot_button.setToolTip("Right click to open external window")
-        self._add_sidebar_button("Manage experiments", load_icon("build_wrench.svg"))
+        self._add_sidebar_button(
+            "Manage experiments", self._sidebar_icon("build_wrench.svg")
+        )
         self.results_button = self._add_sidebar_button(
-            "Experiment status", load_icon("in_progress.svg")
+            "Experiment status", self._sidebar_icon("in_progress.svg")
         )
         self.results_button.setEnabled(False)
         self.experiment_button.click()
@@ -285,6 +307,9 @@ class ErtMainWindow(QMainWindow):
         self.central_layout.addWidget(experiment_panel)
         self._experiment_panel = experiment_panel
         self.central_panels_map["Start experiment"] = self._experiment_panel
+        # Start with focus on the panel so no sidebar button shows its
+        # keyboard focus outline on startup.
+        experiment_panel.setFocus()
 
         experiment_panel.experiment_started.connect(self.slot_add_widget)
 
@@ -306,18 +331,31 @@ class ErtMainWindow(QMainWindow):
                     self.help_menu.menuAction(), self.plugins_tool.get_menu()
                 )
 
+    @staticmethod
+    def _sidebar_icon(name: str) -> QIcon:
+        if is_dark_mode():
+            return load_icon(name)
+        return load_stateful_icon(
+            name, resting=TEXT_DEFAULT, active=MEDIUM_GREEN, disabled=DARK_GREY
+        )
+
     def _add_sidebar_button(self, name: str, icon: QIcon) -> SidebarToolButton:
         button = SidebarToolButton(self.side_frame)
         button.setCheckable(True)
         button.setFixedSize(85, 95)
         button.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
 
-        button.setStyleSheet(
-            BUTTON_STYLE_SHEET_DARK
-        ) if is_dark_mode() else button.setStyleSheet(BUTTON_STYLE_SHEET_LIGHT)
+        if is_dark_mode():
+            button.setStyleSheet(BUTTON_STYLE_SHEET_DARK)
+        else:
+            # Only show the focus outline for keyboard focus, like :focus-visible.
+            button.setFocusPolicy(Qt.FocusPolicy.TabFocus)
 
-        pad = 45
-        icon_size = QSize(button.size().width() - pad, button.size().height() - pad)
+        if is_dark_mode():
+            pad = 45
+            icon_size = QSize(button.size().width() - pad, button.size().height() - pad)
+        else:
+            icon_size = QSize(32, 32)
         button.setIconSize(icon_size)
         button.setIcon(icon)
         button.setToolTip(name)

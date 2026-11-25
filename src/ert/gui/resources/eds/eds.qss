@@ -1,0 +1,160 @@
+/*
+ * Style sheet template following the Equinor Design System.
+ * Rules for widgets that are only styled in light mode are scoped by
+ * object names or the eds="light" property, which are set in light mode only.
+ * Copyright (c) 2020 Equinor ASA, MIT License (see LICENSE in this directory).
+ * https://github.com/equinor/design-system
+ *
+ * Dollar-prefixed colour names are filled in from ert/gui/eds_colors.py.
+ */
+
+/* Window */
+QFrame#central_widget { background: $LIGHT_GREY; }
+
+Suggestor[eds="light"] { background-color: $LIGHT_GREY; }
+QScrollArea#suggestor_scroll[eds="light"],
+QScrollArea#suggestor_scroll[eds="light"] > QWidget,
+QWidget#suggestor_messages[eds="light"] {
+    background-color: $LIGHT_GREY;
+}
+
+QFrame#side_frame {
+    background-color: $WHITE;
+    border-right: 2px solid $LIGHT_GREY;
+}
+
+/* Sidebar, mirrors the EDS SideBar.Link states */
+QFrame#side_frame QToolButton {
+    background-color: transparent;
+    color: $TEXT_DEFAULT;
+    border: 2px solid transparent;
+    border-bottom-color: $LIGHT_GREY;
+    border-radius: 0px;
+    padding-top: 5px;
+    padding-bottom: 10px;
+}
+QFrame#side_frame QToolButton:hover { background-color: $HEAVY_GREY; }
+QFrame#side_frame QToolButton:checked,
+QFrame#side_frame QToolButton:checked:hover {
+    background-color: $SELECTED_HIGHLIGHT;
+    color: $MEDIUM_GREEN;
+}
+QFrame#side_frame QToolButton:focus { border: 2px dashed $MEDIUM_GREEN; }
+QFrame#side_frame QToolButton:disabled {
+    background-color: $MEDIUM_GREY;
+    color: $DARK_GREY;
+}
+QFrame#side_frame QToolButton::menu-indicator { right: 10px; bottom: 5px; }
+
+/* Contained (primary) button */
+QFrame#central_widget QToolButton#run_experiment {
+    background-color: $MEDIUM_GREEN;
+    color: $WHITE;
+    border: none;
+    border-radius: 4px;
+    padding: 0px 16px 0px 12px;
+    font-size: 14px;
+    font-weight: 500;
+}
+QFrame#central_widget QToolButton#run_experiment:hover { background-color: $DARK_GREEN; }
+QFrame#central_widget QToolButton#run_experiment:disabled {
+    background-color: $MEDIUM_GREY;
+    color: $DARK_GREY;
+}
+
+/* Select */
+QFrame#central_widget QComboBoxWithDescription {
+    background-color: $MEDIUM_GREY;
+    color: $TEXT_DEFAULT;
+    border: none;
+    border-bottom: 1px solid $TEXT_TERTIARY;
+    border-radius: 0px;
+    padding: 0px 8px;
+    min-height: 36px;
+}
+QFrame#central_widget QComboBoxWithDescription:hover { background-color: $HEAVY_GREY; }
+QFrame#central_widget QComboBoxWithDescription:focus, QFrame#central_widget QComboBoxWithDescription:on {
+    border-bottom: 2px solid $MEDIUM_GREEN;
+}
+QFrame#central_widget QComboBoxWithDescription::drop-down { border: none; width: 32px; }
+QFrame#central_widget QComboBoxWithDescription::down-arrow {
+    image: url(img:arrow_drop_down.svg);
+    width: 24px;
+    height: 24px;
+}
+QFrame#central_widget QComboBoxWithDescription QAbstractItemView {
+    background-color: $WHITE;
+    border: none;
+    outline: none;
+}
+
+/* Suggestor, also used in dark mode */
+Suggestor QPushButton[variant="primary"] {
+    background-color: $MEDIUM_GREEN;
+    color: white;
+    border-radius: 4px;
+    border: 2px solid $MEDIUM_GREEN;
+    height: 36px;
+    padding: 0px 16px 0px 16px;
+}
+Suggestor QPushButton[variant="primary"]:hover {
+    background: $DARK_GREEN;
+    border: 2px solid $DARK_GREEN;
+}
+
+Suggestor QPushButton[variant="secondary"] {
+    background-color: $LIGHT_GREY;
+    color: $MEDIUM_GREEN;
+    border-radius: 4px;
+    border: 2px solid $MEDIUM_GREEN;
+    height: 36px;
+    padding: 0px 16px 0px 16px;
+}
+Suggestor QPushButton[variant="secondary"]:hover {
+    background-color: $LIGHT_GREEN;
+}
+
+Suggestor QFrame#help_panel,
+Suggestor QFrame#help_panel QFrame {
+    background-color: $MEDIUM_GREY;
+    border-radius: 4px;
+    border: 2px solid $HEAVY_GREY;
+}
+Suggestor QFrame#help_panel QFrame[frameShape="4"] {
+    color: $HEAVY_GREY;
+}
+Suggestor QFrame#help_panel QLabel#help_header {
+    font-size: 24px;
+    color: $BLUE_TEXT;
+    border: none;
+    margin-left: 30px;
+}
+Suggestor QFrame#help_panel QPushButton[variant="link"] {
+    background-color: $MEDIUM_GREY;
+    color: $BLUE_TEXT;
+    border: 0px solid white;
+    margin-left: 34px;
+    height: 36px;
+    text-decoration: underline;
+    text-align: left;
+    font-size: 16px;
+    padding: 0px;
+}
+
+QScrollArea#suggestor_scroll {
+    border: none;
+    width: 128px;
+}
+QScrollArea#suggestor_scroll QScrollBar {
+    border: none;
+    background-color: $LIGHT_GREY;
+    width: 10px;
+}
+QScrollArea#suggestor_scroll QScrollBar::handle {
+    border: none;
+    background-color: $HEAVY_GREY;
+    border-radius: 4px;
+}
+QScrollArea#suggestor_scroll QScrollBar::sub-line:vertical, QScrollArea#suggestor_scroll QScrollBar::add-line:vertical {
+    background: none;
+}
