@@ -36,7 +36,7 @@ class AnalysisReportEvent(AnalysisEvent):
 @dataclass
 class DataSection:
     header: list[str]
-    data: Sequence[Sequence[str | float]]
+    data: Sequence[Sequence[str | int | float | None]]
     extra: dict[str, str] | None = None
 
     def __post_init__(self) -> None:

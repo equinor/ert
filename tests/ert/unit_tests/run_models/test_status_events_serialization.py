@@ -1,3 +1,4 @@
+import json
 import uuid
 from collections import defaultdict
 from datetime import UTC
@@ -233,6 +234,25 @@ def test_that_update_table_with_numpy_rows_can_be_sent_over_websocket():
     restored = status_event_from_json(status_event_to_json(event))
     assert isinstance(restored, RunModelDataEvent)
     assert restored.data.data == [["OBS", 1.5]]
+
+
+@pytest.mark.filterwarnings("error")
+def test_that_update_table_integers_and_missing_values_are_preserved_over_websocket():
+    row = ["OBS", 60, 1.5, None]
+    event = RunModelDataEvent(
+        iteration=0,
+        ensemble_id=uuid.uuid4(),
+        name="Auto scale",
+        data=DataSection(
+            header=["observation", "cluster", "scaling", "response_mean"],
+            data=[row],
+        ),
+    )
+
+    restored = status_event_from_json(json.dumps(jsonable_encoder(event)))
+
+    assert restored.data.data == [row]
+    assert isinstance(restored.data.data[0][1], int)
 
 
 def _build_full_snapshot_event() -> FullSnapshotEvent:
