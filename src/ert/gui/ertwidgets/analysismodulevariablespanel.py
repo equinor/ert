@@ -9,7 +9,6 @@ from PyQt6.QtWidgets import (
     QAbstractSpinBox,
     QDoubleSpinBox,
     QFormLayout,
-    QLabel,
     QWidget,
 )
 
@@ -41,8 +40,6 @@ class AnalysisModuleVariablesPanel(QWidget):
         layout = QFormLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         self.blockSignals(True)
-
-        layout.addRow(QLabel("<b>General settings</b>"))
 
         var_name = "enkf_truncation"
         metadata = AnalysisModule.model_fields[var_name]
