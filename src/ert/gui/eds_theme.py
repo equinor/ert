@@ -24,7 +24,10 @@ def _colors(*modules: ModuleType) -> dict[str, str]:
 def render_eds_stylesheet() -> str:
     name = "eds_dark.qss" if is_dark_mode() else "eds_light.qss"
     template = files("ert.gui").joinpath("resources/eds", name).read_text("utf-8")
-    return Template(template).substitute(_colors(eds_colors, suggestor_colors))
+    colors = _colors(eds_colors, suggestor_colors)
+    if is_dark_mode():
+        colors |= eds_colors.DARK_COLORS
+    return Template(template).substitute(colors)
 
 
 def apply_eds_theme(app: QApplication) -> None:

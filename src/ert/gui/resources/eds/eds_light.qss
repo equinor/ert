@@ -89,7 +89,7 @@ QFrame#central_widget QComboBoxWithDescription QAbstractItemView {
 /* Suggestor */
 Suggestor QPushButton[variant="primary"] {
     background-color: $MEDIUM_GREEN;
-    color: white;
+    color: $TEXT_ON_ACCENT;
     border-radius: 4px;
     border: 2px solid $MEDIUM_GREEN;
     height: 36px;
