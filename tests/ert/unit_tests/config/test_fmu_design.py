@@ -167,3 +167,23 @@ def test_that_invalid_fmu_design_file_extension_raises_config_validation_error(
         ConfigValidationError, match=f"must have file extension .xlsx; .*{design_file}"
     ):
         parse_ert_config_with_fmu_design(f"FMU_DESIGN {design_file}")
+
+
+def test_that_whole_number_columns_in_fmu_design_design_matrix_are_int64(
+    use_tmpdir,
+):
+    design_file = "design.xlsx"
+    write_fmu_design_workbook(
+        design_file,
+        design_values=(
+            "faults,,scenario,FAULT_POSITION,east,-1,west,1\nreference,,ref"
+        ),
+    )
+
+    ert_config = parse_ert_config_with_fmu_design(f"FMU_DESIGN {design_file}")
+
+    fault_position = ert_config.analysis_config.design_matrix.design_matrix_df[
+        "FAULT_POSITION"
+    ]
+    assert fault_position.dtype == pl.Int64
+    assert fault_position.to_list() == [-1, 1, 0]

@@ -110,7 +110,9 @@ class DesignMatrix:
             for col in design.designvalues.columns
             if design.designvalues[col].dropna().map(type).nunique() > 1
         ]
-        design_df = design.designvalues.astype(dict.fromkeys(mix_typed_cols, "string"))
+        design_df = design.designvalues.convert_dtypes().astype(
+            dict.fromkeys(mix_typed_cols, "string")
+        )
         try:
             design_matrix_df = _complete_design_matrix(
                 pl.from_pandas(design_df), design.defaultvalues
