@@ -4,6 +4,7 @@ from importlib.resources import files
 from string import Template
 from types import ModuleType
 
+from PyQt6.QtCore import QDir
 from PyQt6.QtWidgets import QApplication
 
 from ert.gui import eds_colors
@@ -30,4 +31,5 @@ def apply_eds_theme(app: QApplication) -> None:
     Rules that only apply in light mode are scoped to widgets that are only
     marked for light mode, so dark mode keeps the native look.
     """
+    QDir.addSearchPath("img", str(files("ert.gui").joinpath("resources/eds/icons")))
     app.setStyleSheet(render_eds_stylesheet())

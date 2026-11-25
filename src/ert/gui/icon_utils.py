@@ -27,7 +27,9 @@ def load_icon(name: str, color: str | None = None) -> QIcon:
 
 
 def _render_pixmap(name: str, color: str, trailing_gap: float = 0.0) -> QPixmap:
-    path = files("ert.gui").joinpath(f"resources/gui/img/{name}")
+    path = files("ert.gui").joinpath(f"resources/eds/icons/{name}")
+    if not path.is_file():
+        path = files("ert.gui").joinpath(f"resources/gui/img/{name}")
     data = path.read_bytes().replace(b"currentColor", color.encode())
 
     renderer = QSvgRenderer(bytes(data))
