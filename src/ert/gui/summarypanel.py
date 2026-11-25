@@ -10,11 +10,14 @@ from PyQt6.QtWidgets import (
     QHBoxLayout,
     QLabel,
     QScrollArea,
+    QSizePolicy,
+    QSpacerItem,
     QVBoxLayout,
     QWidget,
 )
 
 from ert.gui.ertwidgets import ErtSummary
+from ert.gui.ertwidgets.card import CARD_SPACING, create_card
 
 if TYPE_CHECKING:
     from ert.config import ErtConfig
@@ -41,7 +44,8 @@ class SummaryTemplate:
 
     def addTitle(self, title: str) -> None:
         if not self.__finished:
-            style = "font-size: 16px; font-weight: bold;"
+            # 8px is the EDS small spacing.
+            style = "font-size: 16px; font-weight: bold; margin-bottom: 8px;"
             self.text += f'<div style="{style}">{title}</div>'
 
     def addRow(self, value: Any) -> None:
@@ -87,15 +91,22 @@ class SummaryPanel(QFrame):
 
         widget = QWidget(self)
         self._layout = QHBoxLayout()
+        self._layout.setContentsMargins(0, 0, 0, 0)
+        self._layout.setSpacing(CARD_SPACING)
         widget.setLayout(self._layout)
 
         scroll = QScrollArea(self)
+        scroll.setObjectName("summary_scroll")
         scroll.setWidgetResizable(True)
+        # A scroll bar would narrow the last card so that it no longer lines up
+        # with the settings above; the cards' contents scroll on their own.
+        scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         scroll.setWidget(widget)
 
-        layout = QGridLayout()
+        layout = QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(scroll)
+        layout.addWidget(scroll, 1)
 
         self.setLayout(layout)
         self.updateSummary()
@@ -140,14 +151,22 @@ class SummaryPanel(QFrame):
         self.addColumn(text.getText())
 
     def addColumn(self, text: str) -> None:
-        layout = QVBoxLayout()
         text_widget = QLabel(text)
         text_widget.setWordWrap(True)
         text_widget.setTextFormat(Qt.TextFormat.RichText)
-        layout.addWidget(text_widget)
-        layout.addStretch(1)
 
-        self._layout.addLayout(layout)
+        card = create_card()
+        layout = QGridLayout(card)
+        layout.setContentsMargins(16, 12, 16, 12)
+        layout.addWidget(text_widget, 0, 0)
+        layout.addItem(
+            QSpacerItem(0, 0, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding),
+            1,
+            0,
+        )
+        layout.setRowStretch(1, 1)
+
+        self._layout.addWidget(card, 1)
 
     def log_summary(self, run_model: str, num_realizations: int) -> None:
         summary = ErtSummary(self.config)

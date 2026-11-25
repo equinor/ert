@@ -8,6 +8,19 @@
  * ert/gui/eds_colors.py.
  */
 
+/* Window and cards: the surface is darker than the canvas */
+QFrame#central_widget { background: $LIGHT_GREY; }
+
+SummaryPanel { background: transparent; border: none; }
+QScrollArea#summary_card_scroll,
+QScrollArea#summary_card_scroll > QWidget > QWidget { background: transparent; }
+
+QFrame#card {
+    background: $WHITE;
+    border: none;
+    border-radius: 4px;
+}
+
 /* Suggestor */
 Suggestor QPushButton[variant="primary"] {
     background-color: $MEDIUM_GREEN;
@@ -77,4 +90,17 @@ QScrollArea#suggestor_scroll QScrollBar::handle {
 }
 QScrollArea#suggestor_scroll QScrollBar::sub-line:vertical, QScrollArea#suggestor_scroll QScrollBar::add-line:vertical {
     background: none;
+}
+
+/* Accordion */
+Accordion QPushButton#accordion_header {
+    border: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 40);
+    padding: 0px 16px;
+    text-align: left;
+    font-size: 16px;
+    font-weight: 500;
+}
+Accordion QPushButton#accordion_header:hover {
+    background-color: rgba(255, 255, 255, 20);
 }

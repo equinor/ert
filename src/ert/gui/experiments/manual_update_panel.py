@@ -4,16 +4,15 @@ from dataclasses import dataclass
 from typing import cast, override
 
 import numpy as np
-from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtCore import pyqtSlot as Slot
-from PyQt6.QtWidgets import QComboBox, QFormLayout, QLabel, QWidget
+from PyQt6.QtWidgets import QComboBox, QLabel, QWidget
 
 from ert.config import AnalysisConfig, ErrorInfo, ParameterConfig
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import (
     ActiveRealizationsModel,
     AnalysisModuleEdit,
-    CopyableLabel,
     EnsembleSelector,
     StringBox,
     Suggestor,
@@ -59,8 +58,16 @@ class ManualUpdatePanel(ExperimentConfigPanel):
         self.setObjectName("Manual_update_panel")
         self._analysis_config = analysis_config
 
-        layout = QFormLayout()
-        layout.setFormAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
+        layout = self.options_layout
+
+        self._experiment_name_field = StringBox(
+            TextModel(""),
+            placeholder_text="Manual update"
+            if notifier.current_ensemble is None
+            else f"Manual update of {notifier.current_ensemble.name}",
+        )
+        self._experiment_name_field.setMinimumWidth(250)
+
         self._update_method_dropdown = QComboBox()
         self._update_method_dropdown.addItems(
             ["ES Update", "EnIF Update (Experimental)"]
@@ -80,15 +87,6 @@ class ManualUpdatePanel(ExperimentConfigPanel):
         self._ensemble_selector = EnsembleSelector(notifier, filters=filters)
         layout.addRow("Ensemble:", self._ensemble_selector)
 
-        runpath_label = CopyableLabel(text=runpath)
-        layout.addRow("Runpath:", runpath_label)
-
-        self._number_of_realizations_label = QLabel()
-        layout.addRow(
-            QLabel("Number of realizations:"),
-            self._number_of_realizations_label,
-        )
-
         (
             self._ensemble_format_model,
             self._ensemble_format_field,
@@ -100,24 +98,25 @@ class ManualUpdatePanel(ExperimentConfigPanel):
         )
         self._analysis_module_edit = AnalysisModuleEdit(
             es_settings=analysis_config.es_settings,
-            get_update_strategies=lambda: self._param_state.update_strategies,
             ensemble_size=0,
-            can_edit_update_strategies=lambda: False,
         )
         self._analysis_module_edit.setObjectName("ensemble_smoother_edit")
         self._analysis_module_edit.setEnabled(False)
+        self.update_settings_layout.addRow(self._analysis_module_edit)
 
-        layout.addRow("Update settings:", self._analysis_module_edit)
         self._update_strategy_label = QLabel("Parameter Localizations")
         self._update_strategy_label.setObjectName("update_strategy_label")
         self._update_strategy_summary_widget = UpdateStrategySummaryWidget(
-            self._param_state, self
+            self._param_state, self, editable=False
         )
         self._update_strategy_label.setToolTip(
             self._update_strategy_summary_widget.toolTip()
         )
-        layout.addRow(self._update_strategy_label, self._update_strategy_summary_widget)
+        self.update_settings_layout.addRow(
+            self._update_strategy_label, self._update_strategy_summary_widget
+        )
 
+        self._number_of_realizations_label = QLabel()
         self._active_realizations_model = ActiveRealizationsModel(0, show_default=False)
         self._active_realizations_field = StringBox(
             self._active_realizations_model,  # type: ignore
@@ -125,25 +124,17 @@ class ManualUpdatePanel(ExperimentConfigPanel):
         )
         self._active_realizations_field.setObjectName("active_realizations_box")
         self._realizations_from_fs()
-        layout.addRow("Active realizations", self._active_realizations_field)
-
-        self._experiment_name_field = StringBox(
-            TextModel(""),
-            placeholder_text="Manual update"
-            if notifier.current_ensemble is None
-            else f"Manual update of {notifier.current_ensemble.name}",
+        self.add_common_settings(
+            runpath,
+            self._number_of_realizations_label,
+            self._active_realizations_field,
+            experiment_name=self._experiment_name_field,
         )
 
-        self._experiment_name_field.setMinimumWidth(250)
-        layout.addRow("Experiment name:", self._experiment_name_field)
-
-        self.setLayout(layout)
+        self.build_layout()
         self._connect_signals()
 
     def _connect_signals(self) -> None:
-        self._analysis_module_edit.update_strategies_changed.connect(
-            self._param_state.apply_update_strategies
-        )
         self._active_realizations_field.getValidationSupport().validationChanged.connect(
             self.experiment_configuration_changed
         )
@@ -166,6 +157,9 @@ class ManualUpdatePanel(ExperimentConfigPanel):
         )
         self._ensemble_selector.currentIndexChanged.connect(self._realizations_from_fs)
         self._ensemble_selector.currentIndexChanged.connect(
+            self.experiment_configuration_changed
+        )
+        self._ensemble_selector.currentIndexChanged.connect(
             self._parameter_configuration_changed
         )
         self._parameter_configuration_changed()
@@ -185,6 +179,8 @@ class ManualUpdatePanel(ExperimentConfigPanel):
     @Slot(str)
     def _on_update_method_changed(self, new_method: str) -> None:
         show_update_settings = new_method == "ES Update"
+        assert self.update_settings_card is not None
+        self.update_settings_card.setVisible(show_update_settings)
         self._analysis_module_edit.setVisible(show_update_settings)
         self._update_strategy_label.setVisible(show_update_settings)
         self._update_strategy_summary_widget.setVisible(show_update_settings)
@@ -239,7 +235,7 @@ class ManualUpdatePanel(ExperimentConfigPanel):
                 active_realizations_size = sum(
                     self._active_realizations_model.getActiveRealizationsMask()
                 )
-                self._analysis_module_edit._ensemble_size = active_realizations_size
+                self._analysis_module_edit.set_ensemble_size(active_realizations_size)
 
                 self._analysis_module_edit.setEnabled(bool(active_realizations_size))
             except OSError as err:

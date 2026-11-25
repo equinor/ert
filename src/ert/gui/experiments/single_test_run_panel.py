@@ -2,11 +2,10 @@ from dataclasses import dataclass
 from typing import override
 
 from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QFormLayout, QLabel
+from PyQt6.QtWidgets import QLabel
 
 from ert.config import AnalysisConfig, ParameterConfig
 from ert.gui.ertnotifier import ErtNotifier
-from ert.gui.ertwidgets import CopyableLabel
 from ert.mode_definitions import TEST_RUN_MODE
 from ert.run_models import SingleTestRun
 
@@ -15,6 +14,8 @@ from ._panel_utils import (
     merge_design_matrix_parameters,
 )
 from .experiment_config_panel import ExperimentConfigPanel
+
+_EXPERIMENT_NAME = "single_test_run"
 
 
 @dataclass
@@ -36,14 +37,19 @@ class SingleTestRunPanel(ExperimentConfigPanel):
         self.notifier = notifier
         self.setObjectName("Single_test_run_panel")
 
-        layout = QFormLayout()
+        layout = self.options_layout
         lab = QLabel(" ".join(SingleTestRun.__doc__.split()))  # type: ignore
         lab.setWordWrap(True)
         lab.setAlignment(Qt.AlignmentFlag.AlignLeft)
         layout.addRow(lab)
 
-        runpath_label = CopyableLabel(text=runpath)
-        layout.addRow("Runpath:", runpath_label)
+        # A test run has no settings to change, so show them read only.
+        self.add_common_settings(
+            runpath,
+            QLabel("<b>1</b>"),
+            QLabel("<b>0</b>"),
+            experiment_name=QLabel(f"<b>{_EXPERIMENT_NAME}</b>"),
+        )
 
         parameter_configuration = merge_design_matrix_parameters(
             analysis_config.design_matrix, parameter_configuration
@@ -54,8 +60,8 @@ class SingleTestRunPanel(ExperimentConfigPanel):
             design_matrix=analysis_config.design_matrix,
             get_parameter_configuration=lambda: parameter_configuration,
         )
-        self.setLayout(layout)
+        self.build_layout(accordions=False)
 
     @override
     def get_experiment_arguments(self) -> Arguments:
-        return Arguments(TEST_RUN_MODE, "ensemble", "single_test_run")
+        return Arguments(TEST_RUN_MODE, "ensemble", _EXPERIMENT_NAME)

@@ -1,106 +1,59 @@
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping
+from typing import override
 
-from PyQt6.QtCore import QMargins, Qt
-from PyQt6.QtCore import pyqtSignal as Signal
-from PyQt6.QtWidgets import (
-    QDialog,
-    QDialogButtonBox,
-    QHBoxLayout,
-    QPushButton,
-    QVBoxLayout,
-    QWidget,
-)
+from PyQt6.QtGui import QShowEvent
+from PyQt6.QtWidgets import QVBoxLayout, QWidget
 
-from ert.config import ESSettings, LocalizationType, ParameterType
-from ert.gui.icon_utils import load_icon
+from ert.config import ESSettings
 
 from .analysismodulevariablespanel import AnalysisModuleVariablesPanel
 
 
 class AnalysisModuleEdit(QWidget):
-    update_strategies_changed = Signal(dict)
-
-    def __init__(
-        self,
-        es_settings: ESSettings,
-        get_update_strategies: Callable[[], Mapping[ParameterType, LocalizationType]],
-        ensemble_size: int,
-        can_edit_update_strategies: Callable[[], bool] = lambda: True,
-    ) -> None:
+    def __init__(self, es_settings: ESSettings, ensemble_size: int) -> None:
         QWidget.__init__(self)
 
         self._es_settings: ESSettings = es_settings
-        self._get_update_strategies = get_update_strategies
-        self._can_edit_update_strategies = can_edit_update_strategies
         self._ensemble_size: int = ensemble_size
 
-        layout = QHBoxLayout()
-
-        variables_popup_button = QPushButton("Edit")
-        variables_popup_button.setObjectName("analysis_variables_popup_button")
-        variables_popup_button.setIcon(load_icon("edit.svg"))
-        variables_popup_button.clicked.connect(self._show_update_settings_dialog)
-
-        layout.addWidget(variables_popup_button, 0, Qt.AlignmentFlag.AlignLeft)
-        layout.setContentsMargins(QMargins(0, 0, 0, 0))
-        layout.addStretch()
-
-        self.setLayout(layout)
-
-    def _show_update_settings_dialog(self) -> None:
-        dialog = QDialog(self.parent())  # type: ignore
-        dialog.setWindowTitle("Update settings")
-        dialog.setModal(True)
-        dialog.setWindowFlag(Qt.WindowType.CustomizeWindowHint, True)
-        dialog.setWindowFlag(Qt.WindowType.WindowContextHelpButtonHint, False)
-        dialog.setWindowFlag(Qt.WindowType.WindowCloseButtonHint, False)
-
-        layout = QVBoxLayout()
-
-        correlation_threshold = 1.0
-        if self._ensemble_size != 0:
-            correlation_threshold = self._es_settings.correlation_threshold(
-                self._ensemble_size
-            )
-
-        update_settings_dialog = AnalysisModuleVariablesPanel(
-            update_strategies=dict(self._get_update_strategies()),
-            correlation_threshold=correlation_threshold,
+        self._variables_panel = AnalysisModuleVariablesPanel(
+            correlation_threshold=self._correlation_threshold(),
             enkf_truncation=self._es_settings.enkf_truncation,
-            strategies_editable=self._can_edit_update_strategies(),
         )
-
-        layout.addWidget(update_settings_dialog, stretch=1)
-
-        button_box = QDialogButtonBox(
-            QDialogButtonBox.StandardButton.Save
-            | QDialogButtonBox.StandardButton.Cancel
-        )
-        save_button = button_box.button(QDialogButtonBox.StandardButton.Save)
-        assert save_button is not None
-        save_button.setAutoDefault(False)
-        cancel_button = button_box.button(QDialogButtonBox.StandardButton.Cancel)
-        assert cancel_button is not None
-        cancel_button.setAutoDefault(False)
-        button_box.accepted.connect(dialog.accept)
-        button_box.rejected.connect(dialog.reject)
-
-        button_layout = QHBoxLayout()
-        button_layout.addStretch()
-        button_layout.addWidget(button_box)
-        layout.addLayout(button_layout)
-
-        dialog.setLayout(layout)
-        dialog.setFixedSize(450, 300)
-
-        if dialog.exec() == QDialog.DialogCode.Accepted:
-            self._es_settings.localization_correlation_threshold = (
-                update_settings_dialog.correlation_threshold
+        self._variables_panel.correlation_threshold_changed.connect(
+            lambda value: setattr(
+                self._es_settings, "localization_correlation_threshold", value
             )
-            self._es_settings.enkf_truncation = update_settings_dialog.enkf_truncation
-            if self._can_edit_update_strategies():
-                self.update_strategies_changed.emit(
-                    dict(update_settings_dialog.update_strategies)
-                )
+        )
+        self._variables_panel.enkf_truncation_changed.connect(
+            lambda value: setattr(self._es_settings, "enkf_truncation", value)
+        )
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(self._variables_panel)
+
+    @property
+    def variables_panel(self) -> AnalysisModuleVariablesPanel:
+        return self._variables_panel
+
+    def set_ensemble_size(self, ensemble_size: int) -> None:
+        self._ensemble_size = ensemble_size
+        self.refresh()
+
+    def _correlation_threshold(self) -> float:
+        if self._ensemble_size == 0:
+            return 1.0
+        return self._es_settings.correlation_threshold(self._ensemble_size)
+
+    def refresh(self) -> None:
+        self._variables_panel.set_values(
+            self._correlation_threshold(), self._es_settings.enkf_truncation
+        )
+
+    @override
+    def showEvent(self, event: QShowEvent | None) -> None:
+        # The settings are shared between experiment types, so pick up
+        # changes made in another one.
+        self.refresh()
+        super().showEvent(event)

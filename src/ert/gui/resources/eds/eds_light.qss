@@ -60,6 +60,43 @@ QFrame#central_widget QToolButton#run_experiment:disabled {
     color: $DARK_GREY;
 }
 
+/* Outlined buttons */
+QFrame#central_widget QPushButton {
+    background-color: transparent;
+    color: $TEXT_DEFAULT;
+    border: 1px solid $TEXT_TERTIARY;
+    border-radius: 4px;
+    padding: 4px 12px;
+}
+QFrame#central_widget QPushButton:hover {
+    background-color: $MEDIUM_GREY;
+    border-color: $TEXT_DEFAULT;
+}
+QFrame#central_widget QPushButton:disabled {
+    background-color: transparent;
+    color: $DARK_GREY;
+    border-color: $HEAVY_GREY;
+}
+
+/* Outlined primary button, also used outside the main window */
+QPushButton#copy_button,
+QFrame#central_widget QPushButton#copy_button {
+    background-color: transparent;
+    border: 1px solid $MEDIUM_GREEN;
+    border-radius: 4px;
+    padding: 4px 12px;
+}
+QPushButton#copy_button:hover,
+QFrame#central_widget QPushButton#copy_button:hover {
+    background-color: $LIGHT_GREEN;
+    border-color: $DARK_GREEN;
+}
+QPushButton#copy_button:disabled,
+QFrame#central_widget QPushButton#copy_button:disabled {
+    background-color: transparent;
+    border-color: $HEAVY_GREY;
+}
+
 /* Select */
 QFrame#central_widget QComboBoxWithDescription {
     background-color: $MEDIUM_GREY;
@@ -84,6 +121,63 @@ QFrame#central_widget QComboBoxWithDescription QAbstractItemView {
     background-color: $WHITE;
     border: none;
     outline: none;
+}
+
+/* Summary and settings cards */
+SummaryPanel { background: transparent; border: none; }
+QScrollArea#summary_scroll { border: none; background: transparent; }
+QScrollArea#summary_scroll > QWidget > QWidget { background: transparent; }
+
+QFrame#card {
+    background: $WHITE;
+    border: none;
+    border-radius: 4px;
+}
+
+/* Accordion */
+Accordion QPushButton#accordion_header {
+    background-color: $WHITE;
+    color: $TEXT_DEFAULT;
+    border: none;
+    border-bottom: 1px solid $HEAVY_GREY;
+    border-radius: 0px;
+    padding: 0px 16px;
+    text-align: left;
+    font-size: 16px;
+    font-weight: 500;
+}
+Accordion QPushButton#accordion_header:hover {
+    background-color: $LIGHT_GREY;
+}
+Accordion QPushButton#accordion_header:checked {
+    color: $MEDIUM_GREEN;
+}
+Accordion QPushButton#accordion_header:disabled {
+    color: $DARK_GREY;
+    border-color: $HEAVY_GREY;
+}
+
+/* Table, compact density */
+QTableWidget#update_strategy_summary_widget {
+    background: $WHITE;
+    border: none;
+    color: $TEXT_DEFAULT;
+    gridline-color: transparent;
+}
+QTableWidget#update_strategy_summary_widget::item {
+    padding: 0 16px;
+    border-bottom: 1px solid $HEAVY_GREY;
+}
+QTableWidget#update_strategy_summary_widget::item:hover {
+    background: $MEDIUM_GREY;
+}
+QTableWidget#update_strategy_summary_widget QHeaderView::section {
+    background: $LIGHT_GREY;
+    border: none;
+    border-bottom: 2px solid $HEAVY_GREY;
+    padding: 0 16px;
+    min-height: 32px;
+    color: $TEXT_DEFAULT;
 }
 
 /* Suggestor */

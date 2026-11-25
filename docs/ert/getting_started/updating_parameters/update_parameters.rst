@@ -103,6 +103,11 @@ parameters added or overridden by a design matrix. When you select a prior
 ensemble, it instead reflects the parameter configurations stored with
 that ensemble's experiment.
 
-The table is read-only. It refreshes when you save changes in
-**Update settings**, change the prior ensemble selection, or return to
-the ES-MDA settings from another experiment type.
+Each strategy is a drop-down in the table. Choosing a different strategy
+for a parameter type applies it to all parameters of that type immediately,
+overriding the configuration file for this experiment. ``Non-updatable``
+parameters are shown as plain text. When a prior ensemble is selected, the
+strategies are those stored with that ensemble and cannot be changed.
+
+The table refreshes when you change the prior ensemble selection, or return
+to the ES-MDA settings from another experiment type.
