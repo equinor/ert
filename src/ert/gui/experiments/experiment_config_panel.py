@@ -78,7 +78,7 @@ class ExperimentConfigPanel(QWidget):
         )
         if experiment_name is not None:
             self.common_layout.addRow("Experiment name:", experiment_name)
-        self.common_layout.addRow("Runpath:", CopyableLabel(text=runpath, elide=True))
+        self.common_layout.addRow("Runpath:", CopyableLabel(text=runpath))
         self.common_layout.addRow("Number of realizations:", number_of_realizations)
         self.common_layout.addRow("Active realizations:", active_realizations)
 

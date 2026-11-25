@@ -1,8 +1,7 @@
 from typing import override
 
-from PyQt6.QtCore import QSize, Qt
-from PyQt6.QtGui import QPainter, QPaintEvent
-from PyQt6.QtWidgets import QHBoxLayout, QLabel, QSizePolicy
+from PyQt6.QtCore import Qt
+from PyQt6.QtWidgets import QHBoxLayout, QLabel
 
 from .copy_button import CopyButton
 
@@ -65,50 +64,20 @@ class _CopyButton(CopyButton):
         self.copy_text(strip_runpath_magic_keywords(unescape_string(self.label.text())))
 
 
-class _ElidedLabel(QLabel):
-    """Bold single line label that elides its text in the middle to fit."""
-
-    def __init__(self, text: str) -> None:
-        super().__init__(text)
-        self.setTextFormat(Qt.TextFormat.PlainText)
-        font = self.font()
-        font.setBold(True)
-        self.setFont(font)
-        self.setToolTip(text)
-        self.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred)
-
-    @override
-    def minimumSizeHint(self) -> QSize:
-        return QSize(0, super().minimumSizeHint().height())
-
-    @override
-    def paintEvent(self, a0: QPaintEvent | None) -> None:
-        painter = QPainter(self)
-        rect = self.contentsRect()
-        elided = self.fontMetrics().elidedText(
-            self.text(), Qt.TextElideMode.ElideMiddle, rect.width()
-        )
-        painter.drawText(rect, int(self.alignment()), elided)
-
-
 class CopyableLabel(QHBoxLayout):
     """CopyableLabel shows a string that is copyable via
     selection or clicking of a copy button
     """
 
-    def __init__(self, text: str, *, elide: bool = False) -> None:
+    def __init__(self, text: str) -> None:
         super().__init__()
 
-        if elide:
-            # The full text is in the tooltip and copied by the copy button.
-            self.label: QLabel = _ElidedLabel(text)
-        else:
-            self.label = QLabel(f"<b>{escape_string(text)}</b>")
-            self.label.setTextInteractionFlags(
-                Qt.TextInteractionFlag.TextSelectableByMouse
-            )
+        self.label = QLabel(f"<b>{escape_string(text)}</b>")
+        self.label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
 
         self.copy_button = _CopyButton(self.label)
 
-        self.addWidget(self.label, 1)
+        self.addWidget(self.label)
         self.addWidget(self.copy_button, alignment=Qt.AlignmentFlag.AlignLeft)
+
+        self.setStretch(1, 1)
