@@ -1,0 +1,79 @@
+/*
+ * Style sheet template for dark mode. Only the suggestor is styled, the rest
+ * of the application keeps the native look.
+ * Copyright (c) 2020 Equinor ASA, MIT License (see LICENSE in this directory).
+ * https://github.com/equinor/design-system
+ *
+ * Dollar-prefixed colour names are filled in from ert/gui/eds_colors.py.
+ */
+
+/* Suggestor */
+Suggestor QPushButton[variant="primary"] {
+    background-color: $MEDIUM_GREEN;
+    color: white;
+    border-radius: 4px;
+    border: 2px solid $MEDIUM_GREEN;
+    height: 36px;
+    padding: 0px 16px 0px 16px;
+}
+Suggestor QPushButton[variant="primary"]:hover {
+    background: $DARK_GREEN;
+    border: 2px solid $DARK_GREEN;
+}
+
+Suggestor QPushButton[variant="secondary"] {
+    background-color: $LIGHT_GREY;
+    color: $MEDIUM_GREEN;
+    border-radius: 4px;
+    border: 2px solid $MEDIUM_GREEN;
+    height: 36px;
+    padding: 0px 16px 0px 16px;
+}
+Suggestor QPushButton[variant="secondary"]:hover {
+    background-color: $LIGHT_GREEN;
+}
+
+Suggestor QFrame#help_panel,
+Suggestor QFrame#help_panel QFrame {
+    background-color: $MEDIUM_GREY;
+    border-radius: 4px;
+    border: 2px solid $HEAVY_GREY;
+}
+Suggestor QFrame#help_panel QFrame[frameShape="4"] {
+    color: $HEAVY_GREY;
+}
+Suggestor QFrame#help_panel QLabel#help_header {
+    font-size: 24px;
+    color: $BLUE_TEXT;
+    border: none;
+    margin-left: 30px;
+}
+Suggestor QFrame#help_panel QPushButton[variant="link"] {
+    background-color: $MEDIUM_GREY;
+    color: $BLUE_TEXT;
+    border: 0px solid white;
+    margin-left: 34px;
+    height: 36px;
+    text-decoration: underline;
+    text-align: left;
+    font-size: 16px;
+    padding: 0px;
+}
+
+QScrollArea#suggestor_scroll {
+    border: none;
+    width: 128px;
+}
+QScrollArea#suggestor_scroll QScrollBar {
+    border: none;
+    background-color: $LIGHT_GREY;
+    width: 10px;
+}
+QScrollArea#suggestor_scroll QScrollBar::handle {
+    border: none;
+    background-color: $HEAVY_GREY;
+    border-radius: 4px;
+}
+QScrollArea#suggestor_scroll QScrollBar::sub-line:vertical, QScrollArea#suggestor_scroll QScrollBar::add-line:vertical {
+    background: none;
+}

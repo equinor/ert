@@ -8,6 +8,7 @@ from PyQt6.QtCore import QDir
 from PyQt6.QtWidgets import QApplication
 
 from ert.gui import eds_colors
+from ert.gui.detect_mode import is_dark_mode
 from ert.gui.ertwidgets.suggestor import _colors as suggestor_colors
 
 
@@ -21,15 +22,15 @@ def _colors(*modules: ModuleType) -> dict[str, str]:
 
 
 def render_eds_stylesheet() -> str:
-    template = files("ert.gui").joinpath("resources/eds/eds.qss").read_text("utf-8")
+    name = "eds_dark.qss" if is_dark_mode() else "eds_light.qss"
+    template = files("ert.gui").joinpath("resources/eds", name).read_text("utf-8")
     return Template(template).substitute(_colors(eds_colors, suggestor_colors))
 
 
 def apply_eds_theme(app: QApplication) -> None:
     """Style the application like the Equinor Design System.
 
-    Rules that only apply in light mode are scoped to widgets that are only
-    marked for light mode, so dark mode keeps the native look.
+    Dark mode only styles the suggestor and keeps the native look elsewhere.
     """
     QDir.addSearchPath("img", str(files("ert.gui").joinpath("resources/eds/icons")))
     app.setStyleSheet(render_eds_stylesheet())

@@ -20,7 +20,6 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from ert.gui.detect_mode import is_dark_mode
 from ert.gui.ertwidgets import CopyButton
 
 from ._suggestor_message import SuggestorMessage
@@ -42,12 +41,6 @@ def _combine_messages(infos: Sequence[ErrorInfo]) -> list[tuple[str, list[str]]]
     for info in infos:
         combined[info.message].append(info.location())
     return list(combined.items())
-
-
-def _mark_light_mode(widget: QWidget) -> None:
-    """Select the light mode rules of the application style sheet."""
-    if not is_dark_mode():
-        widget.setProperty("eds", "light")
 
 
 class _CopyAllButton(CopyButton):
@@ -88,7 +81,6 @@ class Suggestor(QWidget):
         parent: QWidget | None = None,
     ) -> None:
         super().__init__(parent, flags=Qt.WindowType.Window)
-        _mark_light_mode(self)
         if errors is None:
             errors = []
         if warnings is None:
@@ -212,7 +204,6 @@ class Suggestor(QWidget):
 
         suggest_msgs = QWidget(parent=self)
         suggest_msgs.setObjectName("suggestor_messages")
-        _mark_light_mode(suggest_msgs)
         suggest_msgs.setAttribute(Qt.WidgetAttribute.WA_StyledBackground)
         suggest_msgs.setContentsMargins(0, 0, 16, 0)
         suggest_layout = QGridLayout()
@@ -248,7 +239,6 @@ class Suggestor(QWidget):
         suggest_msgs.setLayout(suggest_layout)
         scroll = QScrollArea()
         scroll.setObjectName("suggestor_scroll")
-        _mark_light_mode(scroll)
         scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         scroll.setWidgetResizable(True)
