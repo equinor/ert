@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import dataclasses
+import io
 import logging
+from contextlib import redirect_stdout
 from dataclasses import field
 from math import ceil
 from os.path import realpath
@@ -333,15 +335,20 @@ class AnalysisConfig:
                 "default_val_sheet": fmu_design_options.default_sheet,
             }
             try:
-                design = FmudesignDesignMatrix(
-                    excel_to_config(
-                        fmu_design_file,
-                        **{k: v for k, v in sheet_arguments.items() if v is not None},
-                        fallback_distribution_seed=config_dict.get(
-                            ConfigKeys.RANDOM_SEED
-                        ),
+                with redirect_stdout(io.StringIO()):
+                    design = FmudesignDesignMatrix(
+                        excel_to_config(
+                            fmu_design_file,
+                            **{
+                                k: v
+                                for k, v in sheet_arguments.items()
+                                if v is not None
+                            },
+                            fallback_distribution_seed=config_dict.get(
+                                ConfigKeys.RANDOM_SEED
+                            ),
+                        )
                     )
-                )
             except ValueError as err:
                 raise ConfigValidationError(
                     f"Error when generating design matrix with FMU_DESIGN:\n{err}",

@@ -278,3 +278,16 @@ def test_that_negative_random_seed_propagated_to_fmu_design_raises_config_error(
         parse_ert_config_with_fmu_design(
             f"FMU_DESIGN {design_file}\nRANDOM_SEED {negative_random_seed}"
         )
+
+
+def test_that_fmudesign_output_is_silenced_when_run_from_ert(
+    use_tmpdir, capsys, caplog
+):
+    design_file = "design.xlsx"
+    write_fmu_design_workbook(design_file)
+
+    parse_ert_config_with_fmu_design(f"FMU_DESIGN {design_file}")
+
+    stdout = capsys.readouterr().out
+    assert "Generating sensitivity" not in stdout
+    assert "Setting to default" not in stdout
