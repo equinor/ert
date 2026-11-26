@@ -14,7 +14,11 @@ from .models import (
     TextModel,
     ValueModel,
 )
-from .parameterviewer import get_parameters_button
+from .parameterviewer import (
+    ParametersSummary,
+    ParameterTree,
+    get_parameters_button,
+)
 from .pathchooser import PathChooser
 from .search_bar import SearchBar
 from .searchbox import SearchBox
@@ -33,6 +37,8 @@ __all__ = [
     "CreateExperimentDialog",
     "EnsembleSelector",
     "ErtSummary",
+    "ParameterTree",
+    "ParametersSummary",
     "PathChooser",
     "PathModel",
     "SearchBar",
