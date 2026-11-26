@@ -22,7 +22,6 @@ def loaded_icons(monkeypatch: pytest.MonkeyPatch) -> list[str]:
         names.append(name)
         return QIcon()
 
-    monkeypatch.setattr(copy_button, "load_icon", load)
     monkeypatch.setattr(copy_button, "load_stateful_icon", load)
     return names
 
@@ -39,15 +38,26 @@ def test_that_copy_button_shows_check_icon_after_copy_and_restores_copy_icon(
     assert loaded_icons == ["copy.svg", "check.svg", "copy.svg"]
 
 
-def test_that_copy_button_icon_is_not_tinted_in_dark_mode(
+def test_that_copy_button_icon_has_the_text_colors_of_the_style_sheet(
     qtbot: QtBot, monkeypatch: pytest.MonkeyPatch
 ):
-    monkeypatch.setattr(copy_button, "is_dark_mode", lambda: True)
-    plain_icons: list[str] = []
+    icon_colors: list[dict[str, str]] = []
     monkeypatch.setattr(
-        copy_button, "load_icon", lambda name: plain_icons.append(name) or QIcon()
+        copy_button,
+        "load_stateful_icon",
+        lambda name, **colors: icon_colors.append(colors) or QIcon(),
     )
+    button = _RecordingCopyButton()
+    qtbot.addWidget(button)
 
-    qtbot.addWidget(_RecordingCopyButton())
+    button.setStyleSheet(
+        "QPushButton#copy_button { color: #112233; }"
+        "QPushButton#copy_button:disabled { color: #445566; }"
+    )
+    button.ensurePolished()
 
-    assert plain_icons == ["copy.svg"]
+    assert icon_colors[-1] == {
+        "resting": "#112233",
+        "active": "#112233",
+        "disabled": "#445566",
+    }

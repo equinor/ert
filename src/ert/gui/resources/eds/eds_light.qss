@@ -85,6 +85,7 @@ QFrame#central_widget QPushButton#copy_button {
     border: 1px solid $MEDIUM_GREEN;
     border-radius: 4px;
     padding: 4px 12px;
+    color: $MEDIUM_GREEN;
 }
 QPushButton#copy_button:hover,
 QFrame#central_widget QPushButton#copy_button:hover {
@@ -94,6 +95,7 @@ QFrame#central_widget QPushButton#copy_button:hover {
 QPushButton#copy_button:disabled,
 QFrame#central_widget QPushButton#copy_button:disabled {
     background-color: transparent;
+    color: $DARK_GREY;
     border-color: $HEAVY_GREY;
 }
 

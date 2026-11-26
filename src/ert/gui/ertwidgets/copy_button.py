@@ -1,39 +1,48 @@
 from abc import abstractmethod
+from typing import override
 
-from PyQt6.QtCore import QTimer
-from PyQt6.QtGui import QIcon
+from PyQt6.QtCore import QEvent, QTimer
+from PyQt6.QtGui import QPalette
 from PyQt6.QtWidgets import QApplication, QMessageBox, QPushButton, QSizePolicy
 
-from ert.gui.detect_mode import is_dark_mode
-from ert.gui.eds_colors import DARK_GREY, MEDIUM_GREEN
-from ert.gui.icon_utils import load_icon, load_stateful_icon
-
-
-def _load_button_icon(name: str) -> QIcon:
-    if is_dark_mode():
-        return load_icon(name)
-    return load_stateful_icon(
-        name,
-        resting=MEDIUM_GREEN,
-        active=MEDIUM_GREEN,
-        disabled=DARK_GREY,
-    )
+from ert.gui.icon_utils import load_stateful_icon
 
 
 class CopyButton(QPushButton):
+    """Button whose icon has the text color given by the style sheet."""
+
+    _icon_name = "copy.svg"
+
     def __init__(self) -> None:
         super().__init__()
         self.setObjectName("copy_button")
         self.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Fixed)
-        self.setIcon(_load_button_icon("copy.svg"))
+        self._show_icon("copy.svg")
         self.restore_timer = QTimer(self)
-
-        def restore_text() -> None:
-            self.setIcon(_load_button_icon("copy.svg"))
-
-        self.restore_timer.timeout.connect(restore_text)
+        self.restore_timer.timeout.connect(lambda: self._show_icon("copy.svg"))
 
         self.clicked.connect(self.copy)
+
+    def _show_icon(self, name: str) -> None:
+        self._icon_name = name
+        palette = self.palette()
+        color = palette.color(
+            QPalette.ColorGroup.Normal, QPalette.ColorRole.ButtonText
+        ).name()
+        disabled_color = palette.color(
+            QPalette.ColorGroup.Disabled, QPalette.ColorRole.ButtonText
+        ).name()
+        self.setIcon(
+            load_stateful_icon(
+                name, resting=color, active=color, disabled=disabled_color
+            )
+        )
+
+    @override
+    def changeEvent(self, event: QEvent | None) -> None:
+        super().changeEvent(event)
+        if event is not None and event.type() == QEvent.Type.PaletteChange:
+            self._show_icon(self._icon_name)
 
     @abstractmethod
     def copy(self) -> None:
@@ -51,5 +60,5 @@ class CopyButton(QPushButton):
                 "system does not have a clipboard",
                 QMessageBox.StandardButton.Ok,
             )
-        self.setIcon(_load_button_icon("check.svg"))
+        self._show_icon("check.svg")
         self.restore_timer.start(1000)
