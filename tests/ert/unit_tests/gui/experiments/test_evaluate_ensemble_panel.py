@@ -10,6 +10,7 @@ from ert.gui.ertwidgets import EnsembleSelector
 from ert.gui.experiments import ExperimentPanel
 from ert.gui.experiments.evaluate_ensemble_panel import EvaluateEnsemblePanel
 from ert.gui.main import GUILogHandler
+from ert.run_models.evaluate_ensemble import EvaluateEnsemble
 from tests.ert.ui_tests.gui.conftest import (
     get_child,
 )
@@ -28,6 +29,24 @@ def test_that_the_run_experiments_button_is_disabled(qtbot):
     experiment_panel = get_child(gui, ExperimentPanel)
     evaluate_ensemble_panel = get_child(experiment_panel, EvaluateEnsemblePanel)
     assert not evaluate_ensemble_panel.isConfigurationValid()
+
+
+@pytest.mark.slow
+@pytest.mark.usefixtures("copy_poly_case")
+def test_that_the_summary_lists_all_config_parameters_for_panels_without_parameter_rows(
+    qtbot,
+):
+    args = Mock()
+    args.config = "poly.ert"
+    gui, *_ = ert.gui.main._start_initial_gui_window(args, GUILogHandler())
+    experiment_panel = get_child(gui, ExperimentPanel)
+
+    experiment_panel._experiment_type_combo.setCurrentText(
+        EvaluateEnsemble.display_name()
+    )
+
+    parameters_summary = experiment_panel.configuration_summary.parameters_summary
+    assert parameters_summary.title.text() == "Parameters (3)"
 
 
 def test_that_ensemble_select_contains_only_leaf_ensembles(qtbot: QtBot):

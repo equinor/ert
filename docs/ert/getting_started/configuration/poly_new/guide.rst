@@ -284,12 +284,14 @@ The two required arguments for :ref:`GEN_KW <gen_kw>` are:
 
 .. _parameter_viewer:
 
-Once configured, a button "Parameters" will appear in the simulation panel
-Clicking this will open the "Parameter viewer" window, displaying the defined parameters:
+Once configured, the parameters are listed in the "Parameters" card in the summary
+below the experiment panel, split into updatable and non-updatable parameters:
 
 .. image:: with_results/parameter_viewer.png
 
-This window shows parameters organized by their "type" (see :ref:`Data_types_available_in_ERT`) for an overview.
+Each entry shows a parameter group (or a field or surface with its dimensions) and the number
+of parameters it contains. Expand an entry to see its parameters, and expand a parameter to see its details
+(see :ref:`Data_types_available_in_ERT` for the parameter types).
 The "Source" property refers to if the parameter is sampled by ERT, or provided using a design matrix (see :ref:`design_matrix`).
 "Update" tells you if ERT will update this parameter, and "Forward Init" indicates if the parameter is produced using a
 forward model step.

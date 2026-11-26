@@ -4,11 +4,7 @@ from ert.config import Field, GenKwConfig, SurfaceConfig
 from ert.config.everest_control import EverestControl
 from ert.config.field import ErtboxParameters
 from ert.config.parameter_config import LocalizationType
-from ert.gui.ertwidgets.parameterviewer import (
-    ParametersSummary,
-    ParametersViewer,
-    ParameterTree,
-)
+from ert.gui.ertwidgets.parameterviewer import ParametersSummary, ParameterTree
 
 
 def _gen_kw(name, group, update):
@@ -113,12 +109,3 @@ def test_that_other_parameter_types_are_listed_by_name(qtbot):
     tree.set_parameters([control])
 
     assert _top_level_labels(tree) == ["CONTROL"]
-
-
-def test_that_the_parameter_viewer_dialog_shows_the_lazy_parameter_trees(
-    qtbot, parameters
-):
-    viewer = ParametersViewer(parameters)
-    qtbot.addWidget(viewer)
-
-    assert viewer.parameters_summary.updatable_tree.topLevelItemCount() > 0

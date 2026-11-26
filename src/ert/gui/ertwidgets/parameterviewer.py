@@ -5,11 +5,9 @@ from collections.abc import Callable, Sequence
 from functools import partial
 
 from PyQt6.QtWidgets import (
-    QDialog,
     QFrame,
     QHBoxLayout,
     QLabel,
-    QPushButton,
     QTreeWidget,
     QTreeWidgetItem,
     QVBoxLayout,
@@ -178,41 +176,3 @@ class ParametersSummary(QWidget):
         self.non_updatable_tree.set_parameters(
             [p for p in parameters if p.update_strategy is None]
         )
-
-
-class ParametersViewer(QDialog):
-    def __init__(
-        self,
-        parameter_configurations: Sequence[ParameterConfig],
-        parent: QWidget | None = None,
-    ) -> None:
-        super().__init__(parent)
-        self.setWindowTitle("Parameter viewer")
-        layout = QVBoxLayout(self)
-        self.parameters_summary = ParametersSummary()
-        self.parameters_summary.set_parameters(parameter_configurations)
-        layout.addWidget(self.parameters_summary)
-        self.resize(600, 500)
-
-
-def get_parameters_button(
-    get_parameter_configurations: Callable[[], list[ParameterConfig]],
-    parent: QWidget,
-) -> QHBoxLayout:
-    parameter_viewer_button = QPushButton("Show parameters")
-    parameter_viewer_button.setMinimumWidth(50)
-    parameter_viewer_button.clicked.connect(
-        lambda: _show_parameter_viewer(get_parameter_configurations(), parent)
-    )
-
-    button_layout = QHBoxLayout()
-    button_layout.addWidget(parameter_viewer_button)
-    button_layout.addStretch()  # Add stretch to push the button to the left
-    return button_layout
-
-
-def _show_parameter_viewer(
-    parameter_configurations: list[ParameterConfig], parent: QWidget
-) -> None:
-    parameter_dialog = ParametersViewer(parameter_configurations, parent)
-    parameter_dialog.exec()
