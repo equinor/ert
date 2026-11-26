@@ -227,6 +227,8 @@ class LocalStorage(BaseMode):
 
         Raises
         ------
+        ErtStoragePermissionError
+            If the storage cannot be accessed due to insufficient permissions.
         ErtStorageException
             If the storage version is newer than the current version, or if
             the storage lock cannot be acquired.
@@ -234,6 +236,10 @@ class LocalStorage(BaseMode):
         if LocalStorage.check_migration_needed(path):
             try:
                 storage = LocalStorage(path, Mode("w"), stage_for_migration=True)
+            except PermissionError as err:
+                raise ert.storage.ErtStoragePermissionError(
+                    f"Permission error when migrating storage at: {path}. Error: {err}"
+                ) from err
             except TimeoutError as err:
                 raise ert.storage.ErtStorageException(
                     f"Failed to migrate storage: {path} with error: {err}"
