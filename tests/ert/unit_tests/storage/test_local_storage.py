@@ -369,6 +369,26 @@ def test_that_migrating_locked_storage_raises_ert_storage_exception(
     assert LocalStorage.check_migration_needed(tmp_path)
 
 
+def test_that_migrating_read_only_storage_raises_ert_storage_permission_error(
+    tmp_path: Path,
+):
+    with open_storage(tmp_path, mode="w") as storage:
+        storage._index.version = _LOCAL_STORAGE_VERSION - 1
+        storage._save_index()
+
+    tmp_path.chmod(stat.S_IRUSR | stat.S_IXUSR)
+    try:
+        with pytest.raises(
+            ErtStoragePermissionError,
+            match=r"Permission error when migrating storage at: .* Permission denied",
+        ):
+            LocalStorage.perform_migration(tmp_path)
+    finally:
+        tmp_path.chmod(stat.S_IRWXU)
+
+    assert LocalStorage.check_migration_needed(tmp_path)
+
+
 def test_ensemble_no_parameters(storage):
     ensemble = storage.create_experiment(name="my-experiment").create_ensemble(
         ensemble_size=2,
