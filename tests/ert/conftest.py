@@ -36,6 +36,7 @@ from ert.config import ConfigWarning, ErtConfig
 from ert.config.parsing.file_context_token import FileContextToken
 from ert.config.rft_config import _get_zonemap, _read_egrid
 from ert.ensemble_evaluator.config import EvaluatorServerConfig
+from ert.gui.eds_theme import apply_eds_theme
 from ert.mode_definitions import (
     ENIF_MODE,
     ENSEMBLE_EXPERIMENT_MODE,
@@ -115,6 +116,13 @@ def _clear_rft_caches():
 def _qt_add_search_paths(qapp):
     "Ensure that icons and such are found by the tests"
     QDir.addSearchPath("img", str(files("ert.gui").joinpath("resources/gui/img")))
+
+
+@pytest.fixture
+def _qt_apply_eds_theme(qapp):
+    "Style the tested GUI as ert.gui.main does"
+    if not qapp.styleSheet():
+        apply_eds_theme(qapp)
 
 
 # Timeout settings are unreliable both on CI and
