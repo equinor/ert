@@ -969,6 +969,21 @@ to read summary data from forward model, do:
             raise ValueError(f"'{path.parent!s}' is not writeable or executable")
         return config_path
 
+    @model_validator(mode="after")
+    def validate_simulation_folder_is_writeable(self) -> Self:
+        simulation_folder = Path(self.simulation_dir).resolve()
+        nearest_existing = next(
+            path
+            for path in (simulation_folder, *simulation_folder.parents)
+            if os.path.exists(path)  # ruff: ignore[os-path-exists]
+        )
+        if not os.access(nearest_existing, os.W_OK | os.X_OK):
+            raise ValueError(
+                f"Cannot create simulation folder '{simulation_folder}': "
+                f"'{nearest_existing}' is not writeable or executable"
+            )
+        return self
+
     def copy(self) -> "EverestConfig":  # type: ignore
         return EverestConfig.model_validate(self.model_dump(exclude_none=True))
 
