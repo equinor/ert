@@ -14,7 +14,7 @@ from PyQt6.QtWidgets import (
 
 from ert.gui.ertwidgets import CopyableLabel
 from ert.gui.ertwidgets.accordion import Accordion
-from ert.gui.ertwidgets.card import CARD_SPACING, create_card
+from ert.gui.ertwidgets.card import Card
 
 if TYPE_CHECKING:
     from ert.run_models import RunModel
@@ -79,7 +79,7 @@ class ExperimentConfigPanel(QWidget):
     def build_layout(self, *, accordions: bool = True) -> None:
         grid = QGridLayout(self)
         grid.setContentsMargins(0, 0, 0, 0)
-        grid.setSpacing(CARD_SPACING)
+        grid.setSpacing(Card.SPACING)
         for column in range(3):
             grid.setColumnStretch(column, 1)
 
@@ -115,7 +115,7 @@ class ExperimentConfigPanel(QWidget):
             )
             grid.addWidget(self.update_settings_card, 0, column)
         else:
-            options_card = create_card()
+            options_card = Card()
             options_layout = QVBoxLayout(options_card)
             options_layout.setContentsMargins(16, 12, 16, 12)
             options_layout.addWidget(self._wrap(self.options_layout))
@@ -124,7 +124,7 @@ class ExperimentConfigPanel(QWidget):
 
     @staticmethod
     def _accordion_card(accordion: Accordion) -> QWidget:
-        card = create_card()
+        card = Card()
         card_layout = QVBoxLayout(card)
         card_layout.setContentsMargins(0, 0, 0, 0)
         card_layout.setSpacing(0)

@@ -26,7 +26,7 @@ from ert.gui.detect_mode import is_dark_mode
 from ert.gui.eds_colors import DARK_GREY, WHITE
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import wait_cursor
-from ert.gui.ertwidgets.card import CARD_SPACING
+from ert.gui.ertwidgets.card import Card
 from ert.gui.find_ert_info import find_ert_info
 from ert.gui.icon_utils import load_icon, load_stateful_icon
 from ert.gui.summarypanel import SummaryPanel
@@ -189,7 +189,7 @@ class ExperimentPanel(QWidget):
         experiment_type_layout.addStretch(1)
 
         layout.setContentsMargins(10, 10, 10, 10)
-        layout.setSpacing(CARD_SPACING)
+        layout.setSpacing(Card.SPACING)
         layout.addLayout(experiment_type_layout)
 
         self._experiment_stack = _CurrentPageStack()

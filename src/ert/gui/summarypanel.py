@@ -17,7 +17,7 @@ from PyQt6.QtWidgets import (
 )
 
 from ert.gui.ertwidgets import ErtSummary
-from ert.gui.ertwidgets.card import CARD_SPACING, create_card
+from ert.gui.ertwidgets.card import Card
 
 if TYPE_CHECKING:
     from ert.config import ErtConfig
@@ -92,7 +92,7 @@ class SummaryPanel(QFrame):
         widget = QWidget(self)
         self._layout = QHBoxLayout()
         self._layout.setContentsMargins(0, 0, 0, 0)
-        self._layout.setSpacing(CARD_SPACING)
+        self._layout.setSpacing(Card.SPACING)
         widget.setLayout(self._layout)
 
         scroll = QScrollArea(self)
@@ -155,7 +155,7 @@ class SummaryPanel(QFrame):
         text_widget.setWordWrap(True)
         text_widget.setTextFormat(Qt.TextFormat.RichText)
 
-        card = create_card()
+        card = Card()
         layout = QGridLayout(card)
         layout.setContentsMargins(16, 12, 16, 12)
         layout.addWidget(text_widget, 0, 0)
