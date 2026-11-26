@@ -18,6 +18,45 @@ from PyQt6.QtWidgets import (
 from ert.config import ParameterConfig
 
 
+class ParameterTree(QTreeWidget):
+    """Tree of parameters grouped by their type."""
+
+    def __init__(self, parent: QWidget | None = None) -> None:
+        super().__init__(parent)
+        self.setHeaderLabel("Parameters")
+        self.type_nodes: dict[str, QTreeWidgetItem] = {}
+        self.parameter_nodes: list[QTreeWidgetItem] = []
+
+    def set_parameters(self, parameters: list[ParameterConfig]) -> None:
+        self.clear()
+        self.type_nodes = {}
+        self.parameter_nodes = []
+        for parameter in parameters:
+            if parameter.type not in self.type_nodes:
+                self.type_nodes[parameter.type] = QTreeWidgetItem(
+                    self, [parameter.type.upper()]
+                )
+
+            parameter_node = QTreeWidgetItem(
+                self.type_nodes[parameter.type], [parameter.name]
+            )
+            # Stored for filtering on updatability
+            parameter_node.setData(
+                0, Qt.ItemDataRole.UserRole, parameter.update_strategy
+            )
+            self.parameter_nodes.append(parameter_node)
+            QTreeWidgetItem(parameter_node, [f"Update: {parameter.update_strategy}"])
+            QTreeWidgetItem(parameter_node, [f"Forward Init: {parameter.forward_init}"])
+            if parameter.group_name:
+                QTreeWidgetItem(
+                    parameter_node, [f"Group: {parameter.group_name.upper()}"]
+                )
+            if hasattr(parameter, "input_source"):
+                QTreeWidgetItem(parameter_node, [f"Source: {parameter.input_source}"])
+
+        self.expandAll()
+
+
 class ParametersViewer(QDialog):
     def __init__(
         self,
@@ -52,44 +91,13 @@ class ParametersViewer(QDialog):
 
         main_layout.addLayout(menu_layout)
 
-        self.tree_widget = self._create_parameter_tree()
+        self.tree_widget = ParameterTree()
+        self.tree_widget.set_parameters(self._parameter_configurations)
+        self.type_nodes = self.tree_widget.type_nodes
+        self.parameter_nodes = self.tree_widget.parameter_nodes
         main_layout.addWidget(self.tree_widget)
         self.setLayout(main_layout)
         self.resize(400, 500)
-
-    def _create_parameter_tree(self) -> QTreeWidget:
-        """Create a tree widget showing parameters grouped by their type."""
-        tree = QTreeWidget()
-        tree.setHeaderLabel("Parameters")
-
-        self.type_nodes: dict[
-            str, QTreeWidgetItem
-        ] = {}  # Store type nodes for later use
-        self.parameter_nodes = []  # Store parameter nodes for filtering
-        for parameter in self._parameter_configurations:
-            if parameter.type not in self.type_nodes:
-                self.type_nodes[parameter.type] = QTreeWidgetItem(
-                    tree, [parameter.type.upper()]
-                )
-
-            parameter_node = QTreeWidgetItem(
-                self.type_nodes[parameter.type], [parameter.name]
-            )
-            parameter_node.setData(
-                0, Qt.ItemDataRole.UserRole, parameter.update_strategy
-            )  # Store update value for filtering
-            self.parameter_nodes.append(parameter_node)
-            QTreeWidgetItem(parameter_node, [f"Update: {parameter.update_strategy}"])
-            QTreeWidgetItem(parameter_node, [f"Forward Init: {parameter.forward_init}"])
-            if parameter.group_name:
-                QTreeWidgetItem(
-                    parameter_node, [f"Group: {parameter.group_name.upper()}"]
-                )
-            if hasattr(parameter, "input_source"):
-                QTreeWidgetItem(parameter_node, [f"Source: {parameter.input_source}"])
-
-        tree.expandAll()
-        return tree
 
     def toggle_parameters(self) -> None:
         """Toggle collapse/expand details of parameter nodes."""
