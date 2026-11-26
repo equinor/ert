@@ -31,9 +31,6 @@ def render_eds_stylesheet() -> str:
 
 
 def apply_eds_theme(app: QApplication) -> None:
-    """Style the application like the Equinor Design System.
-
-    Dark mode only styles the suggestor and keeps the native look elsewhere.
-    """
+    """Style the application like the Equinor Design System."""
     QDir.addSearchPath("img", str(files("ert.gui").joinpath("resources/eds/icons")))
     app.setStyleSheet(render_eds_stylesheet())

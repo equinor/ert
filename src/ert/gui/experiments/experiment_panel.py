@@ -2,12 +2,12 @@ from __future__ import annotations
 
 from collections import OrderedDict
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, override
 
 import httpx
-from PyQt6.QtCore import QSize, Qt
+from PyQt6.QtCore import QEvent, QSize, Qt
 from PyQt6.QtCore import pyqtSignal as Signal
-from PyQt6.QtGui import QAction, QStandardItemModel
+from PyQt6.QtGui import QAction, QPalette, QStandardItemModel
 from PyQt6.QtWidgets import (
     QCheckBox,
     QHBoxLayout,
@@ -22,13 +22,11 @@ from PyQt6.QtWidgets import (
 from _ert.threading import ErtThread
 from ert.config import parameter_config
 from ert.ensemble_evaluator import EvaluatorServerConfig
-from ert.gui.detect_mode import is_dark_mode
-from ert.gui.eds_colors import DARK_GREY, WHITE
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import wait_cursor
 from ert.gui.ertwidgets.card import Card
 from ert.gui.find_ert_info import find_ert_info
-from ert.gui.icon_utils import load_icon, load_stateful_icon
+from ert.gui.icon_utils import load_stateful_icon
 from ert.gui.summarypanel import SummaryPanel
 from ert.run_models import RunModel
 from ert.run_models.run_model import RunModelAPI
@@ -49,6 +47,40 @@ if TYPE_CHECKING:
     from ert.config import ErtConfig
 
 EXPERIMENT_IS_MANUAL_UPDATE_MESSAGE = "Execute selected"
+
+
+class _RunButton(QToolButton):
+    """Button whose icon has the text color given by the style sheet."""
+
+    _ICON_SIZE = 24
+    # Qt draws 4px between icon and text; pad to the 8px EDS button gap.
+    _ICON_GAP = 4
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.setIconSize(QSize(self._ICON_SIZE + self._ICON_GAP, self._ICON_SIZE))
+        self._update_icon()
+
+    def _update_icon(self) -> None:
+        palette = self.palette()
+        role = self.foregroundRole()
+        color = palette.color(QPalette.ColorGroup.Normal, role).name()
+        disabled_color = palette.color(QPalette.ColorGroup.Disabled, role).name()
+        self.setIcon(
+            load_stateful_icon(
+                "play_circle.svg",
+                resting=color,
+                active=color,
+                disabled=disabled_color,
+                trailing_gap=self._ICON_GAP / self._ICON_SIZE,
+            )
+        )
+
+    @override
+    def changeEvent(self, event: QEvent | None) -> None:
+        super().changeEvent(event)
+        if event is not None and event.type() == QEvent.Type.PaletteChange:
+            self._update_icon()
 
 
 def create_md_table(kv: dict[str, str], output: str) -> str:
@@ -137,53 +169,13 @@ class ExperimentPanel(QWidget):
         )
 
         self._experiment_done: bool = True
-        self.run_button = QToolButton()
+        self.run_button = _RunButton()
+        self.run_button.setFixedHeight(36)
         self.run_button.setObjectName("run_experiment")
         self.run_button.setText("Start")
         self.run_button.setToolTip(EXPERIMENT_IS_MANUAL_UPDATE_MESSAGE)
         self.run_button.clicked.connect(self.run_experiment)
         self.run_button.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
-        if is_dark_mode():
-            self.run_button.setIcon(load_icon("play_circle.svg"))
-            self.run_button.setIconSize(QSize(32, 32))
-            self.run_button.setMinimumWidth(60)
-            self.run_button.setMinimumHeight(40)
-            self.run_button.setStyleSheet(
-                """
-                QToolButton {
-                border-radius: 10px;
-                background-color: qlineargradient(
-                    x1:0, y1:0, x2:0, y2:1,
-                    stop:0 #484848,
-                    stop:1 #323232
-                );
-                border: 1px solid #1e1e1e;
-                padding: 5px;
-                }
-                QToolButton:hover {
-                    background-color: qlineargradient(
-                    x1:0, y1:0, x2:0, y2:1,
-                    stop:0 #575757,
-                    stop:1 #424242
-                );
-                }
-                """
-            )
-        else:
-            icon_size = 24
-            # Qt draws 4px between icon and text; pad to the 8px EDS button gap.
-            extra_gap = 4
-            self.run_button.setIcon(
-                load_stateful_icon(
-                    "play_circle.svg",
-                    resting=WHITE,
-                    active=WHITE,
-                    disabled=DARK_GREY,
-                    trailing_gap=extra_gap / icon_size,
-                )
-            )
-            self.run_button.setIconSize(QSize(icon_size + extra_gap, icon_size))
-            self.run_button.setFixedHeight(36)
 
         experiment_type_layout.addWidget(self.run_button)
         experiment_type_layout.addStretch(1)
