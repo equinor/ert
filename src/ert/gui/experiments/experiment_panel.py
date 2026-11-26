@@ -103,9 +103,6 @@ class _CurrentPageStack(QWidget):
         self._current = widget
         widget.show()
 
-    def currentWidget(self) -> QWidget | None:
-        return self._current
-
 
 class ExperimentPanel(QWidget):
     experiment_type_changed = Signal(ExperimentConfigPanel)

@@ -74,3 +74,14 @@ def test_that_unset_correlation_threshold_shows_default_for_ensemble_size(
         ESSettings().correlation_threshold(new_ensemble_size), abs=1e-6
     )
     assert settings.localization_correlation_threshold is None
+
+
+def test_that_showing_widget_picks_up_changes_made_to_es_settings(
+    qtbot: QtBot, es_settings: ESSettings
+):
+    widget = _create_analysis_module_edit(qtbot, es_settings)
+
+    es_settings.enkf_truncation = 0.4
+    widget.show()
+
+    assert math.isclose(widget.variables_panel.truncation_spinner.value(), 0.4)

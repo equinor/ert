@@ -79,12 +79,6 @@ class Accordion(QWidget):
         self.header.setChecked(expanded)
         self._on_toggled(expanded)
 
-    def is_expanded(self) -> bool:
-        return self.header.isChecked()
-
-    def set_expanded(self, expanded: bool) -> None:
-        self.header.setChecked(expanded)
-
     def _on_toggled(self, expanded: bool) -> None:
         self.header.setIcon(self._collapse_icon if expanded else self._expand_icon)
         self.content.setVisible(expanded)

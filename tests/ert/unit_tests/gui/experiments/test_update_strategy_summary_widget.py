@@ -1,6 +1,7 @@
 from unittest.mock import MagicMock
 
 import pytest
+from PyQt6.QtWidgets import QComboBox
 from pytestqt.qtbot import QtBot
 
 from ert.config import GenKwConfig
@@ -99,3 +100,35 @@ def test_that_strategy_summary_widget_refreshes_rows_when_parameter_state_change
 
     state.deselect_prior()
     assert _rows(widget) == [("Adaptive", "GenKW", "1")]
+
+
+def _strategy_selector(widget: UpdateStrategySummaryWidget) -> QComboBox | None:
+    return widget.findChild(QComboBox, ParameterType.GEN_KW)
+
+
+def test_that_choosing_a_strategy_in_the_summary_applies_it_to_the_parameters(
+    qtbot: QtBot,
+):
+    state = ParameterConfigurationStateModel([_parameter()])
+    widget = UpdateStrategySummaryWidget(state)
+    qtbot.addWidget(widget)
+    selector = _strategy_selector(widget)
+    assert selector is not None
+
+    selector.setCurrentIndex(selector.findData(LocalizationType.ADAPTIVE))
+
+    assert state.update_strategies == {ParameterType.GEN_KW: LocalizationType.ADAPTIVE}
+    assert _rows(widget) == [("Adaptive", "GenKW", "1")]
+
+
+def test_that_strategy_cannot_be_chosen_in_the_summary_when_a_prior_is_selected(
+    qtbot: QtBot,
+):
+    state = ParameterConfigurationStateModel([_parameter()])
+    widget = UpdateStrategySummaryWidget(state)
+    qtbot.addWidget(widget)
+    state.select_prior([_parameter(LocalizationType.DISTANCE)])
+
+    assert widget.cellWidget(0, 0) is None
+    assert _rows(widget) == [("Distance", "GenKW", "1")]
+    assert widget.item(0, 0).toolTip()

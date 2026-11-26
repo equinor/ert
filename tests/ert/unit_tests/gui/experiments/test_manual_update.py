@@ -362,3 +362,39 @@ def test_that_run_uses_parameter_configuration_of_selected_ensemble(qtbot: QtBot
             ensemble_selector.findText(f"experiment_{index} : {ensemble_name}")
         )
         assert panel.get_experiment_arguments().parameter_configuration == [parameter]
+
+
+def test_that_prior_ensemble_strategies_cannot_be_changed_in_the_summary(
+    qtbot: QtBot,
+):
+    configured_parameter = GenKwConfig(
+        name="configured",
+        distribution=RawSettings(),
+        update_strategy=LocalizationType.GLOBAL,
+    )
+    prior_parameter = GenKwConfig(
+        name="stored",
+        distribution=RawSettings(),
+        update_strategy=LocalizationType.DISTANCE,
+    )
+    notifier = ErtNotifier()
+    notifier._storage = MockStorage()
+    notifier._storage._setup_mocked_run(
+        "ensemble",
+        "experiment",
+        [REALIZATION_FINISHED_SUCCESSFULLY] * 2,
+        parameter_configuration={"stored": prior_parameter},
+    )
+    panel = ManualUpdatePanel(
+        analysis_config=AnalysisConfig(minimum_required_realizations=1),
+        runpath="",
+        notifier=notifier,
+        parameter_configuration=[configured_parameter],
+    )
+    qtbot.addWidget(panel)
+    summary = panel.findChild(UpdateStrategySummaryWidget)
+    assert summary is not None
+
+    assert summary.cellWidget(0, 0) is None
+    assert panel.get_experiment_arguments().parameter_configuration == [prior_parameter]
+    assert configured_parameter.update_strategy == LocalizationType.GLOBAL
