@@ -26,6 +26,7 @@ def excel_to_config(
     gen_input_sheet: str = "general_input",
     design_input_sheet: str = "designinput",
     default_val_sheet: str = "defaultvalues",
+    fallback_distribution_seed: int | None = None,
 ) -> DesignConfig:
     """Read excel file with input to design configuration
 
@@ -34,6 +35,8 @@ def excel_to_config(
         gen_input_sheet (str): Sheet name for general input
         design_input_sheet (str): Sheet name for design input
         default_val_sheet (str): Sheet name for default input
+        fallback_distribution_seed (int | None): Distribution seed used when
+            the general input sheet does not specify one
 
     Returns:
         DesignConfig for DesignMatrix
@@ -46,6 +49,13 @@ def excel_to_config(
     default_values_sheet = find_sheet(default_val_sheet, names=sheet_names)
 
     general_input = GeneralInput.from_xlsx(input_filename, general_input_sheet)
+    if general_input.distribution_seed is None:
+        if fallback_distribution_seed is not None and fallback_distribution_seed < 0:
+            raise FmudesignError(
+                f"Fallback distribution seed for fmudesign must be a non-negative "
+                f"integer, was '{fallback_distribution_seed}'"
+            )
+        general_input.distribution_seed = fallback_distribution_seed
     design_input = DesignInput.from_xlsx(input_filename, design_input_sheet)
 
     return DesignConfig.from_input(

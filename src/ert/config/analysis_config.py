@@ -337,6 +337,9 @@ class AnalysisConfig:
                     excel_to_config(
                         fmu_design_file,
                         **{k: v for k, v in sheet_arguments.items() if v is not None},
+                        fallback_distribution_seed=config_dict.get(
+                            ConfigKeys.RANDOM_SEED
+                        ),
                     )
                 )
             except ValueError as err:

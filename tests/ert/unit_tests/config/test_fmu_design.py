@@ -28,8 +28,8 @@ def write_fmu_design_workbook(
             distribution_seed,None"""
         ),
         design_sheet: (
-            "sensname,numreal,type,param_name,senscase1,value1,senscase2,value2\n"
-            f"{design_values}"
+            "sensname,numreal,type,param_name,senscase1,value1,senscase2,value2,"
+            f"dist_name,dist_param1,dist_param2\n{design_values}"
         ),
         default_sheet: f"param_name,default_values\n{default_values}",
     }
@@ -244,3 +244,37 @@ def test_that_generated_empty_cell_raises_config_validation_error(
 
     with pytest.raises(ConfigValidationError, match="empty cells"):
         parse_ert_config_with_fmu_design(f"FMU_DESIGN {design_file}")
+
+
+def test_that_fmu_design_samples_are_reproducible_with_ert_random_seed(use_tmpdir):
+    design_file = "design.xlsx"
+    write_fmu_design_workbook(
+        design_file,
+        design_values="perm,2,dist,PERM,,,,,normal,0,1",
+        default_values="PERM,0",
+    )
+
+    dm1, dm2 = (
+        parse_ert_config_with_fmu_design(
+            f"FMU_DESIGN {design_file}\nRANDOM_SEED 123"
+        ).analysis_config.design_matrix.design_matrix_df
+        for _ in range(2)
+    )
+
+    assert dm1.equals(dm2)
+
+
+def test_that_negative_random_seed_propagated_to_fmu_design_raises_config_error(
+    use_tmpdir,
+):
+    negative_random_seed = -1
+    design_file = "design.xlsx"
+    write_fmu_design_workbook(design_file)
+
+    with pytest.raises(
+        ConfigValidationError,
+        match=f"must be a non-negative integer, was '{negative_random_seed}'",
+    ):
+        parse_ert_config_with_fmu_design(
+            f"FMU_DESIGN {design_file}\nRANDOM_SEED {negative_random_seed}"
+        )

@@ -971,3 +971,34 @@ def test_that_corrupted_xlsx_file_raises_fmudesign_error(tmp_path):
 
     with pytest.raises(FmudesignError, match=re.escape("is not a valid .xlsx file")):
         excel_to_config(str(input_path))
+
+
+def test_that_workbook_distribution_seed_takes_precedence_over_fallback_seed(
+    use_tmpdir,
+):
+    input_path = _write_config_workbook("designinput.xlsx")
+
+    design_config = excel_to_config(input_path, fallback_distribution_seed=7)
+
+    assert design_config.distribution_seed == 42
+
+
+def test_that_fallback_distribution_seed_is_used_when_workbook_has_none(use_tmpdir):
+    general_input = MOCK_GENERAL_INPUT.copy()
+    general_input.loc[general_input[0] == "distribution_seed", 1] = "None"
+    input_path = _write_config_workbook("designinput.xlsx", general_input=general_input)
+
+    design_config = excel_to_config(input_path, fallback_distribution_seed=7)
+
+    assert design_config.distribution_seed == 7
+
+
+def test_that_negative_fallback_distribution_seed_raises_fmudesign_error(use_tmpdir):
+    general_input = MOCK_GENERAL_INPUT.copy()
+    general_input.loc[general_input[0] == "distribution_seed", 1] = "None"
+    input_path = _write_config_workbook("designinput.xlsx", general_input=general_input)
+
+    with pytest.raises(
+        FmudesignError, match="must be a non-negative integer, was '-1'"
+    ):
+        excel_to_config(input_path, fallback_distribution_seed=-1)
