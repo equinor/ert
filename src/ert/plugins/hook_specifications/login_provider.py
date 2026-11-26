@@ -20,6 +20,11 @@ def login_provider() -> PluginResponse[type[LoginProvider]]:
     exception, its message is shown to the user and the traceback is logged.
     Pressing Ctrl-C cancels the login.
 
+    The login provider only handles the interactive login. Ert does not
+    pass it to other plugins, so plugins that call authenticated services
+    must get their tokens from their own authentication library, for
+    example by reading the token cache written during login.
+
     Only one implementation is allowed.
 
     :return: A subclass of :code:`ert.LoginProvider`.

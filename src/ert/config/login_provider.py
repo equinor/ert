@@ -4,8 +4,11 @@ from pydantic import BaseModel
 
 
 class LoginProvider(BaseModel):
-    """Base class for login provider plugins."""
+    """Base class for login provider plugins.
+
+    Only covers the interactive login run by ``ert login``.
+    """
 
     @abstractmethod
     def login(self) -> None:
-        """Interactive login."""
+        """Log in interactively, for example through a browser."""
