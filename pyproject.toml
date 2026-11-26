@@ -265,18 +265,18 @@ select = [
 ]
 preview = true
 ignore = [
-    "logging-f-string",
     "eq-without-hash",
-    "magic-value-comparison",
-    "too-many-statements",
-    "too-many-branches",
-    "too-many-return-statements",
     "import-private-name",
-    "too-many-locals",
+    "logging-f-string",
+    "magic-value-comparison",
     "no-self-use",
-    "too-many-public-methods",
-    "too-many-nested-blocks",
     "non-empty-init-module",
+    "too-many-branches",
+    "too-many-locals",
+    "too-many-nested-blocks",
+    "too-many-public-methods",
+    "too-many-return-statements",
+    "too-many-statements",
 ]
 
 # Allow EN DASH (U+2013)
