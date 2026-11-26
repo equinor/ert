@@ -106,6 +106,24 @@ def _strategy_selector(widget: UpdateStrategySummaryWidget) -> QComboBox | None:
     return widget.findChild(QComboBox, ParameterType.GEN_KW)
 
 
+@pytest.mark.parametrize("parameter_type", list(ParameterType))
+def test_that_strategy_selector_only_offers_supported_localization_types(
+    qtbot: QtBot, parameter_type: ParameterType
+):
+    config = MagicMock(spec=ParameterConfig)
+    config.type = parameter_type
+    config.update_strategy = LocalizationType.GLOBAL
+    config.__len__.return_value = 1
+    widget = UpdateStrategySummaryWidget(ParameterConfigurationStateModel([config]))
+    qtbot.addWidget(widget)
+
+    selector = widget.findChild(QComboBox, parameter_type)
+    assert selector is not None
+
+    offered = {selector.itemData(index) for index in range(selector.count())}
+    assert offered == set(parameter_type.supported_localization_types)
+
+
 def test_that_choosing_a_strategy_in_the_summary_applies_it_to_the_parameters(
     qtbot: QtBot,
 ):
