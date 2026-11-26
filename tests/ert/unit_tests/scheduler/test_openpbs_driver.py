@@ -13,7 +13,6 @@ from hypothesis import given, settings
 from hypothesis import strategies as st
 
 from ert.cli.main import ErtCliError
-from ert.ensemble_evaluator.evaluator import EnsembleEvaluator
 from ert.mode_definitions import ENSEMBLE_EXPERIMENT_MODE
 from ert.scheduler.openpbs_driver import (
     JOB_STATES,
@@ -31,8 +30,7 @@ from ert.scheduler.openpbs_driver import (
     _create_job_class,
     _parse_jobs_dict,
 )
-from ert.scheduler.scheduler import Scheduler
-from tests.ert.ui_tests.cli.run_cli import run_cli
+from tests.ert.ui_tests.cli.run_cli import read_server_log, run_cli
 from tests.ert.utils import poll
 
 from .conftest import mock_bin
@@ -583,19 +581,25 @@ def queue_name_config():
     return ""
 
 
-async def mock_failure(message, *args, **kwargs):
-    raise RuntimeError(message)
-
-
 @pytest.mark.slow
 @pytest.mark.usefixtures("copy_poly_case")
 def test_openpbs_driver_with_poly_example_failing_submit_fails_ert_and_propagates_exception_to_user(  # ruff: ignore[line-too-long]
-    monkeypatch, caplog, queue_name_config
+    install_plugin, queue_name_config
 ):
-    async def submit_that_fails(*args, **kwargs):
-        return await mock_failure("Submit job failed", *args, **kwargs)
+    install_plugin(
+        "failing_openpbs_submit",
+        """
+        from ert.scheduler.openpbs_driver import OpenPBSDriver
 
-    monkeypatch.setattr(OpenPBSDriver, "submit", submit_that_fails)
+
+        async def submit_that_fails(*args, **kwargs):
+            raise RuntimeError("Submit job failed")
+
+
+        OpenPBSDriver.submit = submit_that_fails
+        """,
+        server_only=True,
+    )
     with Path("poly.ert").open(mode="a+", encoding="utf-8") as f:
         f.write("QUEUE_SYSTEM TORQUE\nNUM_REALIZATIONS 2")
         f.write(queue_name_config)
@@ -604,21 +608,33 @@ def test_openpbs_driver_with_poly_example_failing_submit_fails_ert_and_propagate
             ENSEMBLE_EXPERIMENT_MODE,
             "poly.ert",
         )
-    assert "RuntimeError: Submit job failed" in caplog.text
+    assert "RuntimeError: Submit job failed" in read_server_log()
 
 
 @pytest.mark.slow
 @pytest.mark.usefixtures("copy_poly_case")
 def test_openpbs_driver_with_poly_example_failing_poll_fails_ert_and_propagates_exception_to_user(  # ruff: ignore[line-too-long]
-    monkeypatch, caplog, queue_name_config
+    install_plugin, queue_name_config
 ):
-    monkeypatch.setattr(EnsembleEvaluator, "BATCHING_INTERVAL", 0.05)
-    monkeypatch.setattr(Scheduler, "BATCH_KILLING_INTERVAL", 0.01)
+    install_plugin(
+        "failing_openpbs_poll",
+        """
+        from ert.ensemble_evaluator.evaluator import EnsembleEvaluator
+        from ert.scheduler.openpbs_driver import OpenPBSDriver
+        from ert.scheduler.scheduler import Scheduler
 
-    async def poll_that_fails(*args, **kwargs):
-        return await mock_failure("Status polling failed", *args, **kwargs)
+        EnsembleEvaluator.BATCHING_INTERVAL = 0.05
+        Scheduler.BATCH_KILLING_INTERVAL = 0.01
 
-    monkeypatch.setattr(OpenPBSDriver, "poll", poll_that_fails)
+
+        async def poll_that_fails(*args, **kwargs):
+            raise RuntimeError("Status polling failed")
+
+
+        OpenPBSDriver.poll = poll_that_fails
+        """,
+        server_only=True,
+    )
     with Path("poly.ert").open(mode="a+", encoding="utf-8") as f:
         f.write("QUEUE_SYSTEM TORQUE\nNUM_REALIZATIONS 2")
         f.write(queue_name_config)
@@ -627,7 +643,7 @@ def test_openpbs_driver_with_poly_example_failing_poll_fails_ert_and_propagates_
             ENSEMBLE_EXPERIMENT_MODE,
             "poly.ert",
         )
-    assert "RuntimeError: Status polling failed" in caplog.text
+    assert "RuntimeError: Status polling failed" in read_server_log()
 
 
 @pytest.mark.slow

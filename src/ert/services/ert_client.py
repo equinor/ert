@@ -400,7 +400,11 @@ class ErtClient:
         return str(_check_response(response).json()["experiment_id"])
 
     def register_ert_experiment(self, config: ErtConfig, args: Any) -> str:
-        """Registers an ERT configuration, returns its config ID."""
+        """Registers an ERT configuration, returns its config ID.
+
+        A registration rejected by the server raises httpx.RequestError with
+        the server's reason as the message.
+        """
         response = self._request(
             "POST",
             f"{_EXPERIMENT_RUNS}/{ErtRunnerEndpoints.REGISTER}",
@@ -410,6 +414,11 @@ class ErtClient:
                 "args": to_jsonable_python(args),
             },
         )
+        if response.status_code in {
+            httpx.codes.UNPROCESSABLE_ENTITY,
+            httpx.codes.CONFLICT,
+        } and isinstance(reason := response.json().get("detail"), str):
+            raise httpx.RequestError(reason)
         return str(_check_response(response).json()["config_id"])
 
     def discard_registration(self, config_id: str) -> None:
