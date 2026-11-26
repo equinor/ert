@@ -350,8 +350,9 @@ class AnalysisConfig:
                         )
                     )
             except ValueError as err:
-                raise ConfigValidationError(
-                    f"Error when generating design matrix with FMU_DESIGN:\n{err}",
+                raise ConfigValidationError.with_context(
+                    "Error when generating design matrix with FMU_DESIGN "
+                    f"{fmu_design_file}:\n{err}",
                     fmu_design_file,
                 ) from err
             origin = (
