@@ -1,11 +1,4 @@
-from PyQt6.QtCore import Qt, QTimer
-from PyQt6.QtWidgets import (
-    QApplication,
-    QComboBox,
-    QDialog,
-    QDialogButtonBox,
-    QPushButton,
-)
+from PyQt6.QtCore import Qt
 from pytestqt.qtbot import QtBot
 
 from ert.config import GenKwConfig
@@ -18,7 +11,6 @@ from ert.gui.experiments._update_strategy_summary_widget import (
     UpdateStrategySummaryWidget,
 )
 from ert.gui.experiments.manual_update_panel import ManualUpdatePanel
-from tests.ert.unit_tests.gui.conftest import click_dialog_button
 
 from .conftest import (
     REALIZATION_FINISHED_SUCCESSFULLY,
@@ -370,55 +362,3 @@ def test_that_run_uses_parameter_configuration_of_selected_ensemble(qtbot: QtBot
             ensemble_selector.findText(f"experiment_{index} : {ensemble_name}")
         )
         assert panel.get_experiment_arguments().parameter_configuration == [parameter]
-
-
-def test_that_prior_ensemble_strategies_are_locked_in_update_settings_dialog(
-    qtbot: QtBot,
-):
-    configured_parameter = GenKwConfig(
-        name="configured",
-        distribution=RawSettings(),
-        update_strategy=LocalizationType.GLOBAL,
-    )
-    prior_parameter = GenKwConfig(
-        name="stored",
-        distribution=RawSettings(),
-        update_strategy=LocalizationType.DISTANCE,
-    )
-    notifier = ErtNotifier()
-    notifier._storage = MockStorage()
-    notifier._storage._setup_mocked_run(
-        "ensemble",
-        "experiment",
-        [REALIZATION_FINISHED_SUCCESSFULLY] * 2,
-        parameter_configuration={"stored": prior_parameter},
-    )
-    panel = ManualUpdatePanel(
-        analysis_config=AnalysisConfig(minimum_required_realizations=1),
-        runpath="",
-        notifier=notifier,
-        parameter_configuration=[configured_parameter],
-    )
-    qtbot.addWidget(panel)
-    assert panel.get_experiment_arguments().parameter_configuration == [prior_parameter]
-    strategy_selectors_enabled: list[bool] = []
-
-    def save_update_settings() -> None:
-        dialog = QApplication.activeModalWidget()
-        assert isinstance(dialog, QDialog)
-        strategy_selectors_enabled.extend(
-            selector.isEnabled() for selector in dialog.findChildren(QComboBox)
-        )
-        click_dialog_button(qtbot, dialog, QDialogButtonBox.StandardButton.Save)
-
-    QTimer.singleShot(0, save_update_settings)
-    edit_button = panel.findChild(QPushButton, "analysis_variables_popup_button")
-    assert edit_button is not None
-    assert edit_button.isEnabled()
-    qtbot.mouseClick(edit_button, Qt.MouseButton.LeftButton)
-
-    assert strategy_selectors_enabled
-    assert not any(strategy_selectors_enabled)
-    assert panel.get_experiment_arguments().parameter_configuration == [prior_parameter]
-    assert prior_parameter.update_strategy == LocalizationType.DISTANCE
-    assert configured_parameter.update_strategy == LocalizationType.GLOBAL

@@ -1,27 +1,17 @@
 import math
 
-import pytest
-from PyQt6.QtWidgets import QComboBox, QDoubleSpinBox
+from PyQt6.QtWidgets import QDoubleSpinBox
 from pytestqt.qtbot import QtBot
 
-from ert.config import LocalizationType, ParameterType
 from ert.gui.ertwidgets.analysismodulevariablespanel import AnalysisModuleVariablesPanel
-
-_MIXED_UPDATE_STRATEGIES = {
-    ParameterType.GEN_KW: LocalizationType.GLOBAL,
-    ParameterType.FIELD: LocalizationType.ADAPTIVE,
-    ParameterType.SURFACE: LocalizationType.DISTANCE,
-}
 
 
 def _create_panel(
     qtbot: QtBot,
-    update_strategies: dict[ParameterType, LocalizationType],
     correlation_threshold: float = 0.5,
     enkf_truncation: float = 0.2,
 ) -> AnalysisModuleVariablesPanel:
     widget = AnalysisModuleVariablesPanel(
-        update_strategies=update_strategies,
         correlation_threshold=correlation_threshold,
         enkf_truncation=enkf_truncation,
     )
@@ -29,45 +19,8 @@ def _create_panel(
     return widget
 
 
-def _strategy_combobox(
-    widget: AnalysisModuleVariablesPanel, parameter_type: ParameterType
-) -> QComboBox:
-    combobox = widget.findChild(QComboBox, name=parameter_type)
-    assert combobox is not None, f"No strategy combobox for {parameter_type}"
-    return combobox
-
-
-def test_that_panel_only_has_strategy_comboboxes_for_given_parameter_types(
-    qtbot: QtBot,
-):
-    widget = _create_panel(qtbot, {ParameterType.FIELD: LocalizationType.GLOBAL})
-
-    assert [c.objectName() for c in widget.findChildren(QComboBox)] == [
-        ParameterType.FIELD
-    ]
-
-
-@pytest.mark.parametrize("parameter_type", list(ParameterType))
-def test_that_strategy_combobox_only_offers_supported_localization_types(
-    qtbot: QtBot, parameter_type: ParameterType
-):
-    widget = _create_panel(qtbot, {parameter_type: LocalizationType.GLOBAL})
-
-    combobox = _strategy_combobox(widget, parameter_type)
-    offered = {combobox.itemData(index) for index in range(combobox.count())}
-
-    assert offered == set(parameter_type.supported_localization_types)
-
-
-def test_that_panel_initializes_controls_from_given_strategies_and_settings(
-    qtbot: QtBot,
-):
-    widget = _create_panel(
-        qtbot,
-        dict(_MIXED_UPDATE_STRATEGIES),
-        correlation_threshold=0.5,
-        enkf_truncation=0.2,
-    )
+def test_that_panel_initializes_spinners_from_given_values(qtbot: QtBot):
+    widget = _create_panel(qtbot, correlation_threshold=0.5, enkf_truncation=0.2)
 
     correlation_spinner = widget.findChild(
         QDoubleSpinBox, name="localization_correlation_threshold"
@@ -76,28 +29,33 @@ def test_that_panel_initializes_controls_from_given_strategies_and_settings(
     assert math.isclose(correlation_spinner.value(), 0.5)
     assert math.isclose(truncation_spinner.value(), 0.2)
 
-    for parameter_type, strategy in _MIXED_UPDATE_STRATEGIES.items():
-        assert _strategy_combobox(widget, parameter_type).currentData() == strategy
+
+def test_that_changing_spinners_emits_signals_and_updates_properties(qtbot: QtBot):
+    widget = _create_panel(qtbot)
+    thresholds: list[float] = []
+    truncations: list[float] = []
+    widget.correlation_threshold_changed.connect(thresholds.append)
+    widget.enkf_truncation_changed.connect(truncations.append)
+
+    widget.threshold_spinner.setValue(0.7)
+    widget.truncation_spinner.setValue(0.3)
+
+    assert thresholds == [0.7]
+    assert truncations == [0.3]
+    assert math.isclose(widget.correlation_threshold, 0.7)
+    assert math.isclose(widget.enkf_truncation, 0.3)
 
 
-@pytest.mark.parametrize(
-    ("parameter_type", "changed_strategy"),
-    [
-        (ParameterType.GEN_KW, LocalizationType.ADAPTIVE),
-        (ParameterType.FIELD, LocalizationType.DISTANCE),
-        (ParameterType.SURFACE, LocalizationType.GLOBAL),
-    ],
-)
-def test_that_changing_localization_control_updates_parameter_strategy_property(
-    qtbot: QtBot,
-    parameter_type: ParameterType,
-    changed_strategy: LocalizationType,
-):
-    widget = _create_panel(qtbot, dict(_MIXED_UPDATE_STRATEGIES))
+def test_that_set_values_updates_spinners_without_emitting_signals(qtbot: QtBot):
+    widget = _create_panel(qtbot)
+    emitted: list[float] = []
+    widget.correlation_threshold_changed.connect(emitted.append)
+    widget.enkf_truncation_changed.connect(emitted.append)
 
-    combobox = _strategy_combobox(widget, parameter_type)
-    changed_index = combobox.findData(changed_strategy)
-    assert changed_index != -1
-    combobox.setCurrentIndex(changed_index)
+    widget.set_values(correlation_threshold=0.9, enkf_truncation=0.4)
 
-    assert widget.update_strategies[parameter_type] == changed_strategy
+    assert emitted == []
+    assert math.isclose(widget.threshold_spinner.value(), 0.9)
+    assert math.isclose(widget.truncation_spinner.value(), 0.4)
+    assert math.isclose(widget.correlation_threshold, 0.9)
+    assert math.isclose(widget.enkf_truncation, 0.4)

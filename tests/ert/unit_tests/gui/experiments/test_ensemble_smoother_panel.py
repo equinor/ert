@@ -1,10 +1,3 @@
-from PyQt6.QtCore import Qt, QTimer
-from PyQt6.QtWidgets import (
-    QApplication,
-    QComboBox,
-    QDialog,
-    QPushButton,
-)
 from pytestqt.qtbot import QtBot
 
 from ert.config import GenKwConfig
@@ -47,30 +40,3 @@ def test_that_ensemble_smoother_panel_runs_es_mda_with_a_single_unit_weight(
     assert arguments.mode == ES_MDA_MODE
     assert arguments.weights == "1"
     assert arguments.prior_ensemble_id is None
-
-
-def test_that_update_strategy_edited_in_dialog_is_used_in_experiment_arguments(
-    qtbot: QtBot,
-):
-    panel = _create_panel(qtbot)
-
-    def select_adaptive_strategy_and_save() -> None:
-        dialog = QApplication.activeModalWidget()
-        assert isinstance(dialog, QDialog)
-        gen_kw_selector = dialog.findChildren(QComboBox)[0]
-        gen_kw_selector.setCurrentIndex(
-            gen_kw_selector.findData(
-                LocalizationType.ADAPTIVE, Qt.ItemDataRole.UserRole
-            )
-        )
-        dialog.accept()
-
-    QTimer.singleShot(0, select_adaptive_strategy_and_save)
-    edit_button = panel.findChild(QPushButton, "analysis_variables_popup_button")
-    assert edit_button is not None
-    qtbot.mouseClick(edit_button, Qt.MouseButton.LeftButton)
-
-    assert (
-        panel.get_experiment_arguments().parameter_configuration[0].update_strategy
-        == LocalizationType.ADAPTIVE
-    )
