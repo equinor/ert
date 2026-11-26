@@ -1,3 +1,4 @@
+from datetime import date
 from pathlib import Path
 from textwrap import dedent
 
@@ -5,7 +6,7 @@ import openpyxl
 import polars as pl
 import pytest
 
-from ert.config import ConfigValidationError, ErtConfig
+from ert.config import ConfigValidationError, ConfigWarning, ErtConfig
 
 
 def write_fmu_design_workbook(
@@ -15,13 +16,14 @@ def write_fmu_design_workbook(
     default_sheet: str = "defaultvalues",
     design_values: str = "faults,,scenario,FAULT_POSITION,east,-1,west,1",
     default_values: str = "FAULT_POSITION,0\nOWC,2650",
+    rms_seeds: str = "None",
 ) -> None:
     sheets = {
         "general_input": dedent(
-            """\
+            f"""\
             designtype,onebyone
             repeats,1
-            rms_seeds,None
+            rms_seeds,{rms_seeds}
             background,None
             distribution_seed,None"""
         ),
@@ -187,3 +189,58 @@ def test_that_whole_number_columns_in_fmu_design_design_matrix_are_int64(
     ]
     assert fault_position.dtype == pl.Int64
     assert fault_position.to_list() == [-1, 1, 0]
+
+
+def test_that_date_columns_in_fmu_design_are_converted_to_strings_with_warning(
+    use_tmpdir,
+):
+    design_file = "design.xlsx"
+    write_fmu_design_workbook(design_file)
+    workbook = openpyxl.load_workbook(design_file)
+    workbook["designinput"]["F2"] = date(2024, 1, 1)
+    workbook["designinput"]["H2"] = date(2025, 1, 1)
+    workbook["defaultvalues"]["B2"] = date(2020, 1, 1)
+    workbook.save(design_file)
+
+    with pytest.warns(ConfigWarning, match="date/datetime columns"):
+        ert_config = parse_ert_config_with_fmu_design(f"FMU_DESIGN {design_file}")
+
+    fault_position = ert_config.analysis_config.design_matrix.design_matrix_df[
+        "FAULT_POSITION"
+    ]
+    assert fault_position.dtype == pl.String
+
+
+def test_that_multiword_parameter_name_in_fmu_design_raises_config_validation_error(
+    use_tmpdir,
+):
+    design_file = "design.xlsx"
+    multiword_name = "FAULT POSITION"
+    write_fmu_design_workbook(
+        design_file,
+        design_values=f"faults,,scenario,{multiword_name},east,-1,west,1",
+        default_values=f"{multiword_name},0",
+    )
+
+    with pytest.raises(
+        ConfigValidationError,
+        match=f"Multiple words in parameter name .*{multiword_name}",
+    ):
+        parse_ert_config_with_fmu_design(f"FMU_DESIGN {design_file}")
+
+
+def test_that_generated_empty_cell_raises_config_validation_error(
+    use_tmpdir,
+):
+    """fmudesign assigns no RMS_SEED to ref rows, so the cell is left empty
+    unless RMS_SEED has a default value.
+    """
+    design_file = "design.xlsx"
+    write_fmu_design_workbook(
+        design_file,
+        design_values="faults,,scenario,FAULT_POSITION,east,-1,west,1\nreference,,ref",
+        rms_seeds="default",
+    )
+
+    with pytest.raises(ConfigValidationError, match="empty cells"):
+        parse_ert_config_with_fmu_design(f"FMU_DESIGN {design_file}")

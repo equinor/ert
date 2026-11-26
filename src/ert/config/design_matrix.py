@@ -114,9 +114,13 @@ class DesignMatrix:
             dict.fromkeys(mix_typed_cols, "string")
         )
         try:
-            design_matrix_df = _complete_design_matrix(
-                pl.from_pandas(design_df), design.defaultvalues
+            design_df = pl.from_pandas(design_df)
+            design_df = _validate_design_values(
+                design_df,
+                tuple(design_df.columns),
+                [f"Realization {i}" for i in range(design_df.height)],
             )
+            design_matrix_df = _complete_design_matrix(design_df, design.defaultvalues)
             return cls.from_dataframe(
                 design_matrix_df,
                 origin=origin,
