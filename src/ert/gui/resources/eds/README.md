@@ -7,7 +7,7 @@ The colours, spacing and component styles in this directory, and in
 
 EDS is Copyright (c) 2020 Equinor ASA and is distributed under the MIT
 license, which is included in the `LICENSE` file next to this one. The rest
-of ERT is licensed under the GPL-3.0-or-later.
+of ERT is licensed under the GPL-3.0, see `COPYING` in the repository root.
 
 ## Icons
 
