@@ -279,8 +279,7 @@ ignore = [
     "too-many-return-statements",
     "import-private-name",
     "too-many-locals",
-    "no-self-use", #
-    "eq-without-hash",
+    "no-self-use",
     "too-many-public-methods",
     "too-many-nested-blocks",
     "non-empty-init-module",
