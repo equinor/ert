@@ -125,8 +125,8 @@ QFrame#central_widget QComboBoxWithDescription QAbstractItemView {
 
 /* Summary and settings cards */
 SummaryPanel { background: transparent; border: none; }
-QScrollArea#summary_scroll { border: none; background: transparent; }
-QScrollArea#summary_scroll > QWidget > QWidget { background: transparent; }
+QScrollArea#summary_card_scroll,
+QScrollArea#summary_card_scroll > QWidget > QWidget { background: transparent; }
 
 QFrame#card {
     background: $WHITE;

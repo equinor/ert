@@ -6,14 +6,10 @@ from typing import TYPE_CHECKING, Any
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (
     QFrame,
-    QGridLayout,
     QHBoxLayout,
     QLabel,
     QScrollArea,
-    QSizePolicy,
-    QSpacerItem,
     QVBoxLayout,
-    QWidget,
 )
 
 from ert.gui.ertwidgets import ErtSummary
@@ -89,22 +85,9 @@ class SummaryPanel(QFrame):
         self.setMinimumWidth(250)
         self.setMinimumHeight(150)
 
-        widget = QWidget(self)
-        self._layout = QHBoxLayout()
+        self._layout = QHBoxLayout(self)
         self._layout.setContentsMargins(0, 0, 0, 0)
         self._layout.setSpacing(Card.SPACING)
-        widget.setLayout(self._layout)
-
-        scroll = QScrollArea(self)
-        scroll.setObjectName("summary_scroll")
-        scroll.setWidgetResizable(True)
-        scroll.setWidget(widget)
-
-        layout = QVBoxLayout()
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(scroll, 1)
-
-        self.setLayout(layout)
         self.updateSummary()
 
     def updateSummary(self) -> None:
@@ -151,16 +134,20 @@ class SummaryPanel(QFrame):
         text_widget.setWordWrap(True)
         text_widget.setTextFormat(Qt.TextFormat.RichText)
 
+        text_widget.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)
+        text_widget.setContentsMargins(16, 12, 16, 12)
+
+        scroll = QScrollArea()
+        scroll.setObjectName("summary_card_scroll")
+        scroll.setFrameShape(QFrame.Shape.NoFrame)
+        scroll.setWidgetResizable(True)
+        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        scroll.setWidget(text_widget)
+
         card = Card()
-        layout = QGridLayout(card)
-        layout.setContentsMargins(16, 12, 16, 12)
-        layout.addWidget(text_widget, 0, 0)
-        layout.addItem(
-            QSpacerItem(0, 0, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding),
-            1,
-            0,
-        )
-        layout.setRowStretch(1, 1)
+        layout = QVBoxLayout(card)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(scroll)
 
         self._layout.addWidget(card, 1)
 
