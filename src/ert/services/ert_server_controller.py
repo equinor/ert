@@ -249,7 +249,7 @@ def _acquire_server_lock(project: Path) -> FileLock:
     try:
         server_lock.acquire(timeout=0)
     except Timeout as err:
-        logger.warning(
+        logger.error(
             f"Can not start a server, another process holds {server_lock.lock_file}"
         )
         raise ServerAlreadyRunningError(
