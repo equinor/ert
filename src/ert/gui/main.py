@@ -21,6 +21,7 @@ from ert.config import (
     ErtConfig,
     capture_validation,
 )
+from ert.gui.eds_theme import apply_eds_theme
 from ert.gui.main_window import ErtMainWindow
 from ert.gui.tools.event_viewer import (
     GUILogHandler,
@@ -117,6 +118,7 @@ def run_gui(args: Namespace, plugins: ErtRuntimePlugins | None = None) -> int:
 
     app = QApplication(["ert"])  # Early so that QT is initialized before other imports
     app.setWindowIcon(QIcon("img:ert_icon.svg"))
+    apply_eds_theme(app)
 
     with add_gui_log_handler() as log_handler:
         window, ens_path = _start_initial_gui_window(args, log_handler, plugins)

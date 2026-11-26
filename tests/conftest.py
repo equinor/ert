@@ -77,6 +77,7 @@ def pytest_collection_modifyitems(config, items):
         if item.get_closest_marker("requires_window_manager"):
             item.fixturenames.append("_qt_excepthook")
             item.fixturenames.append("_qt_add_search_paths")
+            item.fixturenames.append("_qt_apply_eds_theme")
         if item.get_closest_marker("requires_eclipse") and not config.getoption(
             "--eclipse-simulator"
         ):

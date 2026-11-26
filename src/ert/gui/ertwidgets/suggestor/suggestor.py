@@ -20,10 +20,8 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from ert.gui.detect_mode import is_dark_mode
 from ert.gui.ertwidgets import CopyButton
 
-from ._colors import BLUE_TEXT
 from ._suggestor_message import SuggestorMessage
 
 if TYPE_CHECKING:
@@ -45,67 +43,6 @@ def _combine_messages(infos: Sequence[ErrorInfo]) -> list[tuple[str, list[str]]]
     return list(combined.items())
 
 
-LIGHT_GREY = "#f7f7f7"
-MEDIUM_GREY = "#eaeaea"
-HEAVY_GREY = "#dcdcdc"
-DARK_GREY = "#bebebe"
-LIGHT_GREEN = "#deedee"
-MEDIUM_GREEN = "#007079"
-DARK_GREEN = "#004f55"
-
-BUTTON_STYLE = f"""
-QPushButton {{
-    background-color: {MEDIUM_GREEN};
-    color: white;
-    border-radius: 4px;
-    border: 2px solid {MEDIUM_GREEN};
-    height: 36px;
-    padding: 0px 16px 0px 16px;
-}}
-QPushButton:hover {{
-    background: {DARK_GREEN};
-    border: 2px solid {DARK_GREEN};
-}};
-"""
-
-LINK_STYLE = f"""
-QPushButton {{
-    color: {BLUE_TEXT};
-    border: 0px solid white;
-    margin-left: 34px;
-    height: 36px;
-    padding: 0px 12px 0px 12px;
-    text-decoration: underline;
-    text-align: left;
-    font-size: 16px;
-    padding: 0px;
-}}
-"""
-
-DISABLED_BUTTON_STYLE = f"""
-    background-color: {MEDIUM_GREY};
-    color: {DARK_GREY};
-    border-radius: 4px;
-    border: 2px solid {MEDIUM_GREY};
-    height: 36px;
-    padding: 0px 16px 0px 16px;
-"""
-
-SECONDARY_BUTTON_STYLE = f"""
-QPushButton {{
-    background-color: {LIGHT_GREY};
-    color: {MEDIUM_GREEN};
-    border-radius: 4px;
-    border: 2px solid {MEDIUM_GREEN};
-    height: 36px;
-    padding: 0px 16px 0px 16px;
-}}
-QPushButton:hover {{
-    background-color: {LIGHT_GREEN};
-}};
-"""
-
-
 class _CopyAllButton(CopyButton):
     def __init__(
         self,
@@ -121,7 +58,7 @@ class _CopyAllButton(CopyButton):
                 for info in (errors + warnings + deprecations)
             ]
         )
-        self.setStyleSheet(SECONDARY_BUTTON_STYLE)
+        self.setProperty("variant", "secondary")
 
     @override
     def copy(self) -> None:
@@ -159,9 +96,6 @@ class Suggestor(QWidget):
         self.__layout.addWidget(QLabel(widget_info))
         self.__layout.addSpacing(20)
 
-        if not is_dark_mode():
-            self.setStyleSheet(f"background-color: {LIGHT_GREY};")
-
         data_widget = QWidget(parent=self)
         data_layout = QHBoxLayout()
         data_widget.setLayout(data_layout)
@@ -194,13 +128,7 @@ class Suggestor(QWidget):
     def _help_panel(self, help_links: dict[str, str]) -> QFrame:
         help_button_frame = QFrame(parent=self)
         help_button_frame.setContentsMargins(0, 0, 0, 0)
-        help_button_frame.setStyleSheet(
-            f"""
-            background-color: {MEDIUM_GREY};
-            border-radius: 4px;
-            border: 2px solid {HEAVY_GREY};
-            """
-        )
+        help_button_frame.setObjectName("help_panel")
         help_button_frame.setMinimumWidth(388)
         help_button_frame.setMaximumWidth(388)
         help_buttons_layout = QVBoxLayout()
@@ -209,20 +137,17 @@ class Suggestor(QWidget):
 
         help_header = QLabel("Helpful links", parent=self)
         help_header.setContentsMargins(0, 0, 0, 0)
-        help_header.setStyleSheet(
-            f"font-size: 24px; color: {BLUE_TEXT}; border: none; margin-left: 30px;"
-        )
+        help_header.setObjectName("help_header")
         help_buttons_layout.addWidget(help_header, alignment=Qt.AlignmentFlag.AlignTop)
 
         separator = QFrame(parent=self)
         separator.setFrameShape(QFrame.Shape.HLine)
-        separator.setStyleSheet(f"color: {HEAVY_GREY};")
         separator.setFixedWidth(388)
         help_buttons_layout.addWidget(separator)
 
         for menu_label, link in help_links.items():
             button = QPushButton(menu_label, parent=self)
-            button.setStyleSheet(LINK_STYLE)
+            button.setProperty("variant", "link")
             button.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
             button.setObjectName(menu_label)
             button.clicked.connect(
@@ -251,7 +176,7 @@ class Suggestor(QWidget):
     def _continue_button(self) -> QWidget:
         assert self._continue_action
         continue_button = QPushButton("Open ERT")
-        continue_button.setStyleSheet(BUTTON_STYLE)
+        continue_button.setProperty("variant", "primary")
         continue_button.setObjectName("run_ert_button")
         continue_button.pressed.connect(self._continue_action)
         continue_button.pressed.connect(self.close)
@@ -261,8 +186,8 @@ class Suggestor(QWidget):
         close_button = QPushButton("Close")
         close_button.setObjectName("close_button")
         close_button.pressed.connect(self.close)
-        close_button.setStyleSheet(
-            SECONDARY_BUTTON_STYLE if self._continue_action else BUTTON_STYLE
+        close_button.setProperty(
+            "variant", "secondary" if self._continue_action else "primary"
         )
         return close_button
 
@@ -279,6 +204,7 @@ class Suggestor(QWidget):
 
         suggest_msgs = QWidget(parent=self)
         suggest_msgs.setObjectName("suggestor_messages")
+        suggest_msgs.setAttribute(Qt.WidgetAttribute.WA_StyledBackground)
         suggest_msgs.setContentsMargins(0, 0, 16, 0)
         suggest_layout = QGridLayout()
         suggest_layout.setContentsMargins(0, 0, 0, 0)
@@ -312,27 +238,7 @@ class Suggestor(QWidget):
 
         suggest_msgs.setLayout(suggest_layout)
         scroll = QScrollArea()
-        scroll.setStyleSheet(
-            f"""
-            QScrollArea {{
-                border: none;
-                width: 128px;
-            }}
-            QScrollBar {{
-                border: none;
-                background-color: {LIGHT_GREY};
-                width: 10px;
-            }}
-            QScrollBar::handle {{
-                border: none;
-                background-color: {HEAVY_GREY};
-                border-radius: 4px;
-            }}
-            QScrollBar::sub-line:vertical, QScrollBar::add-line:vertical {{
-                background: none;
-            }}
-        """
-        )
+        scroll.setObjectName("suggestor_scroll")
         scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         scroll.setWidgetResizable(True)
