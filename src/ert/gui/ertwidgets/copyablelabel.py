@@ -57,13 +57,16 @@ def strip_runpath_magic_keywords(runpath: str) -> str:
 
 
 class _CopyButton(CopyButton):
-    def __init__(self, label: QLabel) -> None:
+    def __init__(self, label: QLabel, *, wrap: bool) -> None:
         super().__init__()
         self.label = label
+        self.wrap = wrap
 
     @override
     def copy(self) -> None:
-        text = unescape_string(self.label.text()).replace(_ZERO_WIDTH_SPACE, "")
+        text = unescape_string(self.label.text())
+        if self.wrap:
+            text = text.replace("/" + _ZERO_WIDTH_SPACE, "/")
         self.copy_text(strip_runpath_magic_keywords(text))
 
 
@@ -84,7 +87,7 @@ class CopyableLabel(QHBoxLayout):
         self.label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
         self.label.setWordWrap(wrap)
 
-        self.copy_button = _CopyButton(self.label)
+        self.copy_button = _CopyButton(self.label, wrap=wrap)
 
         if wrap:
             self.addWidget(self.label, 1)
