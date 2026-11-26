@@ -211,7 +211,7 @@ class LocalStorage(BaseMode):
             raise ert.storage.ErtStoragePermissionError(
                 f"Cannot read storage index in '{path}': {err}"
             ) from err
-        except (ValueError, TypeError, NotImplementedError) as err:
+        except (ValueError, TypeError, OverflowError, NotImplementedError) as err:
             raise ert.storage.ErtStorageException(
                 f"Cannot open storage '{path}': "
                 f"index.json is corrupt or incompatible ({err})"
@@ -253,7 +253,7 @@ class LocalStorage(BaseMode):
                 raise ert.storage.ErtStoragePermissionError(
                     f"Permission error when migrating storage at: {path}. Error: {err}"
                 ) from err
-            except TimeoutError as err:
+            except OSError as err:
                 raise ert.storage.ErtStorageException(
                     f"Failed to migrate storage: {path} with error: {err}"
                 ) from err
