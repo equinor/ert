@@ -15,6 +15,7 @@ from ert.gui.ertwidgets import (
     StringBox,
     Suggestor,
 )
+from ert.gui.ertwidgets.copyablelabel import escape_string
 from ert.gui.experiments.experiment_config_panel import ExperimentConfigPanel
 from ert.mode_definitions import EVALUATE_ENSEMBLE_MODE
 from ert.run_models.evaluate_ensemble import EvaluateEnsemble
@@ -58,6 +59,8 @@ class EvaluateEnsemblePanel(ExperimentConfigPanel):
         if self._ensemble_selector.selected_ensemble:
             ensemble_size = self._ensemble_selector.selected_ensemble.ensemble_size
 
+        self._experiment_name_label = QLabel()
+        self._experiment_name_label.setObjectName("experiment_name")
         self._number_of_realizations_label = QLabel(f"<b>{ensemble_size}</b>")
 
         self._active_realizations_field = StringBox(
@@ -76,6 +79,7 @@ class EvaluateEnsemblePanel(ExperimentConfigPanel):
             runpath,
             self._number_of_realizations_label,
             self._active_realizations_field,
+            experiment_name=self._experiment_name_label,
         )
 
         self.build_layout()
@@ -113,6 +117,9 @@ class EvaluateEnsemblePanel(ExperimentConfigPanel):
     def _realizations_from_fs(self) -> None:
         ensemble = self._ensemble_selector.selected_ensemble
         self._active_realizations_field.setEnabled(ensemble is not None)
+        self._experiment_name_label.setText(
+            f"<b>{escape_string(ensemble.experiment.name)}</b>" if ensemble else ""
+        )
         if ensemble:
             try:
                 parameters = ensemble.get_realization_mask_with_parameters()

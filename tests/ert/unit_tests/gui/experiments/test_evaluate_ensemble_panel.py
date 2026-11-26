@@ -1,6 +1,7 @@
 from unittest.mock import Mock
 
 import pytest
+from PyQt6.QtWidgets import QLabel
 from pytestqt.qtbot import QtBot
 
 import ert.gui
@@ -70,3 +71,30 @@ def test_that_ensemble_select_contains_only_leaf_ensembles(qtbot: QtBot):
     ensemble_selector = panel.findChild(EnsembleSelector)
     assert ensemble_selector.count() == 1
     assert ensemble_selector.itemText(0) == "mock_experiment : mock_ensemble_leaf"
+
+
+def test_that_experiment_name_shows_the_experiment_of_the_selected_ensemble(
+    qtbot: QtBot,
+):
+    notifier = ErtNotifier()
+    notifier._storage = MockStorage()
+    notifier._storage._setup_mocked_run(
+        "mock_ensemble",
+        "mock_<experiment>",
+        [REALIZATION_FINISHED_SUCCESSFULLY],
+    )
+    panel = EvaluateEnsemblePanel(runpath="", notifier=notifier)
+    qtbot.addWidget(panel)
+
+    name_label = panel.findChild(QLabel, "experiment_name")
+
+    assert name_label.text() == "<b>mock_&lt;experiment&gt;</b>"
+
+
+def test_that_experiment_name_is_empty_when_there_is_no_ensemble(qtbot: QtBot):
+    notifier = ErtNotifier()
+    notifier._storage = MockStorage()
+    panel = EvaluateEnsemblePanel(runpath="", notifier=notifier)
+    qtbot.addWidget(panel)
+
+    assert not panel.findChild(QLabel, "experiment_name").text()

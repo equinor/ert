@@ -63,15 +63,14 @@ class ExperimentConfigPanel(QWidget):
         runpath: str,
         number_of_realizations: QWidget,
         active_realizations: QWidget,
-        experiment_name: QWidget | None = None,
+        experiment_name: QWidget,
     ) -> None:
         self.common_layout.setRowWrapPolicy(QFormLayout.RowWrapPolicy.DontWrapRows)
         # Labels default to top alignment, which misaligns them with taller fields.
         self.common_layout.setLabelAlignment(
             Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
         )
-        if experiment_name is not None:
-            self.common_layout.addRow("Experiment name:", experiment_name)
+        self.common_layout.addRow("Experiment name:", experiment_name)
         self.common_layout.addRow("Runpath:", CopyableLabel(text=runpath, wrap=True))
         self.common_layout.addRow("Number of realizations:", number_of_realizations)
         self.common_layout.addRow("Active realizations:", active_realizations)
