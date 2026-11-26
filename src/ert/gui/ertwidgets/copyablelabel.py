@@ -5,8 +5,6 @@ from PyQt6.QtWidgets import QHBoxLayout, QLabel
 
 from .copy_button import CopyButton
 
-_ZERO_WIDTH_SPACE = "\u200b"
-
 
 def escape_string(string: str) -> str:
     """
@@ -57,17 +55,13 @@ def strip_runpath_magic_keywords(runpath: str) -> str:
 
 
 class _CopyButton(CopyButton):
-    def __init__(self, label: QLabel, *, wrap: bool) -> None:
+    def __init__(self, label: QLabel) -> None:
         super().__init__()
         self.label = label
-        self.wrap = wrap
 
     @override
     def copy(self) -> None:
-        text = unescape_string(self.label.text())
-        if self.wrap:
-            text = text.replace("/" + _ZERO_WIDTH_SPACE, "/")
-        self.copy_text(strip_runpath_magic_keywords(text))
+        self.copy_text(strip_runpath_magic_keywords(unescape_string(self.label.text())))
 
 
 class CopyableLabel(QHBoxLayout):
@@ -80,14 +74,11 @@ class CopyableLabel(QHBoxLayout):
     def __init__(self, text: str, *, wrap: bool = False) -> None:
         super().__init__()
 
-        displayed = escape_string(text)
-        if wrap:
-            displayed = displayed.replace("/", "/" + _ZERO_WIDTH_SPACE)
-        self.label = QLabel(f"<b>{displayed}</b>")
+        self.label = QLabel(f"<b>{escape_string(text)}</b>")
         self.label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
         self.label.setWordWrap(wrap)
 
-        self.copy_button = _CopyButton(self.label, wrap=wrap)
+        self.copy_button = _CopyButton(self.label)
 
         if wrap:
             self.addWidget(self.label, 1)

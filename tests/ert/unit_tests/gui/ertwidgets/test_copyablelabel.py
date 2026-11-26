@@ -49,23 +49,15 @@ def test_runpath_stripped(runpath, expected):
     assert strip_runpath_magic_keywords(runpath) == expected
 
 
-def _copy_from_label(qtbot, text: str, *, wrap: bool) -> str:
-    copyable_label = CopyableLabel(text, wrap=wrap)
+def test_that_a_wrapped_label_breaks_a_long_path_without_altering_its_text(qtbot):
+    path = "/aaaaaaaa/bbbbbbbb/cccccccc/dddddddd"
+    copyable_label = CopyableLabel(path, wrap=True)
     wrapper_widget = QWidget()
     wrapper_widget.setLayout(copyable_label)
     qtbot.addWidget(wrapper_widget)
 
+    label = copyable_label.label
+    assert label.heightForWidth(60) > label.heightForWidth(400)
     copyable_label.copy_button.copy()
-    return QApplication.clipboard().text()
-
-
-def test_that_copying_a_wrapped_label_removes_the_break_opportunities_after_slashes(
-    qtbot,
-):
-    assert _copy_from_label(qtbot, "/a/b/c", wrap=True) == "/a/b/c"
-
-
-def test_that_copying_an_unwrapped_label_keeps_zero_width_spaces_in_the_text(qtbot):
-    text = "/a/\u200bb"
-
-    assert _copy_from_label(qtbot, text, wrap=False) == text
+    assert QApplication.clipboard().text() == path
+    assert label.text() == f"<b>{path}</b>"
