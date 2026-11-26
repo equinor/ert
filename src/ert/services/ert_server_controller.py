@@ -19,6 +19,7 @@ from time import monotonic, sleep
 from typing import Any, Protocol, TypedDict, cast
 
 import requests
+from filelock import FileLock, Timeout
 
 from ert.trace import get_traceparent
 
@@ -239,7 +240,22 @@ class _Proc(threading.Thread):
 
 
 _ERT_SERVER_CONNECTION_INFO_FILE = "ert_server_connection.json"
+_ERT_SERVER_LOCK_FILE = "ert_server.lock"
 _ERT_SERVER_EXECUTABLE_FILE = str(Path(__file__).parent / "_ert_server_main.py")
+
+
+def _acquire_server_lock(project: Path) -> FileLock:
+    server_lock = FileLock(project / _ERT_SERVER_LOCK_FILE)
+    try:
+        server_lock.acquire(timeout=0)
+    except Timeout as err:
+        logger.warning(
+            f"Can not start a server, another process holds {server_lock.lock_file}"
+        )
+        raise ServerAlreadyRunningError(
+            f"Server already running for project at {project}"
+        ) from err
+    return server_lock
 
 
 class ErtServerContext:
@@ -276,6 +292,7 @@ class ErtServerController:
         self._connection_info_future: Future[ErtServerConnectionInfo] = Future()
         self._timeout = timeout
         self._url: str | None = None
+        self._server_lock: FileLock | None = None
 
         if connection_info is not None:
             if "urls" not in connection_info:
@@ -331,42 +348,18 @@ class ErtServerController:
         timeout: int = 0,
         logging_config: str | None = None,
     ) -> ErtServerContext:
-        conn_info_path = project / _ERT_SERVER_CONNECTION_INFO_FILE
-
-        try:  # ruff: ignore[too-many-statements-in-try-clause]
-            if conn_info_path.stat().st_size > 0:
-                conn_info = json.loads(conn_info_path.read_text(encoding="utf-8"))
-                controller = ErtServerController(
-                    storage_path=str(project),
-                    connection_info=conn_info,
-                    logging_config=logging_config,
-                )
-                controller.fetch_url()
-                logger.warning(
-                    f"Can not connect to already running server.\n"
-                    f"Connection info file exists and is non-empty at {conn_info_path}"
-                )
-                raise ServerAlreadyRunningError(
-                    f"Server already running for project at {project}"
-                )
-        except FileNotFoundError:
-            pass
-        except (json.JSONDecodeError, KeyError, TimeoutError) as e:
-            logger.warning(
-                "Failed connecting to existing storage service: "
-                f"{type(e).__name__}: {e}, starting new service"
+        if cls._instance is not None:
+            raise ServerAlreadyRunningError("Server already running")
+        try:
+            return cls.start_server(
+                project=project, timeout=timeout, logging_config=logging_config
             )
-            conn_info_path.unlink(missing_ok=True)
         except PermissionError as pe:
             logger.error(
                 f"{type(pe).__name__}: {pe}, cannot connect to storage service "
                 "due to permission issues.",
             )
             raise
-
-        return cls.start_server(
-            project=project, timeout=timeout, logging_config=logging_config
-        )
 
     def fetch_url(self) -> str:
         """Returns the url. Blocks while the server is starting"""
@@ -415,6 +408,9 @@ class ErtServerController:
         self.__class__._instance = None
         error_code = self._thread_that_starts_server_process.shutdown()
         self._thread_that_starts_server_process = None
+        if self._server_lock is not None:
+            self._server_lock.release()
+            self._server_lock = None
 
         return error_code
 
@@ -471,13 +467,23 @@ class ErtServerController:
     ) -> ErtServerContext:
         if cls._instance is not None:
             raise RuntimeError("Server already running")
-        cls._instance = obj = cls(
-            storage_path=str(project),
-            parent_pid=parent_pid,
-            verbose=verbose,
-            timeout=timeout or 120,
-            logging_config=logging_config,
-        )
+        project = Path(project)
+        server_lock = _acquire_server_lock(project)
+        try:
+            # Holding the lock means no other process owns a server for this
+            # project, so any connection info file is left over from a dead one.
+            (project / _ERT_SERVER_CONNECTION_INFO_FILE).unlink(missing_ok=True)
+            cls._instance = obj = cls(
+                storage_path=str(project),
+                parent_pid=parent_pid,
+                verbose=verbose,
+                timeout=timeout or 120,
+                logging_config=logging_config,
+            )
+        except BaseException:
+            server_lock.release()
+            raise
+        obj._server_lock = server_lock
         if obj._thread_that_starts_server_process is not None:
             obj._thread_that_starts_server_process.start()
         return ErtServerContext(obj)

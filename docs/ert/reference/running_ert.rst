@@ -33,9 +33,8 @@ prints an error and exits without opening a window:
    Cannot connect to storage service because it is already running.
 
 Close the open ERT GUI before you start ERT again with a configuration that
-uses the same storage folder. If ERT has just crashed, wait a few seconds and
-try again. To have both GUIs open at the same time, set a different ENSPATH in
-one of the configuration files.
+uses the same storage folder. To have both GUIs open at the same time, set a
+different ENSPATH in one of the configuration files.
 
 Command line interface (CLI)
 ----------------------------

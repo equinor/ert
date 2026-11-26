@@ -1,13 +1,15 @@
 import json
+import multiprocessing
 import os
 import socket
 import ssl
 import subprocess
 import sys
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import DEFAULT, patch
 
 import pytest
+from filelock import FileLock
 
 from ert.services import ErtServerController
 from ert.services._ert_server_main import _create_connection_info, _generate_certificate
@@ -85,51 +87,9 @@ def test_that_service_can_be_started_with_existing_conn_info_json(change_to_tmpd
     create_ert_server_controller(project=Path().absolute())
 
 
-@patch("ert.services.ErtServerController.start_server")
-def test_that_service_can_be_started_with_missing_cert_in_conn_info_json(
-    start_server_mock, change_to_tmpdir
-):
-    """
-    This is a regression test for a bug with the following reproduction steps:
-
-        1. run `ert gui poly.ert` with an ert 14.3
-        2. kill that process, meaning `storage_service_server.json` is not cleaned up.
-        3. run `ert gui poly.ert` with ert 14.4.0, which
-           looks for a 'cert' key present in ert_server_connection.json
-    """
-    connection_info = {
-        "urls": [
-            f"http://{host}:51839"
-            for host in (
-                LOCALHOST_IP,
-                socket.gethostname(),
-                socket.getfqdn(),
-            )
-        ],
-        "authtoken": "dummytoken",
-    }
-    with Path("ert_server_connection.json").open(mode="w", encoding="utf-8") as f:
-        json.dump(connection_info, f)
-    ErtServerController.init_service(project=Path().absolute())
-    start_server_mock.assert_called_once()
-
-
-@patch("ert.services.ErtServerController.start_server")
-def test_that_service_can_be_started_with_empty_conn_info_json(
-    start_server_mock, change_to_tmpdir
-):
-    """An empty file on disk is an erroneous scenario in which we should
-    ignore the file on disk and overwrite it by launching a new server
-    """
-    Path("ert_server_connection.json").touch()
-    ErtServerController.init_service(project=Path().absolute())
-    start_server_mock.assert_called_once()
-
-
-@patch("ert.services.ErtServerController.start_server")
-@patch("ert.services.ert_server_controller.ErtServerController.fetch_url")
+@patch("ert.services.ert_server_controller._Proc")
 def test_that_stale_connection_info_file_is_removed_before_starting_new_service(
-    fetch_url_mock, start_server_mock, change_to_tmpdir
+    server_process_mock, change_to_tmpdir
 ):
     """Regression test: when an ert_server_connection.json is left behind from a
     previous process (e.g. Ctrl+C killed the plotter without cleanup),
@@ -150,25 +110,23 @@ def test_that_stale_connection_info_file_is_removed_before_starting_new_service(
     }
     stale_file.write_text(json.dumps(connection_info), encoding="utf-8")
 
-    fetch_url_mock.side_effect = TimeoutError("server is dead")
-
     def assert_stale_file_deleted(**kwargs):
         assert not stale_file.exists(), (
             "Stale ert_server_connection.json must be deleted before starting a new "
             "server, otherwise clients calling create_ert_server_controller "
             "will read dead connection info"
         )
+        return DEFAULT
 
-    start_server_mock.side_effect = assert_stale_file_deleted
+    server_process_mock.side_effect = assert_stale_file_deleted
 
-    ErtServerController.init_service(project=Path().absolute())
-    start_server_mock.assert_called_once()
+    with ErtServerController.init_service(project=Path().absolute()):
+        server_process_mock.assert_called_once()
 
 
-@patch("ert.services.ErtServerController.start_server")
-@patch("ert.services.ert_server_controller.ErtServerController.fetch_url")
-def test_that_init_service_raises_and_keeps_the_connection_file_of_a_reachable_server(
-    fetch_url_mock, start_server_mock, change_to_tmpdir
+@patch("ert.services.ert_server_controller._Proc")
+def test_that_init_service_raises_and_keeps_connection_file_while_server_lock_is_held(
+    server_process_mock, change_to_tmpdir
 ):
     connection_info_file = Path("ert_server_connection.json")
     connection_info_json = json.dumps(
@@ -182,25 +140,91 @@ def test_that_init_service_raises_and_keeps_the_connection_file_of_a_reachable_s
         }
     )
     connection_info_file.write_text(connection_info_json, encoding="utf-8")
-    fetch_url_mock.return_value = f"http://{LOCALHOST_IP}:51839"
+    server_lock_of_other_process = FileLock("ert_server.lock")
+    server_lock_of_other_process.acquire(timeout=0)
 
-    with pytest.raises(ServerAlreadyRunningError, match="Server already running"):
-        ErtServerController.init_service(project=Path().absolute())
+    try:
+        with pytest.raises(ServerAlreadyRunningError, match="Server already running"):
+            ErtServerController.init_service(project=Path().absolute())
+    finally:
+        server_lock_of_other_process.release()
 
-    start_server_mock.assert_not_called()
+    server_process_mock.assert_not_called()
     assert connection_info_file.read_text(encoding="utf-8") == connection_info_json
 
 
-@patch("ert.services.ErtServerController.start_server")
-def test_that_service_can_be_started_with_empty_json_content(
-    start_server_mock, change_to_tmpdir
+def _start_competing_server(project, start, stop, results):
+    results.put(("ready", os.getpid()))
+    if not start.wait(30):
+        raise TimeoutError("Timed out waiting to start the server")
+    try:
+        with ErtServerController.start_server(
+            project=project, parent_pid=os.getpid(), timeout=120
+        ) as server:
+            results.put(("started", server.fetch_connection_info()))
+            if not stop.wait(120):
+                raise TimeoutError("Timed out waiting to stop the server")
+    except ServerAlreadyRunningError:
+        results.put(("locked", None))
+
+
+@pytest.mark.slow
+def test_that_concurrent_controllers_publish_only_one_server_connection(
+    tmp_path, change_to_tmpdir, monkeypatch
 ):
-    """An empty JSON document on disk is an erroneous scenario in which we should
-    ignore the file on disk and overwrite it by launching a new server
-    """
-    Path("ert_server_connection.json").write_text("{}", encoding="utf-8")
-    ErtServerController.init_service(project=Path().absolute())
-    start_server_mock.assert_called_once()
+    monkeypatch.setenv("ERT_LOG_DIR", str(tmp_path))
+    context = multiprocessing.get_context("spawn")
+    start = context.Event()
+    stop = context.Event()
+    results = context.Queue()
+    processes = [
+        context.Process(
+            target=_start_competing_server, args=(tmp_path, start, stop, results)
+        )
+        for _ in range(2)
+    ]
+    started_processes = []
+    try:
+        for process in processes:
+            process.start()
+            started_processes.append(process)
+        assert [results.get(timeout=30)[0] for _ in processes] == ["ready", "ready"]
+        start.set()
+
+        outcomes = [results.get(timeout=120) for _ in processes]
+        assert sorted(outcome for outcome, _ in outcomes) == ["locked", "started"]
+        connection_info = next(
+            info for outcome, info in outcomes if outcome == "started"
+        )
+        connection_file = tmp_path / "ert_server_connection.json"
+        assert (
+            json.loads(connection_file.read_text(encoding="utf-8")) == connection_info
+        )
+    finally:
+        stop.set()
+        for process in started_processes:
+            process.join(timeout=30)
+            if process.is_alive():
+                process.terminate()
+                process.join(timeout=10)
+        results.close()
+
+    assert [process.exitcode for process in processes] == [0, 0]
+
+
+@patch("ert.services.ert_server_controller._Proc")
+def test_that_server_lock_can_be_reacquired_after_server_shutdown(
+    server_process_mock, change_to_tmpdir
+):
+    with ErtServerController.init_service(project=Path().absolute()):
+        pass
+
+    server_lock = FileLock("ert_server.lock")
+    server_lock.acquire(timeout=0)
+    server_lock.release()
+
+    with ErtServerController.init_service(project=Path().absolute()):
+        assert server_process_mock.call_count == 2
 
 
 @pytest.mark.slow
@@ -282,8 +306,8 @@ def test_that_server_hosts_and_localhost_ip_exists_as_san_in_certificate(
 def test_that_an_exception_is_raised_if_storage_server_file_has_no_permissions(
     change_to_tmpdir,
 ):
-    file_path = Path("ert_server_connection.json")
-    file_path.write_text("{}", encoding="utf-8")
+    file_path = Path("ert_server.lock")
+    file_path.touch()
     mode = file_path.stat().st_mode
     Path(file_path).chmod(0o000)  # no permissions
     try:

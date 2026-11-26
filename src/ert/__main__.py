@@ -40,6 +40,7 @@ from ert.services import ErtServerController
 from ert.services._ert_server_main import (
     add_parser_options as ert_api_add_parser_options,
 )
+from ert.services.ert_server_controller import ServerAlreadyRunningError
 from ert.shared.status.utils import get_ert_memory_usage
 from ert.storage import ErtStorageException, ErtStoragePermissionError
 from ert.trace import trace, tracer
@@ -617,7 +618,7 @@ def main() -> None:
     except ErtStoragePermissionError as err:
         logger.error(str(err))
         sys.exit(str(err))
-    except (ErtCliError, ErtStorageException) as err:
+    except (ErtCliError, ErtStorageException, ServerAlreadyRunningError) as err:
         span.set_status(Status(StatusCode.ERROR))
         span.record_exception(err)
         logger.debug(str(err))
