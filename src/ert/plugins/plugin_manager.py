@@ -8,7 +8,7 @@ from collections.abc import Callable, Mapping, Sequence
 from typing import TYPE_CHECKING, Any, Literal, TypeVar, overload, override
 
 import pluggy
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, InstanceOf
 from typing_extensions import TypedDict
 
 from ert.config import (
@@ -18,6 +18,7 @@ from ert.config import (
     KnownQueueOptions,
     LegacyWorkflowConfigs,
     LocalQueueOptions,
+    LoginProvider,
     SiteInstalledForwardModelStep,
     WorkflowConfigs,
     WorkflowJob,
@@ -145,6 +146,10 @@ class ErtPluginManager(pluggy.PluginManager):
                 f"{names}"
             )
         return plugins[0] if plugins else None
+
+    def get_login_provider(self) -> LoginProvider | None:
+        responses = self.hook.login_provider()
+        return responses[0].data() if responses else None
 
     @staticmethod
     def _evaluate_config_hook(hook: pluggy.HookCaller, config_name: str) -> str | None:
@@ -425,6 +430,7 @@ class ErtRuntimePlugins(BaseModel, extra="forbid"):
     environment_variables: Mapping[str, str] = Field(default_factory=dict)
     env_pr_fm_step: Mapping[str, Mapping[str, Any]] = Field(default_factory=dict)
     help_links: dict[str, str] = Field(default_factory=dict)
+    login_provider: InstanceOf[LoginProvider] | None = None
 
 
 def get_site_plugins(
@@ -480,6 +486,7 @@ def get_site_plugins(
         ),
         env_pr_fm_step=plugin_manager.get_forward_model_configuration(),
         help_links=plugin_manager.get_help_links(),
+        login_provider=plugin_manager.get_login_provider(),
     )
 
 

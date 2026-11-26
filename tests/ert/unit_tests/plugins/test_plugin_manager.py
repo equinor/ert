@@ -1,12 +1,13 @@
 import json
 import logging
 from pathlib import Path
+from typing import override
 from unittest.mock import Mock
 
 import pytest
 
 import ert.plugins.hook_implementations
-from ert import EcosystemPlugin
+from ert import EcosystemPlugin, LoginProvider
 from ert.ensemble_evaluator.event import EndEvent
 from ert.plugins import ErtPluginManager, get_site_plugins, plugin
 from ert.plugins.plugin_manager import hook_implementation
@@ -346,7 +347,8 @@ def test_that_forward_model_step_is_registered(tmpdir):
 
 
 @pytest.mark.parametrize(
-    "hook_name", ["get_ip_address", "on_status_event", "site_configurations"]
+    "hook_name",
+    ["get_ip_address", "login_provider", "on_status_event", "site_configurations"],
 )
 def test_that_second_implementation_of_single_implementation_hook_is_rejected(
     hook_name,
@@ -474,3 +476,19 @@ def test_that_installing_more_than_one_ecosystem_plugin_is_an_error():
         ValueError, match=r"Only one ecosystem plugin.*DummyEcosystem.*OtherEcosystem"
     ):
         _ = pm.ecosystem_plugin
+
+
+def test_that_installed_login_provider_is_instantiated_in_runtime_plugins():
+    class MyLoginProvider(LoginProvider):
+        @override
+        def login(self) -> None:
+            pass
+
+    class LoginPlugin:
+        @staticmethod
+        @plugin(name="login")
+        def login_provider():
+            return MyLoginProvider
+
+    pm = ErtPluginManager(plugins=[LoginPlugin])
+    assert isinstance(get_site_plugins(pm).login_provider, MyLoginProvider)

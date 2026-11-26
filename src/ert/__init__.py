@@ -9,6 +9,7 @@ from .config import (
     ForwardModelStepPlugin,
     ForwardModelStepValidationError,
     ForwardModelStepWarning,
+    LoginProvider,
     WorkflowConfigs,
 )
 from .plugins import plugin
@@ -25,6 +26,7 @@ __all__ = [
     "ForwardModelStepValidationError",
     "ForwardModelStepWarning",
     "JobState",
+    "LoginProvider",
     "WorkflowConfigs",
     "WorkflowRunner",
     "plugin",

@@ -34,6 +34,7 @@ from .gen_data_config import GenDataConfig
 from .gen_kw_config import DataSource, GenKwConfig, PriorDict
 from .known_response_types import KnownResponseTypes
 from .lint_file import lint_file
+from .login_provider import LoginProvider
 from .model_config import ModelConfig
 from .parameter_config import (
     LocalizationType,
@@ -135,6 +136,7 @@ __all__ = [
     "LegacyWorkflowConfigs",
     "LocalQueueOptions",
     "LocalizationType",
+    "LoginProvider",
     "ModelConfig",
     "Observation",
     "ObservationGroups",

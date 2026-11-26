@@ -367,3 +367,23 @@ an Everest optimization has finished, Ert waits up to 30 seconds for the
 remaining events to be passed to the listener before it stops the server.
 Events that have not been passed to the listener by then are lost, and a
 warning with the number of undelivered events is logged.
+
+Login provider
+~~~~~~~~~~~~~~
+A plugin can provide a login flow for an external authentication system.
+
+.. autofunction:: ert.plugins.hook_specifications.login_provider.login_provider
+
+Minimal example:
+
+.. code-block:: python
+
+   import ert
+
+   class MyLoginProvider(ert.LoginProvider):
+       def login(self) -> None:
+           print("Logging in to my service")
+
+   @ert.plugin(name="my_plugin")
+   def login_provider():
+       return MyLoginProvider

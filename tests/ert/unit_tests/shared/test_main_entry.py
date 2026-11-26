@@ -1,6 +1,8 @@
 import logging
 import sys
+from argparse import Namespace
 from pathlib import Path
+from typing import override
 from unittest import mock
 from unittest.mock import MagicMock
 
@@ -8,6 +10,49 @@ import filelock
 import pytest
 
 import ert.__main__ as main
+from ert import LoginProvider
+from ert.cli.main import ErtCliError
+from ert.plugins import ErtRuntimePlugins
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_ert_login_without_login_provider_exits_with_message(monkeypatch):
+    monkeypatch.setattr(logging.config, "dictConfig", MagicMock())
+    monkeypatch.setattr(main, "get_site_plugins", ErtRuntimePlugins)
+    monkeypatch.setattr(sys, "argv", ["ert", "login"])
+    with pytest.raises(SystemExit, match="No login provider is installed"):
+        main.main()
+
+
+def test_that_ert_login_calls_login_on_installed_login_provider():
+    login_calls = []
+
+    class MyLoginProvider(LoginProvider):
+        @override
+        def login(self) -> None:
+            login_calls.append(True)
+
+    main.run_login(Namespace(), ErtRuntimePlugins(login_provider=MyLoginProvider()))
+    assert login_calls == [True]
+
+
+@pytest.mark.parametrize(
+    ("error", "message"),
+    [
+        (RuntimeError("boom"), "Login with FailingLoginProvider failed: boom"),
+        (KeyboardInterrupt(), "Login cancelled"),
+    ],
+)
+def test_that_ert_login_turns_login_provider_exceptions_into_cli_errors(error, message):
+    class FailingLoginProvider(LoginProvider):
+        @override
+        def login(self) -> None:
+            raise error
+
+    with pytest.raises(ErtCliError, match=message):
+        main.run_login(
+            Namespace(), ErtRuntimePlugins(login_provider=FailingLoginProvider())
+        )
 
 
 @pytest.mark.usefixtures("use_tmpdir")

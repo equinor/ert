@@ -177,6 +177,21 @@ def run_lint_wrapper(args: Namespace, _: ErtRuntimePlugins) -> None:
     lint_file(args.config)
 
 
+def run_login(args: Namespace, runtime_plugins: ErtRuntimePlugins) -> None:
+    provider = runtime_plugins.login_provider
+    if provider is None:
+        raise ErtCliError("No login provider is installed")
+    provider_name = type(provider).__name__
+    logger.info(f"Logging in with {provider_name}")
+    try:
+        provider.login()
+    except KeyboardInterrupt as err:
+        raise ErtCliError("Login cancelled") from err
+    except Exception as err:
+        logger.exception(f"Login with {provider_name} failed")
+        raise ErtCliError(f"Login with {provider_name} failed: {err}") from err
+
+
 class DeprecatedAction(argparse.Action):
     def __init__(self, alternative_option: str | None = None, **kwargs: Any) -> None:
         self.alternative_option: str | None = alternative_option
@@ -494,6 +509,13 @@ def get_ert_parser(parser: ArgumentParser | None = None) -> ArgumentParser:
     convert_obs_parser.add_argument(
         "--verbose", action="store_true", help="Show verbose output.", default=False
     )
+    login_parser = subparsers.add_parser(
+        "login", help="Log in with the site login provider."
+    )
+    login_parser.set_defaults(func=run_login)
+    login_parser.add_argument(
+        "--verbose", action="store_true", help="Show verbose output.", default=False
+    )
 
     # Common arguments/defaults for all non-gui modes
     for cli_parser in [
@@ -586,8 +608,12 @@ def main() -> None:
     for handler_name, handler_config in config_dict["handlers"].items():
         if handler_name == "file":
             handler_config["filename"] = "ert-log.txt"
-        if "ert.logging.TimestampedFileHandler" in handler_config.values():
-            handler_config["config_filename"] = args.config
+        config_file = getattr(args, "config", None)
+        if (
+            "ert.logging.TimestampedFileHandler" in handler_config.values()
+            and config_file is not None
+        ):
+            handler_config["config_filename"] = config_file
     try:
         logging.config.dictConfig(config_dict)
     except ValueError as err:

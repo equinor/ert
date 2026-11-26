@@ -11,6 +11,7 @@ from .jobs import (
     legacy_ertscript_workflow,
 )
 from .logging import add_log_handle_to_root, add_span_processor
+from .login_provider import login_provider
 from .net_utils import get_ip_address
 from .site_config import site_configurations
 
@@ -25,6 +26,7 @@ __all__ = [
     "installable_forward_model_steps",
     "installable_workflow_jobs",
     "legacy_ertscript_workflow",
+    "login_provider",
     "on_status_event",
     "site_configurations",
 ]
