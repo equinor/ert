@@ -128,12 +128,12 @@ class SummaryPanel(QFrame):
     def _create_parameters_content(self, parameters_summary: QWidget) -> QWidget:
         content = QWidget()
         layout = QVBoxLayout(content)
-        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setContentsMargins(16, 12, 16, 12)
         layout.addWidget(parameters_summary, 1)
         design_matrix = self.config.analysis_config.design_matrix
         if design_matrix is not None:
             button = DesignMatrixPanel.create_show_button(design_matrix)
-            layout.addWidget(button, 0, Qt.AlignmentFlag.AlignHCenter)
+            layout.addWidget(button, 0, Qt.AlignmentFlag.AlignRight)
         return content
 
     def set_parameter_configuration(
