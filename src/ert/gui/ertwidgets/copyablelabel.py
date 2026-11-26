@@ -5,6 +5,8 @@ from PyQt6.QtWidgets import QHBoxLayout, QLabel
 
 from .copy_button import CopyButton
 
+_ZERO_WIDTH_SPACE = "\u200b"
+
 
 def escape_string(string: str) -> str:
     """
@@ -61,23 +63,33 @@ class _CopyButton(CopyButton):
 
     @override
     def copy(self) -> None:
-        self.copy_text(strip_runpath_magic_keywords(unescape_string(self.label.text())))
+        text = unescape_string(self.label.text()).replace(_ZERO_WIDTH_SPACE, "")
+        self.copy_text(strip_runpath_magic_keywords(text))
 
 
 class CopyableLabel(QHBoxLayout):
     """CopyableLabel shows a string that is copyable via
     selection or clicking of a copy button
+
+    With ``wrap`` a long path is broken into several lines after its slashes.
     """
 
-    def __init__(self, text: str) -> None:
+    def __init__(self, text: str, *, wrap: bool = False) -> None:
         super().__init__()
 
-        self.label = QLabel(f"<b>{escape_string(text)}</b>")
+        displayed = escape_string(text)
+        if wrap:
+            displayed = displayed.replace("/", "/" + _ZERO_WIDTH_SPACE)
+        self.label = QLabel(f"<b>{displayed}</b>")
         self.label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+        self.label.setWordWrap(wrap)
 
         self.copy_button = _CopyButton(self.label)
 
-        self.addWidget(self.label)
-        self.addWidget(self.copy_button, alignment=Qt.AlignmentFlag.AlignLeft)
-
-        self.setStretch(1, 1)
+        if wrap:
+            self.addWidget(self.label, 1)
+            self.addWidget(self.copy_button, alignment=Qt.AlignmentFlag.AlignTop)
+        else:
+            self.addWidget(self.label)
+            self.addWidget(self.copy_button, alignment=Qt.AlignmentFlag.AlignLeft)
+            self.setStretch(1, 1)

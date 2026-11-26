@@ -10,14 +10,20 @@ from PyQt6.QtWidgets import (
     QHBoxLayout,
     QLabel,
     QScrollArea,
+    QSizePolicy,
+    QSpacerItem,
     QVBoxLayout,
     QWidget,
 )
 
-from ert.gui.ertwidgets import ErtSummary
+from ert.gui.ertwidgets import ErtSummary, ParametersSummary
+from ert.gui.ertwidgets.card import CARD_SPACING, create_card
+from ert.gui.ertwidgets.chip import DataSource, SourceChip
+from ert.gui.ertwidgets.models.ertsummary import ObservationCount
+from ert.gui.experiments._design_matrix_panel import DesignMatrixPanel
 
 if TYPE_CHECKING:
-    from ert.config import ErtConfig
+    from ert.config import ErtConfig, ParameterConfig
 
 logger = logging.getLogger(__name__)
 
@@ -41,7 +47,8 @@ class SummaryTemplate:
 
     def addTitle(self, title: str) -> None:
         if not self.__finished:
-            style = "font-size: 16px; font-weight: bold;"
+            # 8px is the EDS small spacing.
+            style = "font-size: 16px; font-weight: bold; margin-bottom: 8px;"
             self.text += f'<div style="{style}">{title}</div>'
 
     def addRow(self, value: Any) -> None:
@@ -78,6 +85,13 @@ class SummaryTemplate:
 
 
 class SummaryPanel(QFrame):
+    """Model summary: forward model, parameters and observations.
+
+    Each card has a chip in its upper right corner telling whether its
+    content comes from the config file or from the ensemble selected in the
+    experiment panel.
+    """
+
     def __init__(self, config: ErtConfig) -> None:
         self.config = config
         QFrame.__init__(self)
@@ -87,15 +101,21 @@ class SummaryPanel(QFrame):
 
         widget = QWidget(self)
         self._layout = QHBoxLayout()
+        self._layout.setContentsMargins(0, 0, 0, 0)
+        self._layout.setSpacing(CARD_SPACING)
         widget.setLayout(self._layout)
 
         scroll = QScrollArea(self)
         scroll.setWidgetResizable(True)
+        # A scroll bar would narrow the last card so that it no longer lines up
+        # with the settings above; the cards' contents scroll on their own.
+        scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         scroll.setWidget(widget)
 
-        layout = QGridLayout()
+        layout = QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(scroll)
+        layout.addWidget(scroll, 1)
 
         self.setLayout(layout)
         self.updateSummary()
@@ -116,38 +136,91 @@ class SummaryPanel(QFrame):
             else:
                 text.addRow(f"{fm_name} x{fm_count}")
 
-        self.addColumn(text.getText())
+        # Forward model steps always come from the config file, also when
+        # continuing from a selected ensemble.
+        self.forward_model_chip = self.addColumn(text.getText())
 
-        parameter_list_updatable, parameter_list_not_updatable, parameter_count = (
-            summary.get_parameters()
+        self.parameters_summary = ParametersSummary()
+        self.parameters_chip = self._add_card(
+            self._create_parameters_content(self.parameters_summary)
         )
-        text = SummaryTemplate(f"Parameters ({parameter_count:,})", width=320)
+        self.set_parameter_configuration(
+            self.config.parameter_configurations_with_design_matrix
+        )
 
-        text.startColumns()
-        text.addColumn("Updatable", parameter_list_updatable)
-        text.addColumn("Non-updatable", parameter_list_not_updatable)
-        text.endColumns()
+        self._observations_label = self._create_text_label("")
+        self.observations_chip = self._add_card(self._observations_label, stretch=False)
+        self.set_observations(summary.getObservations())
 
-        self.addColumn(text.getText())
+    def set_parameter_configuration(
+        self,
+        parameter_configuration: list[ParameterConfig],
+        source: DataSource = DataSource.CONFIG,
+        ensemble_name: str | None = None,
+    ) -> None:
+        self.parameters_summary.set_parameters(parameter_configuration)
+        self.parameters_chip.set_source(source, ensemble_name)
 
-        observation_counts = summary.getObservations()
+    def set_observations(
+        self,
+        observation_counts: list[ObservationCount],
+        source: DataSource = DataSource.CONFIG,
+        ensemble_name: str | None = None,
+    ) -> None:
         text = SummaryTemplate(
             f"Observations ({sum(e['count'] for e in observation_counts)})"
         )
         for entry in observation_counts:
             text.addRow(f"{entry['observation_key']} ({entry['count']})")
+        self._observations_label.setText(text.getText())
+        self.observations_chip.set_source(source, ensemble_name)
 
-        self.addColumn(text.getText())
+    def _create_parameters_content(self, parameters_summary: QWidget) -> QWidget:
+        content = QWidget()
+        layout = QVBoxLayout(content)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(parameters_summary, 1)
+        design_matrix = self.config.analysis_config.design_matrix
+        if design_matrix is not None:
+            button = DesignMatrixPanel.create_show_button(design_matrix)
+            layout.addWidget(button, 0, Qt.AlignmentFlag.AlignHCenter)
+        return content
 
-    def addColumn(self, text: str) -> None:
-        layout = QVBoxLayout()
-        text_widget = QLabel(text)
-        text_widget.setWordWrap(True)
-        text_widget.setTextFormat(Qt.TextFormat.RichText)
-        layout.addWidget(text_widget)
-        layout.addStretch(1)
+    @staticmethod
+    def _create_text_label(text: str) -> QLabel:
+        label = QLabel(text)
+        label.setWordWrap(True)
+        label.setTextFormat(Qt.TextFormat.RichText)
+        return label
 
-        self._layout.addLayout(layout)
+    def addColumn(self, text: str) -> SourceChip:
+        return self._add_card(self._create_text_label(text), stretch=False)
+
+    def _add_card(self, widget: QWidget, *, stretch: bool = True) -> SourceChip:
+        card = create_card()
+        layout = QGridLayout(card)
+        layout.setContentsMargins(16, 12, 16, 12)
+        layout.addWidget(widget, 0, 0)
+        if stretch:
+            layout.setRowStretch(0, 1)
+        else:
+            layout.addItem(
+                QSpacerItem(
+                    0, 0, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding
+                ),
+                1,
+                0,
+            )
+            layout.setRowStretch(1, 1)
+        # The chip shares the first cell with the content, in the upper right
+        # corner next to the card title.
+        chip = SourceChip()
+        layout.addWidget(
+            chip, 0, 0, Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignRight
+        )
+
+        self._layout.addWidget(card, 1)
+        return chip
 
     def log_summary(self, run_model: str, num_realizations: int) -> None:
         summary = ErtSummary(self.config)

@@ -2,14 +2,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, override
 
-from PyQt6.QtCore import Qt
 from PyQt6.QtCore import pyqtSlot as Slot
-from PyQt6.QtWidgets import QFormLayout, QLabel, QWidget
+from PyQt6.QtWidgets import QLabel, QWidget
 
 from ert.config import ParameterConfig
 from ert.config.parameter_config import has_updatable_parameters
 from ert.gui.ertnotifier import ErtNotifier
-from ert.gui.ertwidgets import AnalysisModuleEdit, CopyableLabel
+from ert.gui.ertwidgets import AnalysisModuleEdit
 from ert.gui.ertwidgets.models.parameter_configuration_state_model import (
     ParameterConfigurationStateModel,
 )
@@ -65,23 +64,14 @@ class EnsembleSmootherPanel(ExperimentConfigPanel):
         self.notifier = notifier
         self.setObjectName("ensemble_smoother_panel")
 
-        layout = QFormLayout()
-        layout.setFormAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
+        layout = self.options_layout
 
         self._experiment_name_field = create_experiment_name_field(
             self.notifier.storage, ES_MDA_MODE
         )
-        layout.addRow("Experiment name:", self._experiment_name_field)
-
-        runpath_label = CopyableLabel(text=runpath)
-        layout.addRow("Runpath:", runpath_label)
 
         number_of_realizations_container, number_of_realizations_label = (
             create_number_of_realizations_container(len(active_realizations))
-        )
-
-        layout.addRow(
-            QLabel("Number of realizations:"), number_of_realizations_container
         )
 
         (
@@ -98,13 +88,12 @@ class EnsembleSmootherPanel(ExperimentConfigPanel):
         )
         self._analysis_module_edit = AnalysisModuleEdit(
             es_settings=analysis_config.es_settings,
-            get_update_strategies=lambda: self._param_state.update_strategies,
             ensemble_size=sum(
                 active_realizations
             ),  # only use active realizations for setting threshold
         )
         self._analysis_module_edit.setObjectName("ensemble_smoother_edit")
-        layout.addRow("Update settings:", self._analysis_module_edit)
+        self.update_settings_layout.addRow(self._analysis_module_edit)
 
         self._update_strategy_label = QLabel("Parameter Localizations")
         self._update_strategy_label.setObjectName("update_strategy_label")
@@ -114,12 +103,19 @@ class EnsembleSmootherPanel(ExperimentConfigPanel):
         self._update_strategy_label.setToolTip(
             self._update_strategy_summary_widget.toolTip()
         )
-        layout.addRow(self._update_strategy_label, self._update_strategy_summary_widget)
+        self.update_settings_layout.addRow(
+            self._update_strategy_label, self._update_strategy_summary_widget
+        )
 
         self._active_realizations_field, _ = create_active_realizations_field(
             active_realizations
         )
-        layout.addRow("Active realizations", self._active_realizations_field)
+        self.add_common_settings(
+            runpath,
+            number_of_realizations_container,
+            self._active_realizations_field,
+            experiment_name=self._experiment_name_field,
+        )
 
         add_parameter_configuration_rows(
             self,
@@ -129,13 +125,10 @@ class EnsembleSmootherPanel(ExperimentConfigPanel):
             number_of_realizations_label=number_of_realizations_label,
             config_num_realization=config_num_realization,
         )
-        self.setLayout(layout)
+        self.build_layout()
         self._connect_signals()
 
     def _connect_signals(self) -> None:
-        self._analysis_module_edit.update_strategies_changed.connect(
-            self._param_state.apply_update_strategies
-        )
         self._param_state.changed.connect(self.experiment_configuration_changed)
         for field in (
             self._experiment_name_field,

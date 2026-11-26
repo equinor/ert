@@ -10,10 +10,9 @@ from PyQt6.QtCore import pyqtSignal as Signal
 from PyQt6.QtGui import QAction, QStandardItemModel
 from PyQt6.QtWidgets import (
     QCheckBox,
-    QFrame,
     QHBoxLayout,
     QMessageBox,
-    QStackedWidget,
+    QSizePolicy,
     QStyle,
     QToolButton,
     QVBoxLayout,
@@ -25,9 +24,19 @@ from ert.config import parameter_config
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.gui.detect_mode import is_dark_mode
 from ert.gui.ertnotifier import ErtNotifier
-from ert.gui.ertwidgets import wait_cursor
+from ert.gui.ertwidgets import ErtSummary, wait_cursor
+from ert.gui.ertwidgets.card import CARD_SPACING
+from ert.gui.ertwidgets.chip import DataSource
+from ert.gui.ertwidgets.models.ertsummary import count_observations
+from ert.gui.ertwidgets.suggestor.suggestor import (
+    DARK_GREEN,
+    DARK_GREY,
+    MEDIUM_GREEN,
+    MEDIUM_GREY,
+    WHITE,
+)
 from ert.gui.find_ert_info import find_ert_info
-from ert.gui.icon_utils import load_icon
+from ert.gui.icon_utils import load_icon, load_stateful_icon
 from ert.gui.summarypanel import SummaryPanel
 from ert.run_models import RunModel
 from ert.run_models.run_model import RunModelAPI
@@ -75,6 +84,37 @@ def get_simulation_thread(
     return ErtThread(name="ert_gui_simulation_thread", target=run, daemon=True)
 
 
+class _CurrentPageStack(QWidget):
+    """Shows one page at a time, sized after that page.
+
+    Unlike QStackedWidget, hidden pages do not affect the size, so the
+    summary below can use the space a smaller page leaves.
+    """
+
+    def __init__(self) -> None:
+        super().__init__()
+        self._layout = QVBoxLayout(self)
+        self._layout.setContentsMargins(0, 0, 0, 0)
+        self._current: QWidget | None = None
+
+    def addWidget(self, widget: QWidget) -> None:
+        widget.setVisible(self._current is None)
+        if self._current is None:
+            self._current = widget
+        self._layout.addWidget(widget)
+
+    def setCurrentWidget(self, widget: QWidget) -> None:
+        if widget is self._current:
+            return
+        if self._current is not None:
+            self._current.hide()
+        self._current = widget
+        widget.show()
+
+    def currentWidget(self) -> QWidget | None:
+        return self._current
+
+
 class ExperimentPanel(QWidget):
     experiment_type_changed = Signal(ExperimentConfigPanel)
     experiment_started = Signal(RunDialog)
@@ -110,64 +150,85 @@ class ExperimentPanel(QWidget):
         self._experiment_done: bool = True
         self.run_button = QToolButton()
         self.run_button.setObjectName("run_experiment")
-        self.run_button.setIcon(load_icon("play_circle.svg"))
+        self.run_button.setText("Start")
         self.run_button.setToolTip(EXPERIMENT_IS_MANUAL_UPDATE_MESSAGE)
-        self.run_button.setIconSize(QSize(32, 32))
         self.run_button.clicked.connect(self.run_experiment)
-        self.run_button.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonIconOnly)
-        self.run_button.setMinimumWidth(60)
-        self.run_button.setMinimumHeight(40)
-        self.run_button.setStyleSheet(
-            """
-            QToolButton {
-            border-radius: 10px;
-            background-color: qlineargradient(
-                x1:0, y1:0, x2:0, y2:1,
-                stop:0 #484848,
-                stop:1 #323232
-            );
-            border: 1px solid #1e1e1e;
-            padding: 5px;
-            }
-            QToolButton:hover {
+        self.run_button.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+        if is_dark_mode():
+            self.run_button.setIcon(load_icon("play_circle.svg"))
+            self.run_button.setIconSize(QSize(32, 32))
+            self.run_button.setMinimumWidth(60)
+            self.run_button.setMinimumHeight(40)
+            self.run_button.setStyleSheet(
+                """
+                QToolButton {
+                border-radius: 10px;
                 background-color: qlineargradient(
-                x1:0, y1:0, x2:0, y2:1,
-                stop:0 #575757,
-                stop:1 #424242
-            );
-            }
-        """
-            if is_dark_mode()
-            else """
-            QToolButton {
-            border-radius: 10px;
-            background-color: qlineargradient(
-                x1:0, y1:0, x2:0, y2:1,
-                stop:0 #f0f0f0,
-                stop:1 #d9d9d9
-            );
-            border: 1px solid #bfbfbf;
-            padding: 5px;
-            }
-            QToolButton:hover {
-                background-color: qlineargradient(
-                x1:0, y1:0, x2:0, y2:1,
-                stop:0 #d8d8d8,
-                stop:1 #c3c3c3
-            );
-            }
-        """
-        )
+                    x1:0, y1:0, x2:0, y2:1,
+                    stop:0 #484848,
+                    stop:1 #323232
+                );
+                border: 1px solid #1e1e1e;
+                padding: 5px;
+                }
+                QToolButton:hover {
+                    background-color: qlineargradient(
+                    x1:0, y1:0, x2:0, y2:1,
+                    stop:0 #575757,
+                    stop:1 #424242
+                );
+                }
+                """
+            )
+        else:
+            # EDS contained (primary) button
+            icon_size = 24
+            # Qt draws 4px between icon and text; pad to the 8px EDS button gap.
+            extra_gap = 4
+            self.run_button.setIcon(
+                load_stateful_icon(
+                    "play_circle.svg",
+                    resting=WHITE,
+                    active=WHITE,
+                    disabled=DARK_GREY,
+                    trailing_gap=extra_gap / icon_size,
+                )
+            )
+            self.run_button.setIconSize(QSize(icon_size + extra_gap, icon_size))
+            self.run_button.setFixedHeight(36)
+            self.run_button.setStyleSheet(
+                f"""
+                QToolButton {{
+                    background-color: {MEDIUM_GREEN};
+                    color: {WHITE};
+                    border: none;
+                    border-radius: 4px;
+                    padding: 0px 16px 0px 12px;
+                    font-size: 14px;
+                    font-weight: 500;
+                }}
+                QToolButton:hover {{
+                    background-color: {DARK_GREEN};
+                }}
+                QToolButton:disabled {{
+                    background-color: {MEDIUM_GREY};
+                    color: {DARK_GREY};
+                }}
+                """
+            )
 
         experiment_type_layout.addWidget(self.run_button)
         experiment_type_layout.addStretch(1)
 
         layout.setContentsMargins(10, 10, 10, 10)
+        layout.setSpacing(CARD_SPACING)
         layout.addLayout(experiment_type_layout)
 
-        self._experiment_stack = QStackedWidget()
-        self._experiment_stack.setLineWidth(1)
-        self._experiment_stack.setFrameStyle(QFrame.Shape.StyledPanel)
+        self._experiment_stack = _CurrentPageStack()
+        self._experiment_stack.setObjectName("experiment_stack")
+        self._experiment_stack.setSizePolicy(
+            QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Maximum
+        )
 
         layout.addWidget(self._experiment_stack)
 
@@ -252,7 +313,8 @@ class ExperimentPanel(QWidget):
         )
 
         self.configuration_summary = SummaryPanel(config)
-        layout.addWidget(self.configuration_summary)
+        layout.addWidget(self.configuration_summary, 1)
+        self._update_parameter_summary()
 
         self.setLayout(layout)
 
@@ -286,6 +348,7 @@ class ExperimentPanel(QWidget):
             )
 
         panel.experiment_configuration_changed.connect(self.validationStatusChanged)
+        panel.experiment_configuration_changed.connect(self._update_parameter_summary)
         self.experiment_type_changed.connect(panel.experimentTypeChanged)
 
     @property
@@ -512,7 +575,49 @@ class ExperimentPanel(QWidget):
             widget = self._experiment_widgets[self.get_current_experiment_type()]
             self._experiment_stack.setCurrentWidget(widget)
             self.validationStatusChanged()
+            self._update_parameter_summary()
             self.experiment_type_changed.emit(widget)
+
+    def _update_parameter_summary(self) -> None:
+        """Show the parameters and observations the selected experiment type
+        will use, from the config file or from a selected ensemble.
+        """
+        # Experiment panels are added before the summary is created.
+        if not hasattr(self, "configuration_summary"):
+            return
+        current_model = self.get_current_experiment_type()
+        if current_model is None:
+            return
+        panel = self._experiment_widgets[current_model]
+        summary = self.configuration_summary
+        parameters = panel.get_parameter_configuration()
+        ensemble = panel.get_selected_ensemble()
+
+        if ensemble is None:
+            summary.set_parameter_configuration(
+                parameters
+                if parameters is not None
+                else self.config.parameter_configurations_with_design_matrix
+            )
+            summary.set_observations(ErtSummary(self.config).getObservations())
+            return
+
+        experiment = ensemble.experiment
+        if parameters is None:
+            parameters = list(experiment.parameter_configuration.values())
+        source = DataSource.SELECTED_ENSEMBLE
+        # Ensemble names are often generic (e.g. "iter-0"), so include the
+        # experiment name like the ensemble selectors do.
+        ensemble_name = f"{experiment.name} : {ensemble.name}"
+        summary.set_parameter_configuration(parameters, source, ensemble_name)
+        summary.set_observations(
+            count_observations(
+                (obs["name"], obs["type"])
+                for obs in experiment.experiment_config.get("observations", [])
+            ),
+            source,
+            ensemble_name,
+        )
 
     def validationStatusChanged(self) -> None:
         widget = self._experiment_widgets[self.get_current_experiment_type()]
