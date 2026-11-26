@@ -98,10 +98,6 @@ class SummaryPanel(QFrame):
         scroll = QScrollArea(self)
         scroll.setObjectName("summary_scroll")
         scroll.setWidgetResizable(True)
-        # A scroll bar would narrow the last card so that it no longer lines up
-        # with the settings above; the cards' contents scroll on their own.
-        scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         scroll.setWidget(widget)
 
         layout = QVBoxLayout()
