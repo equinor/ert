@@ -287,6 +287,42 @@ def test_that_corrupted_storage_releases_lock_without_rewriting_index(
         assert len(list(storage.ensembles)) == 1
 
 
+@pytest.mark.parametrize(
+    "index_content",
+    [
+        pytest.param("{not json", id="corrupt_json"),
+        pytest.param('{"migrations": []}', id="missing_version"),
+        pytest.param('{"version": null}', id="null_version"),
+    ],
+)
+def test_that_corrupt_storage_index_raises_ert_storage_exception(
+    tmp_path: Path, index_content: str
+):
+    (tmp_path / "index.json").write_text(index_content, encoding="utf-8")
+
+    with pytest.raises(
+        ErtStorageException, match=r"index\.json is corrupt or incompatible"
+    ) as error:
+        open_storage(tmp_path, mode="w")
+
+    assert error.value.__cause__ is not None
+
+
+def test_that_unreadable_storage_index_raises_ert_storage_permission_error(
+    tmp_path: Path,
+):
+    open_storage(tmp_path, mode="w").close()
+    index_path = tmp_path / "index.json"
+    index_path.chmod(0)
+    try:
+        with pytest.raises(
+            ErtStoragePermissionError, match="Cannot read storage index"
+        ):
+            open_storage(tmp_path, mode="w")
+    finally:
+        index_path.chmod(stat.S_IRUSR | stat.S_IWUSR)
+
+
 def test_that_open_storage_in_read_mode_with_newer_version_throws_exception(tmp_path):
     with open_storage(tmp_path, mode="w") as storage:
         storage._index.version = _LOCAL_STORAGE_VERSION + 1

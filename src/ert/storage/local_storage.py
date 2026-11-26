@@ -196,17 +196,30 @@ class LocalStorage(BaseMode):
 
         Raises
         ------
+        ErtStoragePermissionError
+            If the storage index cannot be read due to insufficient permissions.
         ErtStorageException
-            If the storage version is newer than the current version.
+            If the storage version is newer than the current version, or if
+            the storage index is corrupt or incompatible.
         """
+        path = storage_dir.absolute()
         try:
-            version = _storage_version(storage_dir)
+            version = _storage_version(path)
         except FileNotFoundError:
             version = _LOCAL_STORAGE_VERSION
+        except PermissionError as err:
+            raise ert.storage.ErtStoragePermissionError(
+                f"Cannot read storage index in '{path}': {err}"
+            ) from err
+        except (ValueError, TypeError, NotImplementedError) as err:
+            raise ert.storage.ErtStorageException(
+                f"Cannot open storage '{path}': "
+                f"index.json is corrupt or incompatible ({err})"
+            ) from err
 
         if version > _LOCAL_STORAGE_VERSION:
             raise ert.storage.ErtStorageException(
-                f"Cannot open storage '{storage_dir.absolute()}': Storage version "
+                f"Cannot open storage '{path}': Storage version "
                 f"{version} is newer than the current version {_LOCAL_STORAGE_VERSION}"
                 f", upgrade ert to continue, or run with a different ENSPATH"
             )
