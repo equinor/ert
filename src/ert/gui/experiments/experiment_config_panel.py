@@ -66,7 +66,7 @@ class ExperimentConfigPanel(QWidget):
         experiment_name: QWidget | None = None,
     ) -> None:
         self.common_layout.setRowWrapPolicy(QFormLayout.RowWrapPolicy.DontWrapRows)
-        # Center labels on their fields so label and value text share a baseline.
+        # Labels default to top alignment, which misaligns them with taller fields.
         self.common_layout.setLabelAlignment(
             Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
         )
