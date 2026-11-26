@@ -26,12 +26,9 @@ class CopyButton(QPushButton):
     def _show_icon(self, name: str) -> None:
         self._icon_name = name
         palette = self.palette()
-        color = palette.color(
-            QPalette.ColorGroup.Normal, QPalette.ColorRole.ButtonText
-        ).name()
-        disabled_color = palette.color(
-            QPalette.ColorGroup.Disabled, QPalette.ColorRole.ButtonText
-        ).name()
+        role = self.foregroundRole()
+        color = palette.color(QPalette.ColorGroup.Normal, role).name()
+        disabled_color = palette.color(QPalette.ColorGroup.Disabled, role).name()
         self.setIcon(
             load_stateful_icon(
                 name, resting=color, active=color, disabled=disabled_color
