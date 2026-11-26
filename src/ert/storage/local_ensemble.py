@@ -4,6 +4,7 @@ import asyncio
 import contextlib
 import io
 import logging
+import shutil
 import time
 from collections import Counter
 from collections.abc import Iterable
@@ -238,6 +239,60 @@ class LocalEnsemble(BaseMode):
         storage._write_transaction(
             path / "index.json", index.model_dump_json(indent=2).encode("utf-8")
         )
+
+        return cls(storage, path, Mode.WRITE)
+
+    @classmethod
+    def create_copy(
+        cls,
+        storage: LocalStorage,
+        path: Path,
+        uuid: UUID,
+        *,
+        source: LocalEnsemble,
+        experiment_id: UUID,
+    ) -> LocalEnsemble:
+        """
+        Create a copy of an ensemble in local storage.
+
+        All files of the source ensemble are copied verbatim, except that the
+        copy gets a new identifier and belongs to the given experiment.
+
+        Parameters
+        ----------
+        storage : LocalStorage
+            Local storage instance.
+        path : Path
+            File system path for the ensemble data of the copy.
+        uuid : UUID
+            Unique identifier for the copy.
+        source : LocalEnsemble
+            The ensemble to copy, possibly from another storage.
+        experiment_id : UUID
+            Identifier of the experiment that the copy belongs to.
+
+        Returns
+        -------
+        local_ensemble : LocalEnsemble
+            Instance of the copied ensemble.
+        """
+
+        # Stage the copy outside ensembles/: a partial copy there, still holding
+        # the source ids, would make the storage fail to open.
+        staging_path = storage._swap_path / str(uuid)
+        try:
+            shutil.copytree(source.mount_point, staging_path)
+            index = _Index.model_validate_json(
+                (staging_path / "index.json").read_text(encoding="utf-8")
+            ).model_copy(update={"id": uuid, "experiment_id": experiment_id})
+            storage._write_transaction(
+                staging_path / "index.json",
+                index.model_dump_json(indent=2).encode("utf-8"),
+            )
+            path.parent.mkdir(parents=True, exist_ok=True)
+            staging_path.rename(path)
+        finally:
+            shutil.rmtree(staging_path, ignore_errors=True)
 
         return cls(storage, path, Mode.WRITE)
 
@@ -971,6 +1026,12 @@ class LocalEnsemble(BaseMode):
             )
             for e in response_configs
         }
+
+    def _has_response_data(self, response_type: str) -> bool:
+        return any(
+            (self._realization_dir(realization) / f"{response_type}.parquet").exists()
+            for realization in range(self.ensemble_size)
+        )
 
     @require_write
     def save_observation_location_metadata(

@@ -596,6 +596,55 @@ class LocalStorage(BaseMode):
         return ens
 
     @require_write
+    def copy_ensemble(
+        self,
+        experiment: LocalExperiment | UUID,
+        source: LocalEnsemble,
+    ) -> LocalEnsemble:
+        """
+        Copies an ensemble, possibly from another storage, into the storage.
+
+        All files of the source ensemble are copied verbatim. The copy gets a
+        new id and belongs to the given experiment.
+
+        Parameters
+        ----------
+        experiment : {LocalExperiment, UUID}
+            The experiment that the copy belongs to.
+        source : LocalEnsemble
+            The ensemble to copy.
+
+        Returns
+        -------
+        local_ensemble : LocalEnsemble
+            The copied ensemble.
+
+        Raises
+        ------
+        ValueError
+            If the source ensemble has a prior ensemble.
+        """
+
+        if source.parent is not None:
+            raise ValueError(
+                f"Cannot copy ensemble '{source.name}' because it has a prior ensemble"
+            )
+
+        experiment_id = experiment if isinstance(experiment, UUID) else experiment.id
+
+        uuid = uuid4()
+        ens = LocalEnsemble.create_copy(
+            self,
+            self._ensemble_path(uuid),
+            uuid,
+            source=source,
+            experiment_id=experiment_id,
+        )
+
+        self._ensembles[ens.id] = ens
+        return ens
+
+    @require_write
     def _add_migration_information(
         self, from_version: int, to_version: int, name: str
     ) -> None:
