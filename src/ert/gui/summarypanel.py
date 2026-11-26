@@ -15,6 +15,7 @@ from PyQt6.QtWidgets import (
 
 from ert.gui.ertwidgets import ErtSummary, ParametersSummary
 from ert.gui.ertwidgets.card import Card
+from ert.gui.experiments._design_matrix_panel import DesignMatrixPanel
 
 if TYPE_CHECKING:
     from ert.config import ErtConfig, ParameterConfig
@@ -113,7 +114,7 @@ class SummaryPanel(QFrame):
         self.parameters_summary.set_parameters(
             self.config.parameter_configurations_with_design_matrix
         )
-        self._add_card(self.parameters_summary)
+        self._add_card(self._create_parameters_content(self.parameters_summary))
 
         observation_counts = summary.getObservations()
         text = SummaryTemplate(
@@ -123,6 +124,17 @@ class SummaryPanel(QFrame):
             text.addRow(f"{entry['observation_key']} ({entry['count']})")
 
         self.addColumn(text.getText())
+
+    def _create_parameters_content(self, parameters_summary: QWidget) -> QWidget:
+        content = QWidget()
+        layout = QVBoxLayout(content)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(parameters_summary, 1)
+        design_matrix = self.config.analysis_config.design_matrix
+        if design_matrix is not None:
+            button = DesignMatrixPanel.create_show_button(design_matrix)
+            layout.addWidget(button, 0, Qt.AlignmentFlag.AlignHCenter)
+        return content
 
     def set_parameter_configuration(
         self, parameter_configuration: list[ParameterConfig]

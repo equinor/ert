@@ -6,7 +6,6 @@ from PyQt6.QtGui import QStandardItem, QStandardItemModel
 from PyQt6.QtWidgets import (
     QApplication,
     QDialog,
-    QHBoxLayout,
     QLabel,
     QPushButton,
     QStyle,
@@ -73,22 +72,18 @@ class DesignMatrixPanel(QDialog):
         viewer.exec()
 
     @staticmethod
-    def get_design_matrix_button(
+    def create_show_button(design_matrix: "DesignMatrix") -> QPushButton:
+        button = QPushButton("Show design matrix")
+        button.setObjectName("show-dm-parameters")
+        button.clicked.connect(lambda: DesignMatrixPanel.show_dm_params(design_matrix))
+        return button
+
+    @staticmethod
+    def add_realizations_warning(
         design_matrix: "DesignMatrix",
         number_of_realizations_label: QLabel | None = None,
         config_num_realization: int | None = None,
-    ) -> QHBoxLayout:
-        show_dm_param_button = QPushButton("Show design matrix")
-        show_dm_param_button.setObjectName("show-dm-parameters")
-        show_dm_param_button.setMinimumWidth(50)
-
-        button_layout = QHBoxLayout()
-        button_layout.addWidget(show_dm_param_button)
-        button_layout.addStretch()  # Add stretch to push the button to the left
-
-        show_dm_param_button.clicked.connect(
-            lambda: DesignMatrixPanel.show_dm_params(design_matrix)
-        )
+    ) -> None:
         if (
             number_of_realizations_label
             and config_num_realization
@@ -124,5 +119,3 @@ class DesignMatrixPanel(QDialog):
                     "NUM_REALIZATIONS in the configuration."
                 )
                 warning_icon.show()
-
-        return button_layout

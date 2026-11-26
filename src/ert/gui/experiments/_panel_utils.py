@@ -96,13 +96,8 @@ def add_parameter_configuration_rows(
     config_num_realization: int | None = None,
 ) -> None:
     if design_matrix is not None:
-        layout.addRow(
-            "Design matrix",
-            DesignMatrixPanel.get_design_matrix_button(
-                design_matrix,
-                number_of_realizations_label,
-                config_num_realization,
-            ),
+        DesignMatrixPanel.add_realizations_warning(
+            design_matrix, number_of_realizations_label, config_num_realization
         )
 
     # The parameters are shown in the summary below the experiment panels.
