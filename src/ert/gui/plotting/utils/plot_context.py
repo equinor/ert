@@ -71,6 +71,7 @@ class PlotContext:
         # Maps plot
         self._misfit_map: bool = True
         self._observations_map: bool = True
+        self._mean_simulated_response_map: bool = True
 
         self._plot_type: PlotType | None = None
 
@@ -245,3 +246,11 @@ class PlotContext:
     @observations_map.setter
     def observations_map(self, value: bool) -> None:
         self._observations_map = value
+
+    @property
+    def mean_simulated_response_map(self) -> bool:
+        return self._mean_simulated_response_map
+
+    @mean_simulated_response_map.setter
+    def mean_simulated_response_map(self, value: bool) -> None:
+        self._mean_simulated_response_map = value
