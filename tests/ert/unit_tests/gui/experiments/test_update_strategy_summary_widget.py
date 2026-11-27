@@ -1,6 +1,8 @@
 from unittest.mock import MagicMock
 
 import pytest
+from PyQt6.QtGui import QColor
+from PyQt6.QtWidgets import QComboBox
 from pytestqt.qtbot import QtBot
 
 from ert.config import GenKwConfig
@@ -9,6 +11,8 @@ from ert.config.parameter_config import (
     ParameterConfig,
     ParameterType,
 )
+from ert.gui import eds_colors
+from ert.gui.eds_theme import render_eds_stylesheet
 from ert.gui.ertwidgets.models.parameter_configuration_state_model import (
     ParameterConfigurationStateModel,
 )
@@ -99,3 +103,85 @@ def test_that_strategy_summary_widget_refreshes_rows_when_parameter_state_change
 
     state.deselect_prior()
     assert _rows(widget) == [("Adaptive", "GenKW", "1")]
+
+
+def _strategy_selector(widget: UpdateStrategySummaryWidget) -> QComboBox | None:
+    return widget.findChild(QComboBox, ParameterType.GEN_KW)
+
+
+@pytest.mark.parametrize("parameter_type", list(ParameterType))
+def test_that_strategy_selector_only_offers_supported_localization_types(
+    qtbot: QtBot, parameter_type: ParameterType
+):
+    config = MagicMock(spec=ParameterConfig)
+    config.type = parameter_type
+    config.update_strategy = LocalizationType.GLOBAL
+    config.__len__.return_value = 1
+    widget = UpdateStrategySummaryWidget(ParameterConfigurationStateModel([config]))
+    qtbot.addWidget(widget)
+
+    selector = widget.findChild(QComboBox, parameter_type)
+    assert selector is not None
+
+    offered = {selector.itemData(index) for index in range(selector.count())}
+    assert offered == set(parameter_type.supported_localization_types)
+
+
+def test_that_choosing_a_strategy_in_the_summary_applies_it_to_the_parameters(
+    qtbot: QtBot,
+):
+    state = ParameterConfigurationStateModel([_parameter()])
+    widget = UpdateStrategySummaryWidget(state)
+    qtbot.addWidget(widget)
+    selector = _strategy_selector(widget)
+    assert selector is not None
+
+    selector.setCurrentIndex(selector.findData(LocalizationType.ADAPTIVE))
+
+    assert state.update_strategies == {ParameterType.GEN_KW: LocalizationType.ADAPTIVE}
+    assert _rows(widget) == [("Adaptive", "GenKW", "1")]
+
+
+def test_that_strategy_cannot_be_chosen_in_the_summary_when_a_prior_is_selected(
+    qtbot: QtBot,
+):
+    state = ParameterConfigurationStateModel([_parameter()])
+    widget = UpdateStrategySummaryWidget(state)
+    qtbot.addWidget(widget)
+    state.select_prior([_parameter(LocalizationType.DISTANCE)])
+
+    assert widget.cellWidget(0, 0) is None
+    assert _rows(widget) == [("Distance", "GenKW", "1")]
+    assert widget.item(0, 0).toolTip()
+
+
+def test_that_strategy_selector_covers_the_cell_text_with_an_opaque_background(
+    qtbot: QtBot,
+):
+    widget = UpdateStrategySummaryWidget(
+        ParameterConfigurationStateModel([_parameter()])
+    )
+    qtbot.addWidget(widget)
+    widget.setStyleSheet(render_eds_stylesheet())
+    widget.show()
+
+    selector = _strategy_selector(widget)
+    assert selector is not None
+    pixel = selector.grab().toImage().pixelColor(2, selector.height() // 2)
+
+    assert pixel == QColor(eds_colors.INPUT_BACKGROUND)
+
+
+def test_that_strategy_selector_is_not_clipped_by_the_cell(qtbot: QtBot):
+    widget = UpdateStrategySummaryWidget(
+        ParameterConfigurationStateModel([_parameter()])
+    )
+    qtbot.addWidget(widget)
+    widget.setStyleSheet(render_eds_stylesheet())
+    widget.show()
+    qtbot.waitExposed(widget)
+
+    selector = _strategy_selector(widget)
+    assert selector is not None
+    assert selector.width() >= selector.sizeHint().width()
+    assert selector.height() <= widget.rowHeight(0)

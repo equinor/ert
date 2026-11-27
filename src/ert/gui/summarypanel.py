@@ -6,15 +6,14 @@ from typing import TYPE_CHECKING, Any
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (
     QFrame,
-    QGridLayout,
     QHBoxLayout,
     QLabel,
     QScrollArea,
     QVBoxLayout,
-    QWidget,
 )
 
 from ert.gui.ertwidgets import ErtSummary
+from ert.gui.ertwidgets.card import Card
 
 if TYPE_CHECKING:
     from ert.config import ErtConfig
@@ -41,7 +40,8 @@ class SummaryTemplate:
 
     def addTitle(self, title: str) -> None:
         if not self.__finished:
-            style = "font-size: 16px; font-weight: bold;"
+            # 8px is the EDS small spacing.
+            style = "font-size: 16px; font-weight: bold; margin-bottom: 8px;"
             self.text += f'<div style="{style}">{title}</div>'
 
     def addRow(self, value: Any) -> None:
@@ -85,19 +85,9 @@ class SummaryPanel(QFrame):
         self.setMinimumWidth(250)
         self.setMinimumHeight(150)
 
-        widget = QWidget(self)
-        self._layout = QHBoxLayout()
-        widget.setLayout(self._layout)
-
-        scroll = QScrollArea(self)
-        scroll.setWidgetResizable(True)
-        scroll.setWidget(widget)
-
-        layout = QGridLayout()
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(scroll)
-
-        self.setLayout(layout)
+        self._layout = QHBoxLayout(self)
+        self._layout.setContentsMargins(0, 0, 0, 0)
+        self._layout.setSpacing(Card.SPACING)
         self.updateSummary()
 
     def updateSummary(self) -> None:
@@ -140,14 +130,26 @@ class SummaryPanel(QFrame):
         self.addColumn(text.getText())
 
     def addColumn(self, text: str) -> None:
-        layout = QVBoxLayout()
         text_widget = QLabel(text)
         text_widget.setWordWrap(True)
         text_widget.setTextFormat(Qt.TextFormat.RichText)
-        layout.addWidget(text_widget)
-        layout.addStretch(1)
 
-        self._layout.addLayout(layout)
+        text_widget.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)
+        text_widget.setContentsMargins(16, 12, 16, 12)
+
+        scroll = QScrollArea()
+        scroll.setObjectName("summary_card_scroll")
+        scroll.setFrameShape(QFrame.Shape.NoFrame)
+        scroll.setWidgetResizable(True)
+        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        scroll.setWidget(text_widget)
+
+        card = Card()
+        layout = QVBoxLayout(card)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(scroll)
+
+        self._layout.addWidget(card, 1)
 
     def log_summary(self, run_model: str, num_realizations: int) -> None:
         summary = ErtSummary(self.config)

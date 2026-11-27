@@ -107,6 +107,7 @@ class ErtMainWindow(QMainWindow):
         )
         self.runtime_plugins = runtime_plugins
         self.central_widget = QFrame(self)
+        self.central_widget.setObjectName("central_widget")
         self.central_layout = QHBoxLayout(self.central_widget)
         self.central_layout.setContentsMargins(0, 0, 0, 0)
         self.central_layout.setSpacing(0)
@@ -119,7 +120,6 @@ class ErtMainWindow(QMainWindow):
             self.side_frame.setStyleSheet("background-color: rgb(64, 64, 64);")
             logger.info("Running Ert with dark mode")
         else:
-            self.central_widget.setObjectName("central_widget")
             palette = self.palette()
             for role in (
                 QPalette.ColorRole.WindowText,

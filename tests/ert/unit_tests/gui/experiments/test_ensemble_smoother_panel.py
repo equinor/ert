@@ -1,10 +1,4 @@
-from PyQt6.QtCore import Qt, QTimer
-from PyQt6.QtWidgets import (
-    QApplication,
-    QComboBox,
-    QDialog,
-    QPushButton,
-)
+from PyQt6.QtWidgets import QComboBox
 from pytestqt.qtbot import QtBot
 
 from ert.config import GenKwConfig
@@ -12,6 +6,9 @@ from ert.config.analysis_config import AnalysisConfig
 from ert.config.distribution import RawSettings
 from ert.config.parameter_config import LocalizationType
 from ert.gui.ertnotifier import ErtNotifier
+from ert.gui.experiments._update_strategy_summary_widget import (
+    UpdateStrategySummaryWidget,
+)
 from ert.gui.experiments.ensemble_smoother_panel import EnsembleSmootherPanel
 from ert.mode_definitions import ES_MDA_MODE
 
@@ -49,26 +46,16 @@ def test_that_ensemble_smoother_panel_runs_es_mda_with_a_single_unit_weight(
     assert arguments.prior_ensemble_id is None
 
 
-def test_that_update_strategy_edited_in_dialog_is_used_in_experiment_arguments(
+def test_that_update_strategy_chosen_in_summary_is_used_in_experiment_arguments(
     qtbot: QtBot,
 ):
     panel = _create_panel(qtbot)
+    summary = panel.findChild(UpdateStrategySummaryWidget)
+    assert summary is not None
+    selector = summary.cellWidget(0, 0)
+    assert isinstance(selector, QComboBox)
 
-    def select_adaptive_strategy_and_save() -> None:
-        dialog = QApplication.activeModalWidget()
-        assert isinstance(dialog, QDialog)
-        gen_kw_selector = dialog.findChildren(QComboBox)[0]
-        gen_kw_selector.setCurrentIndex(
-            gen_kw_selector.findData(
-                LocalizationType.ADAPTIVE, Qt.ItemDataRole.UserRole
-            )
-        )
-        dialog.accept()
-
-    QTimer.singleShot(0, select_adaptive_strategy_and_save)
-    edit_button = panel.findChild(QPushButton, "analysis_variables_popup_button")
-    assert edit_button is not None
-    qtbot.mouseClick(edit_button, Qt.MouseButton.LeftButton)
+    selector.setCurrentIndex(selector.findData(LocalizationType.ADAPTIVE))
 
     assert (
         panel.get_experiment_arguments().parameter_configuration[0].update_strategy

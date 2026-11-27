@@ -2,10 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, override
 
-from PyQt6.QtGui import QPalette
 from PyQt6.QtWidgets import QLineEdit
-
-from ert.gui.detect_mode import is_dark_mode
 
 from .validationsupport import ValidationSupport
 
@@ -46,7 +43,6 @@ class StringBox(QLineEdit):
 
         self.textChanged.connect(self.validateString)
 
-        self._valid_color = self.palette().color(self.backgroundRole())
         self.setText(default_string)
 
         self._model.valueChanged.connect(self.modelChanged)
@@ -60,26 +56,20 @@ class StringBox(QLineEdit):
             if self._validator is not None:
                 status = self._validator.validate(string_to_validate)
 
-                palette = QPalette()
+                self._set_invalid(not status)
                 if not status:
-                    if is_dark_mode():
-                        palette.setColor(
-                            self.backgroundRole(),
-                            ValidationSupport.DARKMODE_ERROR_COLOR,
-                        )
-                    else:
-                        palette.setColor(
-                            self.backgroundRole(),
-                            ValidationSupport.ERROR_COLOR,
-                        )
-                    self.setPalette(palette)
                     self._validation.setValidationMessage(
                         str(status), ValidationSupport.EXCLAMATION
                     )
                 else:
-                    palette.setColor(self.backgroundRole(), self._valid_color)
-                    self.setPalette(palette)
                     self._validation.setValidationMessage("")
+
+    def _set_invalid(self, invalid: bool) -> None:
+        self.setProperty("invalid", invalid)
+        style = self.style()
+        assert style is not None
+        style.unpolish(self)
+        style.polish(self)
 
     def emitChange(self, q_string: Any) -> None:
         self.textChanged.emit(str(q_string))

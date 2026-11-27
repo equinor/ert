@@ -3,15 +3,10 @@ from unittest.mock import MagicMock, Mock
 
 import polars as pl
 import pytest
-from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtWidgets import (
-    QApplication,
     QCheckBox,
     QComboBox,
-    QDialog,
-    QDoubleSpinBox,
     QLabel,
-    QPushButton,
 )
 from pytestqt.qtbot import QtBot
 
@@ -22,7 +17,6 @@ from ert.config.distribution import RawSettings
 from ert.config.parameter_config import LocalizationType, ParameterConfig
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import EnsembleSelector, StringBox
-from ert.gui.ertwidgets.parameterviewer import ParametersViewer
 from ert.gui.experiments._update_strategy_summary_widget import (
     UpdateStrategySummaryWidget,
 )
@@ -284,6 +278,56 @@ def test_that_update_strategy_summary_includes_design_matrix_parameters(
     ]
 
 
+@pytest.mark.parametrize("design_parameter_name", ["design_parameter", "original"])
+def test_that_strategy_chosen_in_summary_applies_to_design_matrix_parameters(
+    qtbot: QtBot, tmp_path, design_parameter_name: str
+):
+    original_parameter = GenKwConfig(
+        name="original",
+        distribution=RawSettings(),
+        update_strategy=LocalizationType.GLOBAL,
+    )
+    design_matrix_path = tmp_path / "design_matrix.xlsx"
+    _create_design_matrix(
+        design_matrix_path,
+        pl.DataFrame({"REAL": [0], design_parameter_name: [1]}),
+    )
+    design_matrix = DesignMatrix.from_config(
+        DesignMatrixConfig(
+            filename=design_matrix_path,
+            design_sheet="DesignSheet",
+            default_sheet=None,
+            update=True,
+        )
+    )
+    notifier = ErtNotifier()
+    notifier._storage = MockStorage()
+    panel = MultipleDataAssimilationPanel(
+        analysis_config=AnalysisConfig(design_matrix=design_matrix),
+        parameter_configuration=[original_parameter],
+        runpath="",
+        notifier=notifier,
+        active_realizations=[True],
+        config_num_realization=1,
+    )
+    qtbot.addWidget(panel)
+    summary = panel.findChild(UpdateStrategySummaryWidget)
+    assert summary is not None
+    selector = summary.cellWidget(0, 0)
+    assert isinstance(selector, QComboBox)
+
+    selector.setCurrentIndex(selector.findData(LocalizationType.ADAPTIVE))
+
+    parameter_configuration = panel.get_experiment_arguments().parameter_configuration
+    assert _summary_rows(summary) == [
+        ("Adaptive", "GenKW", str(len(parameter_configuration)))
+    ]
+    assert all(
+        parameter.update_strategy == LocalizationType.ADAPTIVE
+        for parameter in parameter_configuration
+    )
+
+
 def test_that_active_realizations_selector_validates_with_ensemble_size_from_config(
     qtbot: QtBot,
 ):
@@ -488,29 +532,6 @@ def test_that_multiple_data_assimilation_panel_no_warning_for_equivalent_weight_
     assert warning_icon.isHidden()
 
 
-def _open_and_capture_threshold(panel, qtbot):
-    captured_value = None
-
-    def inspect_and_close_dialog() -> None:
-        nonlocal captured_value
-        dialog = QApplication.activeModalWidget()
-        if isinstance(dialog, QDialog) and dialog.windowTitle() == "Update settings":
-            spinner = dialog.findChild(
-                QDoubleSpinBox, name="localization_correlation_threshold"
-            )
-            if spinner is not None:
-                captured_value = spinner.value()
-            dialog.accept()
-
-    QTimer.singleShot(500, inspect_and_close_dialog)
-
-    button = panel.findChild(QPushButton, "analysis_variables_popup_button")
-    qtbot.mouseClick(button, Qt.MouseButton.LeftButton)
-
-    assert captured_value is not None
-    return captured_value
-
-
 @dataclass(frozen=True)
 class EnsInfo:
     ensemble_id: str
@@ -609,147 +630,3 @@ def test_that_prior_ensemble_selector_contains_only_eligible_ensembles(
     assert ensemble_selector.count() == len(expected_ensembles)
     for i in range(ensemble_selector.count()):
         assert ensemble_selector.itemText(i) in expected_ensembles
-
-
-@pytest.mark.parametrize("design_parameter_name", ["design_parameter", "original"])
-@pytest.mark.timeout(10)
-def test_that_show_parameters_uses_updated_design_matrix_parameter_strategy(
-    qtbot: QtBot, tmp_path, design_parameter_name: str
-):
-    original_parameter = GenKwConfig(
-        name="original",
-        distribution=RawSettings(),
-        update_strategy=LocalizationType.GLOBAL,
-    )
-    design_matrix_path = tmp_path / "design_matrix.xlsx"
-    _create_design_matrix(
-        design_matrix_path,
-        pl.DataFrame({"REAL": [0], design_parameter_name: [1]}),
-    )
-    design_matrix = DesignMatrix.from_config(
-        DesignMatrixConfig(
-            filename=design_matrix_path,
-            design_sheet="DesignSheet",
-            default_sheet=None,
-            update=True,
-        )
-    )
-
-    notifier = ErtNotifier()
-    notifier._storage = MockStorage()
-    panel = MultipleDataAssimilationPanel(
-        analysis_config=AnalysisConfig(design_matrix=design_matrix),
-        parameter_configuration=[original_parameter],
-        runpath="",
-        notifier=notifier,
-        active_realizations=[True],
-        config_num_realization=1,
-    )
-    qtbot.addWidget(panel)
-
-    assert all(
-        parameter.update_strategy == LocalizationType.GLOBAL
-        for parameter in panel.get_experiment_arguments().parameter_configuration
-    )
-
-    def select_adaptive_strategy_and_save() -> None:
-        dialog = QApplication.activeModalWidget()
-        assert isinstance(dialog, QDialog)
-        gen_kw_selector = dialog.findChildren(QComboBox)[0]
-        gen_kw_selector.setCurrentIndex(
-            gen_kw_selector.findData(
-                LocalizationType.ADAPTIVE, Qt.ItemDataRole.UserRole
-            )
-        )
-        dialog.accept()
-
-    QTimer.singleShot(0, select_adaptive_strategy_and_save)
-    edit_button = panel.findChild(QPushButton, "analysis_variables_popup_button")
-    assert edit_button is not None
-    qtbot.mouseClick(edit_button, Qt.MouseButton.LeftButton)
-
-    summary = panel.findChild(UpdateStrategySummaryWidget)
-    assert summary is not None
-    parameter_configuration = panel.get_experiment_arguments().parameter_configuration
-    assert _summary_rows(summary) == [
-        ("Adaptive", "GenKW", str(len(parameter_configuration)))
-    ]
-    assert all(
-        parameter.update_strategy == LocalizationType.ADAPTIVE
-        for parameter in parameter_configuration
-    )
-
-    def verify_parameter_strategy() -> None:
-        dialog = QApplication.activeModalWidget()
-        assert isinstance(dialog, ParametersViewer)
-        parameter_type_node = dialog.tree_widget.topLevelItem(0)
-        assert parameter_type_node is not None
-        for parameter_index in range(parameter_type_node.childCount()):
-            parameter_node = parameter_type_node.child(parameter_index)
-            assert parameter_node is not None
-            parameter_details = []
-            for detail_index in range(parameter_node.childCount()):
-                detail_node = parameter_node.child(detail_index)
-                assert detail_node is not None
-                parameter_details.append(detail_node.text(0))
-            assert f"Update: {LocalizationType.ADAPTIVE}" in parameter_details
-        dialog.accept()
-
-    QTimer.singleShot(0, verify_parameter_strategy)
-    show_parameters_button = next(
-        button
-        for button in panel.findChildren(QPushButton)
-        if button.text() == "Show parameters"
-    )
-    qtbot.mouseClick(show_parameters_button, Qt.MouseButton.LeftButton)
-
-
-def test_that_prior_selection_disables_parameter_update_strategy_changes(
-    qtbot: QtBot,
-):
-    prior_parameter = GenKwConfig(
-        name="prior",
-        distribution={"name": "uniform", "min": 0, "max": 1},
-        update_strategy=LocalizationType.GLOBAL,
-    )
-    notifier = ErtNotifier()
-    notifier._storage = MockStorage()
-    notifier._storage._setup_mocked_run(
-        "prior",
-        "experiment",
-        [REALIZATION_FINISHED_SUCCESSFULLY],
-        experiment_type=ExperimentType.ES_MDA,
-        parameter_configuration={"prior": prior_parameter},
-    )
-    panel = MultipleDataAssimilationPanel(
-        analysis_config=AnalysisConfig(minimum_required_realizations=1),
-        parameter_configuration=[],
-        runpath="",
-        notifier=notifier,
-        active_realizations=[True],
-        config_num_realization=1,
-    )
-    qtbot.addWidget(panel)
-    select_prior_checkbox = panel.findChild(QCheckBox, "select_prior_checkbox_esmda")
-    assert select_prior_checkbox is not None
-    select_prior_checkbox.setChecked(True)
-    comboboxes_enabled: list[bool] = []
-
-    def select_adaptive_strategy_and_save() -> None:
-        dialog = QApplication.activeModalWidget()
-        assert isinstance(dialog, QDialog)
-        comboboxes = dialog.findChildren(QComboBox)
-        comboboxes_enabled.extend(combobox.isEnabled() for combobox in comboboxes)
-        comboboxes[0].setCurrentIndex(
-            comboboxes[0].findData(LocalizationType.ADAPTIVE, Qt.ItemDataRole.UserRole)
-        )
-        dialog.accept()
-
-    QTimer.singleShot(0, select_adaptive_strategy_and_save)
-    edit_button = panel.findChild(QPushButton, "analysis_variables_popup_button")
-    assert edit_button is not None
-    qtbot.mouseClick(edit_button, Qt.MouseButton.LeftButton)
-
-    assert comboboxes_enabled == [False]
-    assert panel.get_experiment_arguments().parameter_configuration == [prior_parameter]
-    assert prior_parameter.update_strategy == LocalizationType.GLOBAL
