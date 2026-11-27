@@ -396,19 +396,19 @@ def test_that_has_status_event_listener_is_true_with_implementing_plugin():
     assert ErtPluginManager(plugins=[EventListener]).has_status_event_listener
 
 
-def test_that_notify_status_event_passes_event_and_experiment_run_id_to_plugin():
+def test_that_notify_status_event_passes_event_id_and_config_path_to_plugin():
     received_events = []
 
     class EventListener:
         @plugin(name="event_listener")
-        def on_status_event(experiment_run_id, event):
-            received_events.append((experiment_run_id, event))
+        def on_status_event(experiment_run_id, config_path, event):
+            received_events.append((experiment_run_id, config_path, event))
 
     event = EndEvent(failed=False, msg="done")
     ErtPluginManager(plugins=[EventListener]).notify_status_event(
-        experiment_run_id="e_id", event=event
+        experiment_run_id="e_id", config_path="/project/model", event=event
     )
-    assert received_events == [("e_id", event)]
+    assert received_events == [("e_id", "/project/model", event)]
 
 
 def test_that_plugin_modifying_status_event_does_not_modify_the_original_event():
@@ -424,7 +424,7 @@ def test_that_plugin_modifying_status_event_does_not_modify_the_original_event()
         results={"objective": 1.0},
     )
     ErtPluginManager(plugins=[ModifyingPlugin]).notify_status_event(
-        experiment_run_id="e_id", event=event
+        experiment_run_id="e_id", config_path="/project/model", event=event
     )
     assert event.results == {"objective": 1.0}
 
@@ -437,7 +437,9 @@ def test_that_notify_status_event_logs_instead_of_raising_plugin_exceptions(capl
 
     pm = ErtPluginManager(plugins=[FailingPlugin])
     with caplog.at_level(logging.ERROR):
-        pm.notify_status_event(experiment_run_id="e_id", event=Mock())
+        pm.notify_status_event(
+            experiment_run_id="e_id", config_path="/project/model", event=Mock()
+        )
     assert "Status event plugin failed for experiment run 'e_id'" in caplog.text
     assert "kaboom!" in caplog.text
 

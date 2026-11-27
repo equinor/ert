@@ -138,13 +138,13 @@ async def test_that_start_uses_the_registered_model_and_config_id(
 
 
 @pytest.mark.asyncio
-async def test_that_registered_ert_experiment_passes_status_events_and_id_to_notifier(
+async def test_that_registered_ert_experiment_passes_status_events_to_notifier(
     monkeypatch: pytest.MonkeyPatch,
 ):
     received_events = []
 
-    def notify_status_event(*, experiment_run_id, event):
-        received_events.append((experiment_run_id, event))
+    def notify_status_event(*, experiment_run_id, config_path, event):
+        received_events.append((experiment_run_id, config_path, event))
 
     monkeypatch.setattr(ert_runner, "_experiments", {})
     events = [
@@ -164,7 +164,7 @@ async def test_that_registered_ert_experiment_passes_status_events_and_id_to_not
     request = ert_runner.StartErtExperimentRequest.model_construct(
         config=Mock(
             spec=ErtConfig,
-            config_path="config.ert",
+            config_path="/project/ert/model",
             runpath_config=SimpleNamespace(runpath_format_string="runpath"),
             ens_path="storage",
         ),
@@ -179,7 +179,9 @@ async def test_that_registered_ert_experiment_passes_status_events_and_id_to_not
     await ert_runner.run_ert(state)
 
     await wait_until_all_status_events_are_delivered(state.status_event_forwarder)
-    assert received_events == [(config_id, event) for event in events]
+    assert received_events == [
+        (config_id, "/project/ert/model", event) for event in events
+    ]
 
 
 @pytest.mark.asyncio
@@ -225,7 +227,7 @@ async def test_that_status_event_notifier_passes_events_to_listening_plugin():
     )
     assert notifier is not None
     event = EndEvent(failed=False, msg="done")
-    notifier(experiment_run_id="e_id", event=event)
+    notifier(experiment_run_id="e_id", config_path="/project/model", event=event)
 
     assert received_events == [("e_id", event)]
 

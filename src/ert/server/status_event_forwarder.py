@@ -9,7 +9,9 @@ from ert.run_models import StatusEvents
 
 
 class StatusEventNotifier(Protocol):
-    def __call__(self, *, experiment_run_id: str, event: StatusEvents) -> None: ...
+    def __call__(
+        self, *, experiment_run_id: str, config_path: str, event: StatusEvents
+    ) -> None: ...
 
 
 class StatusEventListener(Protocol):
@@ -63,10 +65,12 @@ class StatusEventForwarder:
 
 
 def create_status_event_forwarder(
-    notifier: StatusEventNotifier | None, experiment_run_id: str
+    notifier: StatusEventNotifier | None, experiment_run_id: str, config_path: str
 ) -> StatusEventForwarder | None:
     if notifier is None:
         return None
     return StatusEventForwarder(
-        functools.partial(notifier, experiment_run_id=experiment_run_id)
+        functools.partial(
+            notifier, experiment_run_id=experiment_run_id, config_path=config_path
+        )
     )
