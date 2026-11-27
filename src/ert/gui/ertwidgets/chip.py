@@ -3,15 +3,6 @@ from enum import StrEnum
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QLabel, QSizePolicy, QWidget
 
-from ert.gui.detect_mode import is_dark_mode
-
-# EDS colour tokens
-_PRIMARY_SELECTED_HIGHLIGHT = "#e6faec"
-_PRIMARY_RESTING = "#007079"
-_WARNING_HIGHLIGHT = "#ffe7d6"
-_WARNING_TEXT = "#ad6200"
-
-
 _MAX_TEXT_WIDTH = 240
 
 
@@ -20,18 +11,9 @@ class DataSource(StrEnum):
     SELECTED_ENSEMBLE = "selected_ensemble"
 
 
-# (text, background, text colour) for each source
-_SOURCE_STYLES = {
-    DataSource.CONFIG: (
-        "From config file",
-        _PRIMARY_SELECTED_HIGHLIGHT,
-        _PRIMARY_RESTING,
-    ),
-    DataSource.SELECTED_ENSEMBLE: (
-        "From selected ensemble",
-        _WARNING_HIGHLIGHT,
-        _WARNING_TEXT,
-    ),
+_SOURCE_TEXTS = {
+    DataSource.CONFIG: "From config file",
+    DataSource.SELECTED_ENSEMBLE: "From selected ensemble",
 }
 
 
@@ -54,23 +36,12 @@ class SourceChip(QLabel):
     def set_source(self, source: DataSource, ensemble_name: str | None = None) -> None:
         """Show the source; for a selected ensemble, show its name if given."""
         self.source = source
-        text, background, color = _SOURCE_STYLES[source]
+        text = _SOURCE_TEXTS[source]
         if source == DataSource.SELECTED_ENSEMBLE and ensemble_name:
             text = f"From {ensemble_name}"
-        if is_dark_mode():
-            background, color = color, "white"
-        self.setStyleSheet(
-            f"""
-            QLabel#source_chip {{
-                background-color: {background};
-                color: {color};
-                border-radius: 11px;
-                padding: 0px 8px;
-                font-size: 12px;
-                font-weight: 500;
-            }}
-            """
-        )
+        self.setProperty("source", source.value)
+        self.style().unpolish(self)
+        self.style().polish(self)
         # Keep long ensemble names from covering the card title; the full
         # text is in the tooltip.
         self.ensurePolished()

@@ -1,3 +1,5 @@
+from ert.gui import eds_colors
+from ert.gui.eds_theme import render_eds_stylesheet
 from ert.gui.ertwidgets.chip import DataSource, SourceChip
 
 
@@ -41,9 +43,34 @@ def test_that_a_long_ensemble_name_is_elided_and_given_in_full_in_the_tooltip(qt
     assert chip.width() < 400
 
 
-def test_that_chip_uses_inverted_colors_in_dark_mode(qtbot, monkeypatch):
-    monkeypatch.setattr("ert.gui.ertwidgets.chip.is_dark_mode", lambda: True)
-    chip = SourceChip()
-    qtbot.addWidget(chip)
+def _chip_background(qtbot, qapp, source):
+    qapp.setStyleSheet(render_eds_stylesheet())
+    try:
+        chip = SourceChip()
+        qtbot.addWidget(chip)
+        chip.set_source(source)
+        chip.show()
+        return chip.grab().toImage().pixelColor(chip.width() // 2, 1).name()
+    finally:
+        qapp.setStyleSheet("")
 
-    assert "color: white" in chip.styleSheet()
+
+def test_that_chip_background_comes_from_the_eds_stylesheet_for_each_source(
+    qtbot, qapp
+):
+    assert _chip_background(qtbot, qapp, DataSource.CONFIG) == (
+        eds_colors.CHIP_CONFIG_BACKGROUND
+    )
+    assert _chip_background(qtbot, qapp, DataSource.SELECTED_ENSEMBLE) == (
+        eds_colors.CHIP_SELECTED_ENSEMBLE_BACKGROUND
+    )
+
+
+def test_that_dark_stylesheet_gives_the_chip_dark_tokens(monkeypatch):
+    monkeypatch.setattr("ert.gui.eds_theme.is_dark_mode", lambda: True)
+
+    stylesheet = render_eds_stylesheet()
+
+    dark_background = eds_colors.DARK_COLORS["CHIP_CONFIG_BACKGROUND"]
+    assert f"background-color: {dark_background}" in stylesheet
+    assert eds_colors.CHIP_CONFIG_BACKGROUND not in stylesheet

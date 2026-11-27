@@ -21,6 +21,11 @@ TEXT_ON_ACCENT = "#ffffff"
 INPUT_BACKGROUND = "#f8f8f8"
 INPUT_BORDER = "#696969"
 FOCUS = "#5cade5"
+# Source chip: selected highlight / primary resting and warning highlight / text
+CHIP_CONFIG_BACKGROUND = "#e6faec"
+CHIP_CONFIG_TEXT = "#007079"
+CHIP_SELECTED_ENSEMBLE_BACKGROUND = "#ffe7d6"
+CHIP_SELECTED_ENSEMBLE_TEXT = "#ad6200"
 
 # The colours above are used in light mode. These are the corresponding
 # tokens of the EDS dark color scheme, keyed by the same names. For example
@@ -42,6 +47,10 @@ DARK_COLORS = {
     "INPUT_BACKGROUND": "#191a1a",
     "INPUT_BORDER": "#b4c7d7",
     "FOCUS": "#2d8bc5",
+    "CHIP_CONFIG_BACKGROUND": "#007079",
+    "CHIP_CONFIG_TEXT": "#ffffff",
+    "CHIP_SELECTED_ENSEMBLE_BACKGROUND": "#ad6200",
+    "CHIP_SELECTED_ENSEMBLE_TEXT": "#ffffff",
     "BLUE_BACKGROUND": "#171a1c",
     "BLUE_TEXT": "#a1e0ff",
     "RED_BACKGROUND": "#1f1717",
