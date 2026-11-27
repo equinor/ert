@@ -23,8 +23,10 @@ from _ert.threading import ErtThread
 from ert.config import parameter_config
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.gui.ertnotifier import ErtNotifier
-from ert.gui.ertwidgets import wait_cursor
+from ert.gui.ertwidgets import ErtSummary, wait_cursor
 from ert.gui.ertwidgets.card import Card
+from ert.gui.ertwidgets.chip import DataSource
+from ert.gui.ertwidgets.models.ertsummary import count_observations
 from ert.gui.find_ert_info import find_ert_info
 from ert.gui.icon_utils import load_stateful_icon
 from ert.gui.summarypanel import SummaryPanel
@@ -543,12 +545,36 @@ class ExperimentPanel(QWidget):
         if not hasattr(self, "configuration_summary"):
             return
         current_model = self.get_current_experiment_type()
-        parameters = self._experiment_widgets[
-            current_model
-        ].get_parameter_configuration()
+        panel = self._experiment_widgets[current_model]
+        summary = self.configuration_summary
+        parameters = panel.get_parameter_configuration()
+        ensemble = panel.get_selected_ensemble()
+
+        if ensemble is None:
+            summary.set_parameter_configuration(
+                parameters
+                if parameters is not None
+                else self.config.parameter_configurations_with_design_matrix
+            )
+            summary.set_observations(ErtSummary(self.config).getObservations())
+            return
+
+        experiment = ensemble.experiment
         if parameters is None:
-            parameters = self.config.parameter_configurations_with_design_matrix
-        self.configuration_summary.set_parameter_configuration(parameters)
+            parameters = list(experiment.parameter_configuration.values())
+        source = DataSource.SELECTED_ENSEMBLE
+        # Ensemble names are often generic (e.g. "iter-0"), so include the
+        # experiment name like the ensemble selectors do.
+        ensemble_name = f"{experiment.name} : {ensemble.name}"
+        summary.set_parameter_configuration(parameters, source, ensemble_name)
+        summary.set_observations(
+            count_observations(
+                (obs["name"], obs["type"])
+                for obs in experiment.experiment_config.get("observations", [])
+            ),
+            source,
+            ensemble_name,
+        )
 
     def validationStatusChanged(self) -> None:
         widget = self._experiment_widgets[self.get_current_experiment_type()]

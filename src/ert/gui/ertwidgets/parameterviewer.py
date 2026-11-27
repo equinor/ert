@@ -8,6 +8,7 @@ from PyQt6.QtWidgets import (
     QFrame,
     QHBoxLayout,
     QLabel,
+    QSizePolicy,
     QTreeWidget,
     QTreeWidgetItem,
     QVBoxLayout,
@@ -115,6 +116,9 @@ class ParameterTree(QTreeWidget):
         super().__init__(parent)
         self.setHeaderHidden(True)
         self.setFrameShape(QFrame.Shape.NoFrame)
+        # Take the space that is available rather than requiring a minimum
+        # height; the tree scrolls when its content does not fit.
+        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Ignored)
         self.itemExpanded.connect(self._on_item_expanded)
 
     def set_parameters(self, parameters: Sequence[ParameterConfig]) -> None:
@@ -142,6 +146,8 @@ class ParametersSummary(QWidget):
         self.title = QLabel()
         self.title.setStyleSheet("font-size: 16px; font-weight: bold;")
         layout.addWidget(self.title)
+        # 8px is the EDS small spacing.
+        layout.addSpacing(8)
 
         columns = QHBoxLayout()
         columns.setContentsMargins(0, 0, 0, 0)
@@ -157,9 +163,9 @@ class ParametersSummary(QWidget):
             label = QLabel(header)
             label.setStyleSheet("font-weight: bold;")
             column.addWidget(label)
-            column.addWidget(tree)
+            column.addWidget(tree, 1)
             columns.addLayout(column)
-        layout.addLayout(columns)
+        layout.addLayout(columns, 1)
 
     def set_parameters(self, parameters: Sequence[ParameterConfig]) -> None:
         signature = tuple((p.type, p.name, p.update_strategy) for p in parameters)

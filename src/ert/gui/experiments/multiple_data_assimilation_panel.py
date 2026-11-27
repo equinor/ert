@@ -310,6 +310,12 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
             )
         )
 
+    @override
+    def get_selected_ensemble(self) -> Ensemble | None:
+        if not self._select_prior_ensemble_box.isChecked():
+            return None
+        return self._ensemble_selector.selected_ensemble
+
     def select_prior_toggled(self) -> None:
         self._select_prior_ensemble_box.setEnabled(
             bool(self._ensemble_selector._ensemble_list())

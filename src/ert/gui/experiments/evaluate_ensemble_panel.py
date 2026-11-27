@@ -99,6 +99,10 @@ class EvaluateEnsemblePanel(ExperimentConfigPanel):
         )
 
     @override
+    def get_selected_ensemble(self) -> Ensemble | None:
+        return self._ensemble_selector.selected_ensemble
+
+    @override
     def isConfigurationValid(self) -> bool:
         return (
             self._active_realizations_field.isValid()

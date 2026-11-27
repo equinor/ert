@@ -262,6 +262,9 @@ def test_that_strategy_summary_follows_selected_ensemble_and_is_hidden_for_enif(
     ensemble_selector.setCurrentIndex(
         ensemble_selector.findText("experiment_1 : ensemble_1")
     )
+    selected_ensemble = panel.get_selected_ensemble()
+    assert selected_ensemble is not None
+    assert selected_ensemble.name == "ensemble_1"
     assert summary.rowCount() == 1
     summary_items = [summary.item(0, column) for column in range(3)]
     assert all(item is not None for item in summary_items)
