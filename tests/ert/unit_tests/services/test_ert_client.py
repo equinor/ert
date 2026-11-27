@@ -19,6 +19,7 @@ from websockets.frames import Close
 
 from ert.config import ErtConfig, GenKwConfig
 from ert.ensemble_evaluator import ConnectionLostEvent, EndEvent
+from ert.run_models.event import RunPathCreatedEvent
 from ert.services.ert_client import (
     _WEBSOCKET_CONNECT_RETRIES,
     DEFAULT_TIMEOUT,
@@ -530,6 +531,175 @@ def test_that_event_stream_logs_first_event_and_total_on_close(event_client, cap
         caplog.text
     )
     assert "ended after 1 events" in caplog.text
+
+
+def _connection_receiving(*messages):
+    connection = AsyncMock()
+    connection.recv.side_effect = list(messages)
+    return connection
+
+
+def _abnormal_closure_without_close_frame() -> ConnectionClosedError:
+    """What websockets raises when a TLS connection is reset or closed
+    mid-stream without a close frame: no close frame received or sent (1006).
+    """
+    return ConnectionClosedError(None, None, None)
+
+
+def test_that_mid_stream_connection_reset_reconnects_and_skips_replayed_events(
+    event_client, caplog
+):
+    caplog.set_level(logging.INFO, logger="ert.services.ert_client")
+    api, _, connect = event_client
+    first, second = RunPathCreatedEvent(iens=0), RunPathCreatedEvent(iens=1)
+    end = EndEvent(failed=False, msg="completed")
+    dropped = _connection_receiving(
+        first.model_dump_json(), _abnormal_closure_without_close_frame()
+    )
+    # The server replays the whole event history to every new subscriber.
+    resumed = _connection_receiving(
+        first.model_dump_json(),
+        second.model_dump_json(),
+        end.model_dump_json(),
+        ConnectionClosedOK(Close(1000, ""), Close(1000, ""), True),
+    )
+    connect.side_effect = [dropped, resumed]
+
+    assert list(api.iter_events("experiment")) == [first, second, end]
+    assert connect.await_count == 2
+    dropped.close.assert_awaited_once()
+    resumed.close.assert_awaited_once()
+    assert "reconnecting" in caplog.text
+    assert "ended after 3 events" in caplog.text
+
+
+def test_that_monitor_thread_survives_a_mid_stream_connection_reset(event_client):
+    api, _, connect = event_client
+    first = RunPathCreatedEvent(iens=0)
+    end = EndEvent(failed=False, msg="completed")
+    connect.side_effect = [
+        _connection_receiving(
+            first.model_dump_json(), _abnormal_closure_without_close_frame()
+        ),
+        _connection_receiving(
+            first.model_dump_json(),
+            end.model_dump_json(),
+            ConnectionClosedOK(Close(1000, ""), Close(1000, ""), True),
+        ),
+    ]
+    event_queue, monitor = api.setup_event_queue_from_ws_endpoint("experiment")
+
+    monitor.start()
+    monitor.join(timeout=5)
+
+    assert event_queue.get_nowait() == first
+    assert event_queue.get_nowait() == end
+    assert event_queue.empty()
+
+
+def test_that_events_after_a_diverging_replay_are_yielded_as_new(event_client):
+    api, _, connect = event_client
+    first, second, third = (RunPathCreatedEvent(iens=i) for i in range(3))
+    connect.side_effect = [
+        _connection_receiving(
+            first.model_dump_json(),
+            second.model_dump_json(),
+            _abnormal_closure_without_close_frame(),
+        ),
+        _connection_receiving(
+            first.model_dump_json(),
+            third.model_dump_json(),
+            ConnectionClosedOK(Close(1000, ""), Close(1000, ""), True),
+        ),
+    ]
+
+    assert list(api.iter_events("experiment")) == [first, second, third]
+
+
+def test_that_repeated_mid_stream_resets_eventually_give_up(event_client):
+    api, connection, connect = event_client
+    connection.recv.side_effect = _abnormal_closure_without_close_frame()
+    event_queue, monitor = api.setup_event_queue_from_ws_endpoint("experiment")
+
+    monitor.start()
+    monitor.join(timeout=5)
+
+    assert connect.await_count == _WEBSOCKET_CONNECT_RETRIES + 1
+    assert isinstance(event_queue.get_nowait(), ConnectionLostEvent)
+    assert event_queue.empty()
+
+
+def test_that_stream_making_progress_keeps_reconnecting(event_client):
+    api, _, connect = event_client
+    events = [
+        RunPathCreatedEvent(iens=i) for i in range(_WEBSOCKET_CONNECT_RETRIES + 2)
+    ]
+    # Every connection replays the history, delivers one new event and drops,
+    # more often in total than the reconnect limit, until the last one closes.
+    connect.side_effect = [
+        _connection_receiving(
+            *(event.model_dump_json() for event in events[: i + 1]),
+            _abnormal_closure_without_close_frame()
+            if i < len(events) - 1
+            else ConnectionClosedOK(Close(1000, ""), Close(1000, ""), True),
+        )
+        for i in range(len(events))
+    ]
+
+    assert list(api.iter_events("experiment")) == events
+    assert connect.await_count == len(events)
+
+
+@pytest.mark.parametrize("code", [1006, 1012, 1013, 1014])
+def test_that_transient_close_codes_from_the_server_are_retried(event_client, code):
+    api, _, connect = event_client
+    event = RunPathCreatedEvent(iens=0)
+    connect.side_effect = [
+        _connection_receiving(
+            event.model_dump_json(),
+            ConnectionClosedError(Close(code, ""), Close(code, ""), True),
+        ),
+        _connection_receiving(
+            event.model_dump_json(),
+            ConnectionClosedOK(Close(1000, ""), Close(1000, ""), True),
+        ),
+    ]
+
+    assert list(api.iter_events("experiment")) == [event]
+    assert connect.await_count == 2
+
+
+@pytest.mark.parametrize("code", [1002, 1008, 1011])
+def test_that_explicit_server_closures_are_not_retried(event_client, code):
+    api, connection, connect = event_client
+    connection.recv.side_effect = ConnectionClosedError(
+        Close(code, "reason"), Close(code, "reason"), True
+    )
+
+    assert list(api.iter_events("experiment")) == []
+    assert connect.await_count == 1
+
+
+def test_that_policy_violation_closure_is_not_retried(event_client):
+    api, connection, connect = event_client
+    connection.recv.side_effect = ConnectionClosedError(
+        Close(1008, "unknown experiment"), Close(1008, "unknown experiment"), True
+    )
+
+    assert list(api.iter_events("experiment")) == []
+    assert connect.await_count == 1
+
+
+def test_that_connection_reset_after_end_event_is_not_retried(event_client):
+    api, connection, connect = event_client
+    end = EndEvent(failed=False, msg="completed")
+    connection.recv.side_effect = [
+        end.model_dump_json(),
+        _abnormal_closure_without_close_frame(),
+    ]
+
+    assert list(api.iter_events("experiment")) == [end]
+    assert connect.await_count == 1
 
 
 @pytest.mark.parametrize("status_code", [200, 401, 503])
