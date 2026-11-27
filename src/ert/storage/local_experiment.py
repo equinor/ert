@@ -316,12 +316,62 @@ class LocalExperiment(BaseMode):
             prior_ensemble=prior_ensemble,
         )
 
-        self._index.ensembles.append(ensemble.id)
+        self._add_ensemble_id(ensemble.id)
+        return ensemble
+
+    @require_write
+    def copy_ensemble(self, source: LocalEnsemble) -> LocalEnsemble:
+        """
+        Copy an ensemble, possibly from another storage, into this experiment.
+        Requires ERT to be in write mode.
+
+        All files of the source ensemble are copied verbatim. The copy gets a
+        new id and belongs to this experiment. Response keys that are not yet
+        finalized in this experiment are finalized with the keys of the source
+        experiment, if the source ensemble contains data of that response type.
+
+        Parameters
+        ----------
+        source : LocalEnsemble
+            The ensemble to copy.
+
+        Returns
+        -------
+        local_ensemble : LocalEnsemble
+            The copied ensemble.
+
+        Raises
+        ------
+        KeyError
+            If a response type of the source experiment does not exist in this
+            experiment.
+        ValueError
+            If the source ensemble has a prior ensemble.
+        """
+
+        keys_to_finalize = {
+            response_type: config.keys
+            for response_type, config in (
+                source.experiment.response_configuration.items()
+            )
+            if not self._has_finalized_response_keys(response_type)
+            and config.are_keys_finalized()
+            and source._has_response_data(response_type)
+        }
+
+        ensemble = self._storage.copy_ensemble(self, source)
+
+        self._add_ensemble_id(ensemble.id)
+        for response_type, keys in keys_to_finalize.items():
+            self._update_response_keys(response_type, keys)
+        return ensemble
+
+    def _add_ensemble_id(self, ensemble_id: UUID) -> None:
+        self._index.ensembles.append(ensemble_id)
         self._storage._write_transaction(
             self._path / "index.json",
             self._index.model_dump_json(indent=2).encode("utf-8"),
         )
-        return ensemble
 
     @property
     def ensembles(self) -> Generator[LocalEnsemble]:

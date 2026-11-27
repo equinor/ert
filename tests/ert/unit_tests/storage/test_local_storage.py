@@ -730,6 +730,169 @@ def test_that_saving_invalid_everest_realization_info_raises_error(
             ensemble.save_everest_realization_info(bad_realization_info)
 
 
+def _summary_experiment_config():
+    return {
+        "response_configuration": [
+            SummaryConfig(keys=["*"], input_files=["not_relevant"]).model_dump(
+                mode="json"
+            )
+        ]
+    }
+
+
+def _create_source_batch(path):
+    with open_storage(path, mode="w") as storage:
+        experiment = storage.create_experiment(
+            experiment_config=_summary_experiment_config(), name="source"
+        )
+        ensemble = experiment.create_ensemble(ensemble_size=2, name="batch_0")
+        ensemble.save_response("summary", summary_response(), 0)
+        ensemble.set_failure(1, RealizationStorageState.FAILURE_IN_CURRENT, "fail")
+        ensemble.save_everest_realization_info(
+            {
+                0: {"model_realization": 0, "perturbation": -1},
+                1: {"model_realization": 1, "perturbation": -1},
+            }
+        )
+        ensemble.save_everest_batch_success(True)
+
+
+def test_that_copy_ensemble_copies_data_with_new_ids(tmp_path):
+    _create_source_batch(tmp_path / "source")
+    source_index = (
+        next((tmp_path / "source" / "ensembles").iterdir()) / "index.json"
+    ).read_text(encoding="utf-8")
+
+    with (
+        open_storage(tmp_path / "source", mode="r") as source_storage,
+        open_storage(tmp_path / "target", mode="w") as target_storage,
+    ):
+        source = source_storage.get_experiment_by_name("source").get_ensemble_by_name(
+            "batch_0"
+        )
+        experiment = target_storage.create_experiment(
+            experiment_config=_summary_experiment_config(), name="target"
+        )
+        copy = experiment.copy_ensemble(source)
+        assert copy.id != source.id
+        assert copy.experiment_id == experiment.id
+
+    with (
+        open_storage(tmp_path / "source", mode="r") as source_storage,
+        open_storage(tmp_path / "target", mode="r") as target_storage,
+    ):
+        source = source_storage.get_experiment_by_name("source").get_ensemble_by_name(
+            "batch_0"
+        )
+        copy = target_storage.get_experiment_by_name("target").get_ensemble_by_name(
+            "batch_0"
+        )
+        assert copy.load_responses("FOPR", (0,)).equals(
+            source.load_responses("FOPR", (0,))
+        )
+        assert copy.get_ensemble_state() == source.get_ensemble_state()
+        assert copy.get_failure(1) == source.get_failure(1)
+        assert copy.everest_realization_info == source.everest_realization_info
+        assert copy.everest_batch_success is True
+
+    assert (
+        next((tmp_path / "source" / "ensembles").iterdir()) / "index.json"
+    ).read_text(encoding="utf-8") == source_index
+
+
+def test_that_interrupted_copy_ensemble_leaves_no_ensemble_behind(tmp_path):
+    _create_source_batch(tmp_path / "source")
+
+    with (
+        open_storage(tmp_path / "source", mode="r") as source_storage,
+        open_storage(tmp_path / "target", mode="w") as target_storage,
+    ):
+        source = source_storage.get_experiment_by_name("source").get_ensemble_by_name(
+            "batch_0"
+        )
+        experiment = target_storage.create_experiment(
+            experiment_config=_summary_experiment_config(), name="target"
+        )
+        with (
+            patch(
+                "ert.storage.local_storage.NamedTemporaryFile",
+                RaisingWriteNamedTemporaryFile,
+            ),
+            pytest.raises(RuntimeError),
+        ):
+            experiment.copy_ensemble(source)
+
+    with open_storage(tmp_path / "target", mode="r") as target_storage:
+        assert not list(target_storage.ensembles)
+    assert not any(path.is_dir() for path in (tmp_path / "target" / "swp").iterdir())
+
+
+def test_that_copy_ensemble_gives_response_keys_of_source_after_copied_batches(
+    tmp_path,
+):
+    source_summary_configs = []
+    with open_storage(tmp_path / "source", mode="w") as storage:
+        experiment = storage.create_experiment(
+            experiment_config=_summary_experiment_config(), name="source"
+        )
+        for batch, key in enumerate([None, "FOPR", "FOPT"]):
+            ensemble = experiment.create_ensemble(
+                ensemble_size=1, iteration=batch, name=f"batch_{batch}"
+            )
+            if key is not None:
+                ensemble.save_response("summary", summary_response(key=key), 0)
+            source_summary_configs.append(experiment.response_configuration["summary"])
+
+    with (
+        open_storage(tmp_path / "source", mode="r") as source_storage,
+        open_storage(tmp_path / "target", mode="w") as target_storage,
+    ):
+        source_batches = sorted(
+            source_storage.get_experiment_by_name("source").ensembles,
+            key=lambda ensemble: ensemble.iteration,
+        )
+        for num_batches, source_summary_config in enumerate(
+            source_summary_configs, start=1
+        ):
+            experiment = target_storage.create_experiment(
+                experiment_config=_summary_experiment_config()
+            )
+            for source in source_batches[:num_batches]:
+                experiment.copy_ensemble(source)
+            assert experiment.response_configuration["summary"] == source_summary_config
+
+
+def test_that_copy_ensemble_refuses_ensemble_with_prior(tmp_path):
+    with open_storage(tmp_path, mode="w") as storage:
+        experiment = storage.create_experiment()
+        prior = experiment.create_ensemble(ensemble_size=1, name="prior")
+        posterior = experiment.create_ensemble(
+            ensemble_size=1, name="posterior", prior_ensemble=prior
+        )
+        target = storage.create_experiment()
+
+        with pytest.raises(ValueError, match="'posterior' because it has a prior"):
+            target.copy_ensemble(posterior)
+        assert not list(target.ensembles)
+
+
+def test_that_copy_ensemble_raises_for_response_type_missing_in_target(tmp_path):
+    _create_source_batch(tmp_path / "source")
+
+    with (
+        open_storage(tmp_path / "source", mode="r") as source_storage,
+        open_storage(tmp_path / "target", mode="w") as target_storage,
+    ):
+        source = source_storage.get_experiment_by_name("source").get_ensemble_by_name(
+            "batch_0"
+        )
+        experiment = target_storage.create_experiment(name="target")
+
+        with pytest.raises(KeyError, match="Response type summary does not exist"):
+            experiment.copy_ensemble(source)
+        assert not list(experiment.ensembles)
+
+
 def test_set_failure_will_create_realization_directory(storage):
     # Setup
     dummy_ensemble = storage.create_experiment().create_ensemble(
