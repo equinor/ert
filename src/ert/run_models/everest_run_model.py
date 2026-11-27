@@ -21,7 +21,7 @@ import numpy as np
 from numpy.typing import NDArray
 from pydantic import PrivateAttr, ValidationError
 from ropt.enums import ExitCode as RoptExitCode
-from ropt.results import FunctionResults, Results
+from ropt.results import FunctionResults, GradientResults, Results
 from ropt.workflow import BasicOptimizer, EvaluationBatchContext, EvaluationBatchResult
 from typing_extensions import TypedDict, runtime_checkable
 
@@ -594,6 +594,33 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
         for batch_id, batch_dict in batch_dataframes.items():
             target_ensemble = self._experiment.get_ensemble_by_name(f"batch_{batch_id}")
             target_ensemble.save_batch_dataframes(dataframes=batch_dict)
+
+        batch_success: dict[int, bool] = {}
+        for result in results:
+            match result:
+                case FunctionResults():
+                    result_success = result.functions is not None
+                case GradientResults():
+                    result_success = result.gradients is not None
+                case _:
+                    raise TypeError(
+                        f"Unsupported optimizer result type: {type(result)}"
+                    )
+
+            if result.batch_id in batch_success:
+                batch_success[result.batch_id] &= result_success
+            else:
+                batch_success[result.batch_id] = result_success
+
+        ensembles_by_by_batch_id = {
+            ensemble.iteration: ensemble for ensemble in self._experiment.ensembles
+        }
+        # This should remain the final write to storage for this batch:
+        # `True` marks the batch as completed successfully.
+        for batch_id, success in batch_success.items():
+            ensemble = ensembles_by_by_batch_id.get(batch_id)
+            if ensemble is not None:
+                ensemble.save_everest_batch_success(success)
 
         for result in results:
             batches = (

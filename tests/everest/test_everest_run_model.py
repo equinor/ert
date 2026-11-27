@@ -5,6 +5,7 @@ from unittest import mock
 from unittest.mock import Mock, patch
 
 import pytest
+from ropt.results import FunctionResults, GradientResults
 
 from ert.base_model_context import use_runtime_plugins
 from ert.config.queue_config import (
@@ -17,6 +18,7 @@ from ert.config.queue_config import (
 )
 from ert.plugins import ErtRuntimePlugins, get_site_plugins
 from ert.run_models.everest_run_model import EverestRunModel
+from ert.storage import open_storage
 from everest.config import EverestConfig
 from tests.everest.utils import everest_config_with_defaults
 
@@ -392,3 +394,41 @@ def test_that_general_user_queue_options_overrides_site_queue_options_via_runmod
         == parse_string_to_bytes("2Gb")
     )
     assert run_model.queue_config.queue_options.num_cpu == 2
+
+
+@pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
+@pytest.mark.parametrize(
+    ("result_specs", "expected_success"),
+    [
+        ([(FunctionResults, True)], True),
+        ([(FunctionResults, False)], False),
+        ([(GradientResults, True)], True),
+        ([(GradientResults, False)], False),
+        ([(FunctionResults, True), (GradientResults, False)], False),
+    ],
+)
+def test_that_optimizer_results_mark_batch_success(
+    create_runmodel, monkeypatch, tmp_path, result_specs, expected_success
+):
+    results = []
+    for result_type, is_available in result_specs:
+        result = Mock(spec=result_type)
+        result.batch_id = 0
+        attribute = "functions" if result_type is FunctionResults else "gradients"
+        setattr(result, attribute, object() if is_available else None)
+        results.append(result)
+
+    monkeypatch.setattr(
+        "ert.run_models.everest_run_model.unpack_ropt_results", lambda _: {}
+    )
+    runmodel = create_runmodel()
+    with open_storage(tmp_path, mode="w") as storage:
+        experiment = storage.create_experiment()
+        ensemble = experiment.create_ensemble(
+            name="batch_0", ensemble_size=1, iteration=0
+        )
+        runmodel._experiment = experiment
+
+        runmodel._handle_optimizer_results(tuple(results))
+
+        assert ensemble.everest_batch_success is expected_success
