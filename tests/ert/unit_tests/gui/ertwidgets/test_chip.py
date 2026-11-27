@@ -1,3 +1,5 @@
+from PyQt6.QtCore import Qt
+
 from ert.gui import eds_colors
 from ert.gui.eds_theme import render_eds_stylesheet
 from ert.gui.ertwidgets.chip import DataSource, SourceChip
@@ -29,6 +31,16 @@ def test_that_chip_names_the_selected_ensemble_source_without_an_ensemble_name(q
     chip.set_source(DataSource.SELECTED_ENSEMBLE)
 
     assert chip.text() == "From selected ensemble"
+
+
+def test_that_chip_shows_html_in_an_ensemble_name_literally(qtbot):
+    chip = SourceChip()
+    qtbot.addWidget(chip)
+
+    chip.set_source(DataSource.SELECTED_ENSEMBLE, "<b>case")
+
+    assert chip.textFormat() == Qt.TextFormat.PlainText
+    assert chip.text() == "From <b>case"
 
 
 def test_that_a_long_ensemble_name_is_elided_and_given_in_full_in_the_tooltip(qtbot):

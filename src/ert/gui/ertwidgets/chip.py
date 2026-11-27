@@ -28,6 +28,7 @@ class SourceChip(QLabel):
         super().__init__(parent)
         self.setObjectName("source_chip")
         self.setFixedHeight(22)
+        self.setTextFormat(Qt.TextFormat.PlainText)
         self.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
         self.source = DataSource.CONFIG
