@@ -8,7 +8,7 @@ import time
 from collections import Counter
 from collections.abc import Iterable
 from datetime import UTC, datetime
-from functools import cache, cached_property, lru_cache
+from functools import cache
 from multiprocessing.pool import ThreadPool
 from pathlib import Path
 from typing import TYPE_CHECKING, assert_never, cast
@@ -176,6 +176,7 @@ class LocalEnsemble(BaseMode):
         )
         self._error_log_name = "error.json"
         self._scalar_blob_uri_cached: str | None = None
+        self._ensemble_state: list[set[RealizationStorageState]] | None = None
 
         @cache
         def create_realization_dir(realization: int) -> Path:
@@ -331,8 +332,7 @@ class LocalEnsemble(BaseMode):
             ]
         )
 
-    @cached_property
-    def _existing_scalars(self) -> dict[str, list[int]]:
+    def _find_existing_scalars(self) -> dict[str, list[int]]:
         scalar_blob_uri = self._scalar_blob_uri
         genkw_mask: dict[str, list[int]] = {
             param_name: []
@@ -410,15 +410,18 @@ class LocalEnsemble(BaseMode):
         return None
 
     def refresh_ensemble_state(self) -> None:
-        self.get_ensemble_state.cache_clear()
-        if self._existing_scalars is not None:
-            del self._existing_scalars
+        self._ensemble_state = None
         self.get_ensemble_state()
 
-    @lru_cache  # ruff: ignore[cached-instance-method]
     def get_ensemble_state(self) -> list[set[RealizationStorageState]]:
+        state = self._ensemble_state
+        if state is None:
+            state = self._ensemble_state = self._find_ensemble_state()
+        return state
+
+    def _find_ensemble_state(self) -> list[set[RealizationStorageState]]:
         response_configs = self.experiment.simulation_response_configuration
-        existing_scalars = self._existing_scalars
+        existing_scalars = self._find_existing_scalars()
 
         def _parameters_exist_for_realization(realization: int) -> bool:
             """
@@ -946,7 +949,7 @@ class LocalEnsemble(BaseMode):
         self, realization: int
     ) -> dict[str, RealizationStorageState]:
         path = self._realization_dir(realization)
-        existing_scalars = self._existing_scalars
+        existing_scalars = self._find_existing_scalars()
         return {
             e: (
                 RealizationStorageState.PARAMETERS_LOADED

@@ -1,3 +1,4 @@
+import contextlib
 import logging
 import re
 from collections.abc import Callable
@@ -28,6 +29,7 @@ from ert.storage import Ensemble, Experiment
 from ert.storage.local_experiment import ExperimentType
 
 from .storage_model import (
+    ChildModel,
     EnsembleModel,
     ExperimentModel,
     RealizationModel,
@@ -123,6 +125,7 @@ class StorageWidget(QWidget):
         self._notifier = notifier
         self._ert_config = ert_config
         self._ensemble_size = ensemble_size
+        self._selected: ChildModel | None = None
         self.setMinimumWidth(250)
 
         self._tree_view = QTreeView(self)
@@ -130,6 +133,7 @@ class StorageWidget(QWidget):
         notifier.ertChanged.connect(
             lambda: storage_model.reloadStorage(self._notifier.storage)
         )
+        notifier.ertChanged.connect(self._emit_selected)
 
         search_bar = QLineEdit(self)
         search_bar.setPlaceholderText("Filter")
@@ -181,17 +185,23 @@ class StorageWidget(QWidget):
     def _currentChanged(self, selected: QModelIndex, previous: QModelIndex) -> None:
         model = cast(_SortingProxyModel, self._tree_view.model())
         idx = model.mapToSource(selected)
-        cls = idx.internalPointer()
+        if idx.isValid():
+            self._selected = idx.internalPointer()
+            self._emit_selected()
 
-        if isinstance(cls, EnsembleModel):
-            ensemble = self._notifier.storage.get_ensemble(cls._id)
-            self.onSelectEnsemble.emit(ensemble)
-        elif isinstance(cls, ExperimentModel):
-            experiment = self._notifier.storage.get_experiment(cls._id)
-            self.onSelectExperiment.emit(experiment)
-        elif isinstance(cls, RealizationModel):
-            ensemble = self._notifier.storage.get_ensemble(cls.ensemble_id)
-            self.onSelectRealization.emit(ensemble, cls.realization)
+    def _emit_selected(self) -> None:
+        selected = self._selected
+        storage = self._notifier.storage
+        # The selected item may be gone after the storage is reloaded
+        with contextlib.suppress(KeyError):
+            if isinstance(selected, EnsembleModel):
+                self.onSelectEnsemble.emit(storage.get_ensemble(selected._id))
+            elif isinstance(selected, ExperimentModel):
+                self.onSelectExperiment.emit(storage.get_experiment(selected._id))
+            elif isinstance(selected, RealizationModel):
+                self.onSelectRealization.emit(
+                    storage.get_ensemble(selected.ensemble_id), selected.realization
+                )
 
     def _addItem(self) -> None:
         create_experiment_dialog = CreateExperimentDialog(self._notifier, parent=self)
