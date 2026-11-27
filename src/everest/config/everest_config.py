@@ -971,12 +971,17 @@ to read summary data from forward model, do:
 
     @model_validator(mode="after")
     def validate_simulation_folder_is_writeable(self) -> Self:
-        simulation_folder = Path(self.simulation_dir).resolve()
+        simulation_folder = Path(self.simulation_dir)
         nearest_existing = next(
             path
             for path in (simulation_folder, *simulation_folder.parents)
-            if os.path.exists(path)  # ruff: ignore[os-path-exists]
+            if os.path.lexists(path)
         )
+        if not Path(nearest_existing).is_dir():
+            raise ValueError(
+                f"Cannot create simulation folder '{simulation_folder}': "
+                f"'{nearest_existing}' is not a directory"
+            )
         if not os.access(nearest_existing, os.W_OK | os.X_OK):
             raise ValueError(
                 f"Cannot create simulation folder '{simulation_folder}': "
