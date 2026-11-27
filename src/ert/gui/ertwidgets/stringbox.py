@@ -66,8 +66,10 @@ class StringBox(QLineEdit):
 
     def _set_invalid(self, invalid: bool) -> None:
         self.setProperty("invalid", invalid)
-        self.style().unpolish(self)
-        self.style().polish(self)
+        style = self.style()
+        assert style is not None
+        style.unpolish(self)
+        style.polish(self)
 
     def emitChange(self, q_string: Any) -> None:
         self.textChanged.emit(str(q_string))
