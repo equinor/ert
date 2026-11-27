@@ -1,6 +1,7 @@
 from typing import override
 
 from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QResizeEvent
 from PyQt6.QtWidgets import QHBoxLayout, QLabel
 
 from .copy_button import CopyButton
@@ -64,6 +65,17 @@ class _CopyButton(CopyButton):
         self.copy_text(strip_runpath_magic_keywords(unescape_string(self.label.text())))
 
 
+class _WrappedLabel(QLabel):
+    """A word-wrapped label that reserves the height its lines need."""
+
+    @override
+    def resizeEvent(self, event: QResizeEvent | None) -> None:
+        super().resizeEvent(event)
+        # heightForWidth() never reports less than the current minimum height
+        self.setMinimumHeight(0)
+        self.setMinimumHeight(self.heightForWidth(self.width()))
+
+
 class CopyableLabel(QHBoxLayout):
     """CopyableLabel shows a string that is copyable via
     selection or clicking of a copy button
@@ -74,7 +86,8 @@ class CopyableLabel(QHBoxLayout):
     def __init__(self, text: str, *, wrap: bool = False) -> None:
         super().__init__()
 
-        self.label = QLabel(f"<b>{escape_string(text)}</b>")
+        label_class = _WrappedLabel if wrap else QLabel
+        self.label = label_class(f"<b>{escape_string(text)}</b>")
         self.label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
         self.label.setWordWrap(wrap)
 

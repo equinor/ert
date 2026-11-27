@@ -1,6 +1,6 @@
 import pytest
 from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QApplication, QWidget
+from PyQt6.QtWidgets import QApplication, QSizePolicy, QVBoxLayout, QWidget
 
 from ert.gui.ertwidgets.copyablelabel import (
     CopyableLabel,
@@ -61,3 +61,24 @@ def test_that_a_wrapped_label_breaks_a_long_path_without_altering_its_text(qtbot
     copyable_label.copy_button.copy()
     assert QApplication.clipboard().text() == path
     assert label.text() == f"<b>{path}</b>"
+
+
+def test_that_a_wrapped_label_shows_all_its_lines_when_narrower_than_its_size_hint(
+    qtbot,
+):
+    copyable_label = CopyableLabel("/a/b/c/d/e/f/g/h/i/j/k/l", wrap=True)
+    row = QWidget()
+    row.setLayout(copyable_label)
+    row.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Maximum)
+    window = QWidget()
+    layout = QVBoxLayout(window)
+    layout.addWidget(row)
+    layout.addStretch()
+    qtbot.addWidget(window)
+    window.resize(window.minimumSizeHint().width(), 400)
+    with qtbot.waitExposed(window):
+        window.show()
+
+    label = copyable_label.label
+    assert label.width() < label.sizeHint().width()
+    assert row.height() >= label.heightForWidth(label.width())
