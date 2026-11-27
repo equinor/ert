@@ -40,8 +40,10 @@ class SourceChip(QLabel):
         if source == DataSource.SELECTED_ENSEMBLE and ensemble_name:
             text = f"From {ensemble_name}"
         self.setProperty("source", source.value)
-        self.style().unpolish(self)
-        self.style().polish(self)
+        style = self.style()
+        assert style is not None
+        style.unpolish(self)
+        style.polish(self)
         # Keep long ensemble names from covering the card title; the full
         # text is in the tooltip.
         self.ensurePolished()
