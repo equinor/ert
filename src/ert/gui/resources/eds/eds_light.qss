@@ -205,9 +205,26 @@ QTableWidget#update_strategy_summary_widget QComboBox {
     border-bottom: 1px solid $INPUT_BORDER;
     border-radius: 0px;
     padding: 0px 8px;
+    min-height: 36px;
 }
-QTableWidget#update_strategy_summary_widget QComboBox:focus {
+QTableWidget#update_strategy_summary_widget QComboBox:focus,
+QTableWidget#update_strategy_summary_widget QComboBox:on {
     border-bottom: 2px solid $FOCUS;
+}
+QTableWidget#update_strategy_summary_widget QComboBox::drop-down {
+    border: none;
+    width: 32px;
+}
+QTableWidget#update_strategy_summary_widget QComboBox::down-arrow {
+    image: url(img:arrow_drop_down.svg);
+    width: 24px;
+    height: 24px;
+}
+QTableWidget#update_strategy_summary_widget QComboBox QAbstractItemView {
+    background-color: $INPUT_BACKGROUND;
+    color: $TEXT_DEFAULT;
+    border: none;
+    outline: none;
 }
 
 /* Suggestor */
