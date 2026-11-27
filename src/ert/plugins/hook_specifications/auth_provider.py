@@ -21,7 +21,7 @@ def auth_provider() -> PluginResponse[type[AuthProvider]]:
     message is shown to the user and the traceback is logged. Pressing Ctrl-C
     cancels the command.
 
-    The auth provider only handles the interactive login and logout. Ert does not
+    The auth provider only handles login and logout. Ert does not
     pass it to other plugins, so plugins that call authenticated services
     must get their tokens from their own authentication library, for
     example by reading the token cache written during login.
