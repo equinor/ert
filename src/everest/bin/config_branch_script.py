@@ -124,6 +124,11 @@ def config_branch_entry(args: list[str] | None = None) -> None:
         log_enabled_flags("branch", options)
         config_file, _, yml_config = options.config
         config = EverestConfig.load_file(config_file)
+        if config.environment.continue_from is not None:
+            parser.error(
+                "everest branch does not support configurations that set "
+                "environment.continue_from"
+            )
 
         opt_controls = opt_controls_by_batch(config.storage_dir, options.batch)
         if opt_controls is None:

@@ -28,6 +28,19 @@ class EnvironmentConfig(BaseModel, extra="forbid"):
             """
         ),
     )
+    continue_from: str | None = Field(
+        default=None,
+        description=dedent(
+            """
+            Output folder of an earlier run to continue from.
+
+            If the provided path is not absolute, it is assumed to be relative
+            to the directory of the configuration file. The `output_folder` and
+            `simulation_folder` of the new run must not overlap the output and
+            simulation folders of the earlier run.
+            """
+        ),
+    )
     log_level: Literal["debug", "info", "warning", "error", "critical"] | None = Field(
         default=None,
         deprecated=True,

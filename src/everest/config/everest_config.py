@@ -1006,6 +1006,13 @@ to read summary data from forward model, do:
 
         return str(Path(self.output_dir) / path)
 
+    @property
+    def continue_from_dir(self) -> str | None:
+        path = self.environment.continue_from
+        if path is None:
+            return None
+        return str(Path(self.config_directory) / path)
+
     def _get_output_subdirectory(self, subdirname: str) -> str:
         return str(Path(self.output_dir).resolve() / subdirname)
 

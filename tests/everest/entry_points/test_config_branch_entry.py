@@ -7,6 +7,7 @@ from everest.bin.config_branch_script import config_branch_entry
 from everest.config import EverestConfig
 from everest.config_file_loader import load_yaml
 from everest.util._utils import get_everest_experiment
+from tests.everest.utils import everest_config_with_defaults
 
 
 @pytest.mark.slow
@@ -89,3 +90,17 @@ def test_config_branch_preserves_config_section_order(cached_example):
 
     for control_val in control_values:
         assert f"+initial_guess:{control_val}" in diff_lines
+
+
+def test_that_everest_branch_rejects_a_config_with_continue_from(
+    capsys, change_to_tmpdir
+):
+    everest_config_with_defaults(
+        environment={"output_folder": "new", "continue_from": "old"}
+    ).write_to_file("config.yml")
+
+    with pytest.raises(SystemExit):
+        config_branch_entry(["config.yml", "branched.yml", "-b", "0"])
+
+    assert "environment.continue_from" in capsys.readouterr().err
+    assert not Path("branched.yml").exists()
