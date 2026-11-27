@@ -8,10 +8,11 @@ from collections.abc import Callable, Mapping, Sequence
 from typing import TYPE_CHECKING, Any, Literal, TypeVar, overload, override
 
 import pluggy
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, InstanceOf
 from typing_extensions import TypedDict
 
 from ert.config import (
+    AuthProvider,
     EcosystemPlugin,
     ForwardModelStepDocumentation,
     ForwardModelStepPlugin,
@@ -145,6 +146,10 @@ class ErtPluginManager(pluggy.PluginManager):
                 f"{names}"
             )
         return plugins[0] if plugins else None
+
+    def get_auth_provider(self) -> AuthProvider | None:
+        responses = self.hook.auth_provider()
+        return responses[0].data() if responses else None
 
     @staticmethod
     def _evaluate_config_hook(hook: pluggy.HookCaller, config_name: str) -> str | None:
@@ -425,6 +430,7 @@ class ErtRuntimePlugins(BaseModel, extra="forbid"):
     environment_variables: Mapping[str, str] = Field(default_factory=dict)
     env_pr_fm_step: Mapping[str, Mapping[str, Any]] = Field(default_factory=dict)
     help_links: dict[str, str] = Field(default_factory=dict)
+    auth_provider: InstanceOf[AuthProvider] | None = None
 
 
 def get_site_plugins(
@@ -480,6 +486,7 @@ def get_site_plugins(
         ),
         env_pr_fm_step=plugin_manager.get_forward_model_configuration(),
         help_links=plugin_manager.get_help_links(),
+        auth_provider=plugin_manager.get_auth_provider(),
     )
 
 

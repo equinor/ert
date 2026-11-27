@@ -78,3 +78,15 @@ Workflow
    :func: get_ert_parser
    :prog: ert
    :path: workflow
+
+Auth
+~~~~
+
+Log in or out with the auth provider installed by a site plugin, see
+:doc:`../getting_started/howto/plugin_system`. Fails if no auth provider is installed.
+
+.. argparse::
+   :module: ert.__main__
+   :func: get_ert_parser
+   :prog: ert
+   :path: auth

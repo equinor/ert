@@ -7,6 +7,7 @@ from .analysis_config import (
     OutlierSettings,
 )
 from .analysis_module import AnalysisModule, ESSettings, InversionTypeES
+from .auth_provider import AuthProvider
 from .breakthrough_config import BreakthroughConfig
 from .capture_validation import capture_validation
 from .design_matrix import DesignMatrix, DesignMatrixConfig
@@ -94,6 +95,7 @@ from .workflow_job import (
 __all__ = [
     "AnalysisConfig",
     "AnalysisModule",
+    "AuthProvider",
     "BaseErtScriptWorkflow",
     "BreakthroughConfig",
     "CircleShapeConfig",
