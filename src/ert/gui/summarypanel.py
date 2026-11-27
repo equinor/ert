@@ -10,13 +10,15 @@ from PyQt6.QtWidgets import (
     QLabel,
     QScrollArea,
     QVBoxLayout,
+    QWidget,
 )
 
-from ert.gui.ertwidgets import ErtSummary
+from ert.gui.ertwidgets import ErtSummary, ParametersSummary
 from ert.gui.ertwidgets.card import Card
+from ert.gui.experiments._design_matrix_panel import DesignMatrixPanel
 
 if TYPE_CHECKING:
-    from ert.config import ErtConfig
+    from ert.config import ErtConfig, ParameterConfig
 
 logger = logging.getLogger(__name__)
 
@@ -108,17 +110,11 @@ class SummaryPanel(QFrame):
 
         self.addColumn(text.getText())
 
-        parameter_list_updatable, parameter_list_not_updatable, parameter_count = (
-            summary.get_parameters()
+        self.parameters_summary = ParametersSummary()
+        self.parameters_summary.set_parameters(
+            self.config.parameter_configurations_with_design_matrix
         )
-        text = SummaryTemplate(f"Parameters ({parameter_count:,})", width=320)
-
-        text.startColumns()
-        text.addColumn("Updatable", parameter_list_updatable)
-        text.addColumn("Non-updatable", parameter_list_not_updatable)
-        text.endColumns()
-
-        self.addColumn(text.getText())
+        self._add_card(self._create_parameters_content(self.parameters_summary))
 
         observation_counts = summary.getObservations()
         text = SummaryTemplate(
@@ -129,11 +125,26 @@ class SummaryPanel(QFrame):
 
         self.addColumn(text.getText())
 
+    def _create_parameters_content(self, parameters_summary: QWidget) -> QWidget:
+        content = QWidget()
+        layout = QVBoxLayout(content)
+        layout.setContentsMargins(16, 12, 16, 12)
+        layout.addWidget(parameters_summary, 1)
+        design_matrix = self.config.analysis_config.design_matrix
+        if design_matrix is not None:
+            button = DesignMatrixPanel.create_show_button(design_matrix)
+            layout.addWidget(button, 0, Qt.AlignmentFlag.AlignRight)
+        return content
+
+    def set_parameter_configuration(
+        self, parameter_configuration: list[ParameterConfig]
+    ) -> None:
+        self.parameters_summary.set_parameters(parameter_configuration)
+
     def addColumn(self, text: str) -> None:
         text_widget = QLabel(text)
         text_widget.setWordWrap(True)
         text_widget.setTextFormat(Qt.TextFormat.RichText)
-
         text_widget.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)
         text_widget.setContentsMargins(16, 12, 16, 12)
 
@@ -143,12 +154,13 @@ class SummaryPanel(QFrame):
         scroll.setWidgetResizable(True)
         scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         scroll.setWidget(text_widget)
+        self._add_card(scroll)
 
+    def _add_card(self, widget: QWidget) -> None:
         card = Card()
         layout = QVBoxLayout(card)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(scroll)
-
+        layout.addWidget(widget)
         self._layout.addWidget(card, 1)
 
     def log_summary(self, run_model: str, num_realizations: int) -> None:

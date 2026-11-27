@@ -9,13 +9,13 @@ from ert.gui.ertwidgets import (
     StringBox,
     TargetEnsembleModel,
     TextModel,
-    get_parameters_button,
 )
 from ert.validation import ExperimentValidation, ProperNameFormatArgument
 from ert.validation.active_range import ActiveRange
 from ert.validation.range_string_argument import RangeSubsetStringArgument
 
 from ._design_matrix_panel import DesignMatrixPanel
+from .experiment_config_panel import ExperimentConfigPanel
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -96,16 +96,10 @@ def add_parameter_configuration_rows(
     config_num_realization: int | None = None,
 ) -> None:
     if design_matrix is not None:
-        layout.addRow(
-            "Design matrix",
-            DesignMatrixPanel.get_design_matrix_button(
-                design_matrix,
-                number_of_realizations_label,
-                config_num_realization,
-            ),
+        DesignMatrixPanel.add_realizations_warning(
+            design_matrix, number_of_realizations_label, config_num_realization
         )
 
-    if get_parameter_configuration():
-        layout.addRow(
-            "Parameters", get_parameters_button(get_parameter_configuration, parent)
-        )
+    # The parameters are shown in the summary below the experiment panels.
+    if isinstance(parent, ExperimentConfigPanel):
+        parent.set_parameter_configuration_getter(get_parameter_configuration)

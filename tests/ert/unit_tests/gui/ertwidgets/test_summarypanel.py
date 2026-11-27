@@ -35,8 +35,7 @@ def test_that_only_the_overflowing_summary_card_shows_a_scroll_bar(qtbot):
     panel.resize(900, 300)
     panel.show()
 
-    forward_model, parameters, observations_card = panel.findChildren(QScrollArea)
+    forward_model, observations_card = panel.findChildren(QScrollArea)
 
     assert not forward_model.verticalScrollBar().isVisible()
-    assert not parameters.verticalScrollBar().isVisible()
     assert observations_card.verticalScrollBar().isVisible()

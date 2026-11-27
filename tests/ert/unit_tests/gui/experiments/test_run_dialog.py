@@ -868,10 +868,7 @@ def test_that_design_matrix_show_parameters_button_is_visible(
     assert simulation_mode_combo
 
     simulation_mode_combo.setCurrentText(EnsembleExperiment.name())
-    simulation_settings = gui.findChild(EnsembleExperimentPanel)
-    show_dm_parameters = simulation_settings.findChild(
-        QPushButton, "show-dm-parameters"
-    )
+    show_dm_parameters = gui.findChild(QPushButton, "show-dm-parameters")
     if design_matrix_entry:
         assert show_dm_parameters
 
