@@ -1,3 +1,5 @@
+from typing import Literal
+
 from .config_dict import ConfigDict
 from .config_keywords import ConfigKeys
 from .config_schema_deprecations import deprecated_keywords_list
@@ -301,9 +303,12 @@ def install_job_directory_keyword() -> SchemaItem:
     )
 
 
-def design_matrix_keyword() -> SchemaItem:
+def _design_matrix_schema(
+    config_key: Literal[ConfigKeys.DESIGN_MATRIX, ConfigKeys.FMU_DESIGN],
+    multi_occurrence: bool,
+) -> SchemaItem:
     return SchemaItem(
-        kw=ConfigKeys.DESIGN_MATRIX,
+        kw=config_key,
         argc_min=1,
         argc_max=3,
         type_map=[
@@ -312,8 +317,16 @@ def design_matrix_keyword() -> SchemaItem:
             SchemaItemType.STRING,
         ],
         options_after=1,
-        multi_occurrence=True,
+        multi_occurrence=multi_occurrence,
     )
+
+
+def design_matrix_keyword() -> SchemaItem:
+    return _design_matrix_schema(ConfigKeys.DESIGN_MATRIX, multi_occurrence=True)
+
+
+def fmu_design_keyword() -> SchemaItem:
+    return _design_matrix_schema(ConfigKeys.FMU_DESIGN, multi_occurrence=False)
 
 
 def seismic_keyword() -> SchemaItem:
@@ -392,6 +405,7 @@ def init_user_config_schema() -> ConfigSchemaDict:
         positive_int_keyword(ConfigKeys.MAX_RUNNING),
         string_keyword(ConfigKeys.REALIZATION_MEMORY),
         design_matrix_keyword(),
+        fmu_design_keyword(),
         queue_system_keyword(False),
         queue_option_keyword(),
         load_workflow_job_keyword(),

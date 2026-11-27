@@ -7,6 +7,7 @@ from pathlib import Path
 
 import openpyxl
 import yaml
+from python_calamine import CalamineError, CalamineWorkbook
 
 from fmudesign.exceptions import FmudesignError
 
@@ -25,6 +26,7 @@ def excel_to_config(
     gen_input_sheet: str = "general_input",
     design_input_sheet: str = "designinput",
     default_val_sheet: str = "defaultvalues",
+    fallback_distribution_seed: int | None = None,
 ) -> DesignConfig:
     """Read excel file with input to design configuration
 
@@ -33,10 +35,13 @@ def excel_to_config(
         gen_input_sheet (str): Sheet name for general input
         design_input_sheet (str): Sheet name for design input
         default_val_sheet (str): Sheet name for default input
+        fallback_distribution_seed (int | None): Distribution seed used when
+            the general input sheet does not specify one
 
     Returns:
         DesignConfig for DesignMatrix
     """
+    _assert_valid_xlsx(input_filename)
     _assert_no_merged_cells(input_filename)
     sheet_names = excel_sheet_names(input_filename)
     general_input_sheet = find_sheet(gen_input_sheet, names=sheet_names)
@@ -44,6 +49,13 @@ def excel_to_config(
     default_values_sheet = find_sheet(default_val_sheet, names=sheet_names)
 
     general_input = GeneralInput.from_xlsx(input_filename, general_input_sheet)
+    if general_input.distribution_seed is None:
+        if fallback_distribution_seed is not None and fallback_distribution_seed < 0:
+            raise FmudesignError(
+                f"Fallback distribution seed for fmudesign must be a non-negative "
+                f"integer, was '{fallback_distribution_seed}'"
+            )
+        general_input.distribution_seed = fallback_distribution_seed
     design_input = DesignInput.from_xlsx(input_filename, design_input_sheet)
 
     return DesignConfig.from_input(
@@ -63,6 +75,26 @@ def config_to_yaml(config: DesignConfig, filename: str) -> None:
     """
     with Path(filename).open("w", encoding="utf-8") as stream:
         yaml.dump(config.model_dump(mode="json"), stream)
+
+
+def _assert_valid_xlsx(input_filename: str) -> None:
+    """Raises FmudesignError if input file is not a valid xlsx file"""
+    if not Path(input_filename).is_file():
+        raise FmudesignError(f"fmudesign file '{input_filename}' is not a file")
+
+    if Path(input_filename).suffix.lower() != ".xlsx":
+        raise FmudesignError(
+            f"fmudesign file must have file extension .xlsx; is '{input_filename}'"
+        )
+
+    try:
+        with CalamineWorkbook.from_path(input_filename) as workbook:
+            for sheet_name in workbook.sheet_names:
+                workbook.get_sheet_by_name(sheet_name)
+    except CalamineError as err:
+        raise FmudesignError(
+            f"fmudesign file '{input_filename}' is not a valid .xlsx file: {err}"
+        ) from err
 
 
 def _assert_no_merged_cells(input_filename: str) -> None:

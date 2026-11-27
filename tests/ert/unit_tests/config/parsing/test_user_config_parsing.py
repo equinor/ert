@@ -126,3 +126,41 @@ def test_that_seismic_entry_is_limited_to_one_element():
             init_user_config_schema(),
             "unused",
         )
+
+
+def test_that_fmu_design_is_a_valid_keyword(tmp_path):
+    design_config = tmp_path / "design_config.xlsx"
+    design_config.touch()
+    parsed = parse_contents(
+        f"""
+        NUM_REALIZATIONS 1
+
+        FMU_DESIGN {design_config}
+        """,
+        init_user_config_schema(),
+        "unused",
+    )
+
+    assert parsed["FMU_DESIGN"][0] == str(design_config)
+
+
+def test_that_preceding_fmu_design_config_keys_overwrites_the_first(tmp_path):
+    """The FMU_DESIGN keyword is single occurrence by limitation. This test is free
+    to change if made multi occurrence.
+    """
+    first_design = tmp_path / "first_design.xlsx"
+    second_design = tmp_path / "second_design.xlsx"
+    first_design.touch()
+    second_design.touch()
+    parsed = parse_contents(
+        f"""
+        NUM_REALIZATIONS 1
+
+        FMU_DESIGN {first_design}
+        FMU_DESIGN {second_design}
+        """,
+        init_user_config_schema(),
+        "unused",
+    )
+
+    assert parsed["FMU_DESIGN"][0] == str(second_design)
