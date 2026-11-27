@@ -306,10 +306,10 @@ QLabel#source_chip {
     font-weight: 500;
 }
 QLabel#source_chip[source="config"] {
-    background-color: $SELECTED_HIGHLIGHT;
-    color: $MEDIUM_GREEN;
+    background-color: $BACKGROUND_ACCENT_MUTED;
+    color: $TEXT_ON_MUTED_ACCENT;
 }
 QLabel#source_chip[source="selected_ensemble"] {
-    background-color: $WARNING_HIGHLIGHT;
-    color: $WARNING_TEXT;
+    background-color: $BACKGROUND_WARNING_MUTED;
+    color: $TEXT_ON_MUTED_WARNING;
 }
