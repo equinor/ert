@@ -21,6 +21,12 @@ TEXT_ON_ACCENT = "#ffffff"
 INPUT_BACKGROUND = "#f8f8f8"
 INPUT_BORDER = "#696969"
 FOCUS = "#5cade5"
+# background.non-interactive.accent-muted, text.on-muted.accent and the
+# corresponding warning tokens, used by chips
+BACKGROUND_ACCENT_MUTED = "#eefbfd"
+TEXT_ON_MUTED_ACCENT = "#20474b"
+BACKGROUND_WARNING_MUTED = "#fff5e7"
+TEXT_ON_MUTED_WARNING = "#603204"
 
 # The colours above are used in light mode. These are the corresponding
 # tokens of the EDS dark color scheme, keyed by the same names. For example
@@ -42,6 +48,10 @@ DARK_COLORS = {
     "INPUT_BACKGROUND": "#191a1a",
     "INPUT_BORDER": "#b4c7d7",
     "FOCUS": "#2d8bc5",
+    "BACKGROUND_ACCENT_MUTED": "#171a1a",
+    "TEXT_ON_MUTED_ACCENT": "#d7fafd",
+    "BACKGROUND_WARNING_MUTED": "#1d1916",
+    "TEXT_ON_MUTED_WARNING": "#ffe7c3",
     "BLUE_BACKGROUND": "#171a1c",
     "BLUE_TEXT": "#a1e0ff",
     "RED_BACKGROUND": "#1f1717",

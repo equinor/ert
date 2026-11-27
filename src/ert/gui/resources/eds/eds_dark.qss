@@ -211,3 +211,19 @@ QDockWidget#left_plot_side_panel QWidget#plot_side_panel_body {
 QDockWidget#right_plot_side_panel QWidget#plot_side_panel_body {
     border-left: 1px solid $HEAVY_GREY;
 }
+
+/* Source chip */
+QLabel#source_chip {
+    border-radius: 11px;
+    padding: 0px 8px;
+    font-size: 12px;
+    font-weight: 500;
+}
+QLabel#source_chip[source="config"] {
+    background-color: $BACKGROUND_ACCENT_MUTED;
+    color: $TEXT_ON_MUTED_ACCENT;
+}
+QLabel#source_chip[source="selected_ensemble"] {
+    background-color: $BACKGROUND_WARNING_MUTED;
+    color: $TEXT_ON_MUTED_WARNING;
+}

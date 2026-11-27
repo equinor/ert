@@ -1,4 +1,5 @@
 from collections import Counter, defaultdict
+from collections.abc import Iterable
 
 from typing_extensions import TypedDict
 
@@ -65,22 +66,31 @@ class ErtSummary:
         )
 
     def getObservations(self) -> list[ObservationCount]:
-        name_to_types = defaultdict(set)
-        for obs in self.ert_config.observation_declarations:
-            name_to_types[obs.name].add(obs.type)
-
-        multi_type_names = {
-            name for name, types in name_to_types.items() if len(types) > 1
-        }
-
-        keys = (
-            f"{obs.name}[{obs.type}]" if obs.name in multi_type_names else obs.name
-            for obs in self.ert_config.observation_declarations
+        return count_observations(
+            (obs.name, obs.type) for obs in self.ert_config.observation_declarations
         )
-        counts = Counter(keys)
 
-        counts_list = [
-            ObservationCount({"observation_key": key, "count": count})
-            for key, count in counts.items()
-        ]
-        return sorted(counts_list, key=lambda k: k["observation_key"].lower())
+
+def count_observations(
+    declarations: Iterable[tuple[str, str]],
+) -> list[ObservationCount]:
+    """Count observation declarations per name, given (name, type) pairs.
+
+    Names used by more than one observation type get the type appended.
+    """
+    declarations = list(declarations)
+    name_to_types = defaultdict(set)
+    for name, obs_type in declarations:
+        name_to_types[name].add(obs_type)
+
+    multi_type_names = {name for name, types in name_to_types.items() if len(types) > 1}
+
+    counts = Counter(
+        f"{name}[{obs_type}]" if name in multi_type_names else name
+        for name, obs_type in declarations
+    )
+    counts_list = [
+        ObservationCount({"observation_key": key, "count": count})
+        for key, count in counts.items()
+    ]
+    return sorted(counts_list, key=lambda k: k["observation_key"].lower())

@@ -186,6 +186,10 @@ class ManualUpdatePanel(ExperimentConfigPanel):
         self._update_strategy_summary_widget.setVisible(show_update_settings)
 
     @override
+    def get_selected_ensemble(self) -> Ensemble | None:
+        return self._ensemble_selector.selected_ensemble
+
+    @override
     def isConfigurationValid(self) -> bool:
         return (
             self._active_realizations_field.isValid()

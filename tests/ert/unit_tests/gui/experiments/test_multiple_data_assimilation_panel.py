@@ -210,6 +210,7 @@ def test_that_prior_selection_updates_summary_and_run_configuration(qtbot: QtBot
     selector = panel.findChild(EnsembleSelector)
     assert checkbox is not None
     assert selector is not None
+    assert panel.get_selected_ensemble() is None
     checkbox.setChecked(True)
     for index, expected_row in enumerate(
         [("Adaptive", "GenKW", "1"), ("Distance", "GenKW", "1")]
@@ -220,10 +221,12 @@ def test_that_prior_selection_updates_summary_and_run_configuration(qtbot: QtBot
         assert _summary_rows(summary) == [expected_row]
         selected_ensemble = selector.selected_ensemble
         assert selected_ensemble is not None
+        assert panel.get_selected_ensemble() is selected_ensemble
         assert panel.get_experiment_arguments().parameter_configuration == list(
             selected_ensemble.experiment.parameter_configuration.values()
         )
     checkbox.setChecked(False)
+    assert panel.get_selected_ensemble() is None
     assert _summary_rows(summary) == [("Global", "GenKW", "1")]
     assert panel.get_experiment_arguments().parameter_configuration == [parameter]
 
