@@ -17,6 +17,10 @@ TEXT_DEFAULT = "#3d3d3d"
 TEXT_TERTIARY = "#6f6f6f"
 WHITE = "#ffffff"
 TEXT_ON_ACCENT = "#ffffff"
+# background.input, border.interactive.neutral.emphasis and border.interactive.focus
+INPUT_BACKGROUND = "#f8f8f8"
+INPUT_BORDER = "#696969"
+FOCUS = "#5cade5"
 
 # The colours above are used in light mode. These are the corresponding
 # tokens of the EDS dark color scheme, keyed by the same names. For example
@@ -35,6 +39,9 @@ DARK_COLORS = {
     "TEXT_TERTIARY": "#738696",
     "WHITE": "#030303",
     "TEXT_ON_ACCENT": "#030303",
+    "INPUT_BACKGROUND": "#191a1a",
+    "INPUT_BORDER": "#b4c7d7",
+    "FOCUS": "#2d8bc5",
     "BLUE_BACKGROUND": "#171a1c",
     "BLUE_TEXT": "#a1e0ff",
     "RED_BACKGROUND": "#1f1717",

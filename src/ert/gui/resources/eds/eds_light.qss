@@ -136,6 +136,24 @@ QFrame#card {
     border-radius: 4px;
 }
 
+/* Text inputs, explicit so they do not depend on the system base palette */
+QFrame#card StringBox {
+    background-color: $INPUT_BACKGROUND;
+    color: $TEXT_DEFAULT;
+    placeholder-text-color: $TEXT_TERTIARY;
+    border: none;
+    border-bottom: 1px solid $INPUT_BORDER;
+    border-radius: 0px;
+    padding: 2px 4px;
+}
+QFrame#card StringBox:focus { border-bottom: 2px solid $FOCUS; }
+QFrame#card StringBox:disabled { color: $TEXT_TERTIARY; }
+StringBox[invalid="true"],
+QFrame#card StringBox[invalid="true"] {
+    background-color: $RED_BACKGROUND;
+    border-bottom: 2px solid $RED_TEXT;
+}
+
 /* Accordion */
 Accordion QPushButton#accordion_header {
     background-color: $WHITE;
