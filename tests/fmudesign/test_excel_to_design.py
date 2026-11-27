@@ -1,3 +1,4 @@
+import re
 from datetime import date
 from pathlib import Path
 
@@ -948,5 +949,10 @@ def test_that_missing_sensname_column_in_designinput_raises_error(use_tmpdir):
     )
     input_path = _write_config_workbook("designinput.xlsx", design_input=design_input)
 
-    with pytest.raises(FmudesignError, match="sensname"):
+    with pytest.raises(
+        FmudesignError,
+        match=re.escape(
+            "The designinput sheet is missing required 'sensname' column."
+        ),
+    ):
         excel_to_config(input_path)

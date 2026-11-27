@@ -124,8 +124,7 @@ def _check_designinput(dsgn_input: pd.DataFrame) -> None:
     """Checks for valid input in designinput sheet"""
     if "sensname" not in dsgn_input:
         raise FmudesignError(
-            "The designinput sheet has no sensname column. "
-            "Each sensitivity must be named in a column called sensname."
+            "The designinput sheet is missing required 'sensname' column."
         )
 
     if dsgn_input["sensname"].head(1).isna().any():
