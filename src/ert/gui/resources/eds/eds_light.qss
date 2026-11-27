@@ -136,7 +136,6 @@ QFrame#card {
     border-radius: 4px;
 }
 
-/* Text inputs, explicit so they do not depend on the system base palette */
 QFrame#card StringBox {
     background-color: $INPUT_BACKGROUND;
     color: $TEXT_DEFAULT;
