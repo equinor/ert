@@ -1559,3 +1559,30 @@ def test_that_negative_max_memory_fails(max_memory):
         ValidationError, match=f"Negative memory does not make sense in {max_memory}"
     ):
         everest_config_with_defaults(simulator={"max_memory": max_memory})
+
+
+@pytest.mark.usefixtures("change_to_tmpdir")
+@pytest.mark.parametrize(
+    "simulation_folder_below_read_only_dir",
+    [Path(), Path("sub") / "sim"],
+    ids=["read_only_folder_itself", "missing_folder_under_read_only_dir"],
+)
+def test_that_simulation_folder_in_or_under_read_only_directory_fails_validation(
+    simulation_folder_below_read_only_dir,
+):
+    read_only_dir = Path("read_only").resolve()
+    read_only_dir.mkdir()
+    read_only_dir.chmod(0o555)
+
+    with pytest.raises(
+        ValidationError,
+        match=f"'{re.escape(str(read_only_dir))}' is not writeable or executable",
+    ):
+        everest_config_with_defaults(
+            config_path=Path(),
+            environment={
+                "simulation_folder": str(
+                    read_only_dir / simulation_folder_below_read_only_dir
+                )
+            },
+        )
