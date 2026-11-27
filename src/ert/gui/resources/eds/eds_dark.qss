@@ -186,3 +186,15 @@ Accordion QPushButton#accordion_header {
 Accordion QPushButton#accordion_header:hover {
     background-color: rgba(255, 255, 255, 20);
 }
+
+/* Plot side panels */
+QWidget#plot_side_panel_titlebar, QWidget#plot_side_panel_body {
+    background-color: $LIGHT_GREY;
+}
+QWidget#plot_side_panel_titlebar { border-bottom: 1px solid $HEAVY_GREY; }
+QDockWidget#left_plot_side_panel QWidget#plot_side_panel_body {
+    border-right: 1px solid $HEAVY_GREY;
+}
+QDockWidget#right_plot_side_panel QWidget#plot_side_panel_body {
+    border-left: 1px solid $HEAVY_GREY;
+}

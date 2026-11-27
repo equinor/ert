@@ -279,3 +279,15 @@ QScrollArea#suggestor_scroll QScrollBar::handle {
 QScrollArea#suggestor_scroll QScrollBar::sub-line:vertical, QScrollArea#suggestor_scroll QScrollBar::add-line:vertical {
     background: none;
 }
+
+/* Plot side panels */
+QWidget#plot_side_panel_titlebar, QWidget#plot_side_panel_body {
+    background-color: $LIGHT_GREY;
+}
+QWidget#plot_side_panel_titlebar { border-bottom: 1px solid $HEAVY_GREY; }
+QDockWidget#left_plot_side_panel QWidget#plot_side_panel_body {
+    border-right: 1px solid $HEAVY_GREY;
+}
+QDockWidget#right_plot_side_panel QWidget#plot_side_panel_body {
+    border-left: 1px solid $HEAVY_GREY;
+}

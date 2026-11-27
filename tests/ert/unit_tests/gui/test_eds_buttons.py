@@ -1,8 +1,10 @@
+from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QColor
-from PyQt6.QtWidgets import QFrame, QPushButton, QVBoxLayout
+from PyQt6.QtWidgets import QFrame, QLabel, QMainWindow, QPushButton, QVBoxLayout
 
 from ert.gui import eds_colors
 from ert.gui.eds_theme import render_eds_stylesheet
+from ert.gui.plotting.widgets.plot_side_panel import PlotSidePanel
 
 
 def _button_in_central_widget(qtbot) -> tuple[QFrame, QPushButton]:
@@ -33,3 +35,18 @@ def test_that_disabled_push_buttons_in_the_central_widget_have_a_grey_outline(
     pixel = button.grab().toImage().pixelColor(button.width() // 2, 0)
 
     assert pixel == QColor(eds_colors.HEAVY_GREY)
+
+
+def test_that_plot_side_panels_use_the_light_grey_canvas(qtbot):
+    window = QMainWindow()
+    panel = PlotSidePanel("Plot controls", QLabel("content"), window, on_right=True)
+    window.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, panel)
+    qtbot.addWidget(window)
+    window.setStyleSheet(render_eds_stylesheet())
+    window.resize(400, 300)
+    window.show()
+
+    body = panel.widget()
+    pixel = body.grab().toImage().pixelColor(body.width() // 2, body.height() - 2)
+
+    assert pixel == QColor(eds_colors.LIGHT_GREY)

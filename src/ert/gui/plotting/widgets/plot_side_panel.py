@@ -10,13 +10,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from ert.gui.detect_mode import is_dark_mode
 from ert.gui.icon_utils import load_icon
-
-SIDE_PANEL_BACKGROUND_DARK = "rgb(64, 64, 64)"
-SIDE_PANEL_BACKGROUND_LIGHT = "lightgray"
-SIDE_PANEL_BORDER_DARK = "#2d2d2d"
-SIDE_PANEL_BORDER_LIGHT = "#b0b0b0"
 
 
 class PlotSidePanel(QDockWidget):
@@ -63,26 +57,6 @@ class PlotSidePanel(QDockWidget):
 
         title_bar = QWidget()
         title_bar.setObjectName("plot_side_panel_titlebar")
-        background = (
-            SIDE_PANEL_BACKGROUND_DARK
-            if is_dark_mode()
-            else SIDE_PANEL_BACKGROUND_LIGHT
-        )
-        border_color = (
-            SIDE_PANEL_BORDER_DARK if is_dark_mode() else SIDE_PANEL_BORDER_LIGHT
-        )
-        divider_edge = "left" if on_right else "right"
-        self.setStyleSheet(
-            "QWidget#plot_side_panel_titlebar, QWidget#plot_side_panel_body {"
-            f"  background-color: {background};"
-            "}"
-            "QWidget#plot_side_panel_titlebar {"
-            f"  border-bottom: 1px solid {border_color};"
-            "}"
-            "QWidget#plot_side_panel_body {"
-            f"  border-{divider_edge}: 1px solid {border_color};"
-            "}"
-        )
         title_layout = QHBoxLayout(title_bar)
         title_layout.setContentsMargins(2, 2, 2, 2)
         title_layout.setSpacing(2)
