@@ -75,9 +75,11 @@ class Accordion(QWidget):
         layout.addWidget(self.header)
         layout.addWidget(self.content)
 
-        self.header.toggled.connect(self._on_toggled)
         self.header.setChecked(expanded)
-        self._on_toggled(expanded)
+        self.header.setIcon(self._collapse_icon if expanded else self._expand_icon)
+        if not expanded:
+            self.content.hide()
+        self.header.toggled.connect(self._on_toggled)
 
     def _on_toggled(self, expanded: bool) -> None:
         self.header.setIcon(self._collapse_icon if expanded else self._expand_icon)

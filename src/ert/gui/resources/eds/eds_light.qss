@@ -118,7 +118,8 @@ QFrame#card {
     border-radius: 4px;
 }
 
-QFrame#card StringBox {
+QFrame#card StringBox,
+QFrame#card QAbstractSpinBox {
     background-color: $INPUT_BACKGROUND;
     color: $TEXT_DEFAULT;
     placeholder-text-color: $TEXT_TERTIARY;
@@ -127,8 +128,10 @@ QFrame#card StringBox {
     border-radius: 0px;
     padding: 2px 4px;
 }
-QFrame#card StringBox:focus { border-bottom: 2px solid $FOCUS; }
-QFrame#card StringBox:disabled { color: $TEXT_TERTIARY; }
+QFrame#card StringBox:focus,
+QFrame#card QAbstractSpinBox:focus { border-bottom: 2px solid $FOCUS; }
+QFrame#card StringBox:disabled,
+QFrame#card QAbstractSpinBox:disabled { color: $TEXT_TERTIARY; }
 StringBox[invalid="true"],
 QFrame#card StringBox[invalid="true"] {
     background-color: $RED_BACKGROUND;
