@@ -10,9 +10,9 @@ from ert.gui.ertwidgets.copyablelabel import (
 
 @pytest.fixture(
     params=[
-        ("<b>hehe/hoho</b>", "hehe/hoho"),
-        ("<b>fooo/hoho-<ITER></b>", "fooo"),
-        ("<b>booo/hoho-<IENS></b>", "booo"),
+        ("hehe/hoho", "hehe/hoho"),
+        ("fooo/hoho-<ITER>", "fooo"),
+        ("booo/hoho-<IENS>", "booo"),
     ]
 )
 def label_testcase(request):
@@ -20,8 +20,8 @@ def label_testcase(request):
 
 
 def test_copy_clickbtn(qtbot, label_testcase):
-    label_markup, label = label_testcase
-    copyable_label = CopyableLabel(label_markup)
+    text, label = label_testcase
+    copyable_label = CopyableLabel(text)
     wrapper_widget = QWidget()
     wrapper_widget.setLayout(copyable_label)
 
@@ -31,6 +31,13 @@ def test_copy_clickbtn(qtbot, label_testcase):
     qtbot.mouseClick(copyable_label.copy_button, Qt.MouseButton.LeftButton)
 
     assert QApplication.clipboard().text() == label
+
+
+def test_that_html_in_the_text_is_shown_literally(qtbot):
+    copyable_label = CopyableLabel("<i>/path/<IENS></i>")
+
+    assert copyable_label.label.textFormat() == Qt.TextFormat.PlainText
+    assert copyable_label.label.text() == "<i>/path/<IENS></i>"
 
 
 @pytest.mark.parametrize(

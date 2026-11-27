@@ -233,7 +233,7 @@ def clean_up_diplayed_runpath(gui: QWidget):
 
     current_directory = str(Path.cwd())
     label_text = runpath_label.label.text()
-    runpath_label.label.setText(label_text.replace(current_directory, "&lt;cwd&gt;"))
+    runpath_label.label.setText(label_text.replace(current_directory, "<cwd>"))
 
 
 @pytest.fixture
