@@ -82,7 +82,8 @@ QToolButton#run_experiment:disabled {
     color: $DARK_GREY;
 }
 
-/* Outlined primary button */
+/* Outlined primary buttons, also used outside the main window */
+QFrame#central_widget QPushButton,
 QPushButton#copy_button {
     background-color: transparent;
     color: $MEDIUM_GREEN;
@@ -90,10 +91,12 @@ QPushButton#copy_button {
     border-radius: 4px;
     padding: 4px 12px;
 }
+QFrame#central_widget QPushButton:hover,
 QPushButton#copy_button:hover {
     background-color: $LIGHT_GREEN;
     border-color: $DARK_GREEN;
 }
+QFrame#central_widget QPushButton:disabled,
 QPushButton#copy_button:disabled {
     background-color: transparent;
     color: $DARK_GREY;
