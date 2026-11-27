@@ -7,19 +7,17 @@ import stat
 import uuid
 from pathlib import Path
 
+from .migration_utils import ensemble_dirs
+
 logger = logging.getLogger(__name__)
 
 info = "Move SCALAR.parquet into ensemble blobs"
 
 
 def _move_scalar_parquet_into_blobs(path: Path) -> None:
-    ensembles_dir = path / "ensembles"
-    if not ensembles_dir.exists():
-        return
-
-    for ens_dir in ensembles_dir.iterdir():
+    for ens_dir in ensemble_dirs(path):
         parquet_file = ens_dir / "SCALAR.parquet"
-        if not ens_dir.is_dir() or not parquet_file.exists():
+        if not parquet_file.exists():
             continue
 
         blob_dir = ens_dir / "blobs"

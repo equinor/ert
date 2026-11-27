@@ -1,23 +1,17 @@
 from __future__ import annotations
 
-import json
 from pathlib import Path
 from typing import Any
+
+from .migration_utils import experiment_dirs, read_json, write_json
 
 info = "Unroll EverestControl to one config per parameter"
 
 
 def migrate_everest_control_format(path: Path) -> None:
-    experiments_dir = path / "experiments"
-    if not experiments_dir.exists():
-        return
-
-    for exp_dir in experiments_dir.iterdir():
-        if not exp_dir.is_dir():
-            continue
-
+    for exp_dir in experiment_dirs(path):
         index_file = exp_dir / "index.json"
-        index_data = json.loads(index_file.read_text(encoding="utf-8"))
+        index_data = read_json(index_file)
 
         experiment_data = index_data.get("experiment")
         params_config = experiment_data.get("parameter_configuration")
@@ -67,7 +61,7 @@ def migrate_everest_control_format(path: Path) -> None:
 
         if modified:
             experiment_data["parameter_configuration"] = new_params_config
-            index_file.write_text(json.dumps(index_data, indent=2), encoding="utf-8")
+            write_json(index_file, index_data)
 
 
 def migrate(path: Path) -> None:

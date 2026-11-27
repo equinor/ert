@@ -1,8 +1,9 @@
 from __future__ import annotations
 
-import json
 import logging
 from pathlib import Path
+
+from .migration_utils import ensemble_dirs, read_json, write_json
 
 logger = logging.getLogger(__name__)
 
@@ -10,17 +11,14 @@ info = "Remove is_improvement flag from ensembles"
 
 
 def migrate(path: Path) -> None:
-    ensemble_dir = path / "ensembles"
-    if not ensemble_dir.exists():
-        return
-    for ens_dir in ensemble_dir.iterdir():
+    for ens_dir in ensemble_dirs(path):
         index_file = ens_dir / "index.json"
         if not index_file.exists():
             continue
 
-        index_data = json.loads(index_file.read_text(encoding="utf-8"))
+        index_data = read_json(index_file)
 
         if "is_improvement" in index_data:
             index_data.pop("is_improvement")
-            index_file.write_text(json.dumps(index_data, indent=2), encoding="utf-8")
+            write_json(index_file, index_data)
             logger.info("Removed is_improvement flag from %s", index_file)
