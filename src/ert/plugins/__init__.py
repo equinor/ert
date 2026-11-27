@@ -29,7 +29,7 @@ def plugin(name: str) -> Callable[[Callable[P, Any]], Callable[P, Any]]:
                     "help_links",
                     "installable_forward_model_steps",
                     "ecosystem_plugin",
-                    "login_provider",
+                    "auth_provider",
                     "forward_model_configuration",
                     "site_configurations",
                 }

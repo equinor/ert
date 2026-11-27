@@ -82,8 +82,8 @@ Workflow
 Login
 ~~~~~
 
-Log in with the login provider installed by a site plugin, see
-:doc:`../getting_started/howto/plugin_system`. Fails if no login provider is installed.
+Log in with the auth provider installed by a site plugin, see
+:doc:`../getting_started/howto/plugin_system`. Fails if no auth provider is installed.
 
 .. argparse::
    :module: ert.__main__

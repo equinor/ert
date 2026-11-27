@@ -7,6 +7,7 @@ from .analysis_config import (
     OutlierSettings,
 )
 from .analysis_module import AnalysisModule, ESSettings, InversionTypeES
+from .auth_provider import AuthProvider
 from .breakthrough_config import BreakthroughConfig
 from .capture_validation import capture_validation
 from .design_matrix import DesignMatrix, DesignMatrixConfig
@@ -34,7 +35,6 @@ from .gen_data_config import GenDataConfig
 from .gen_kw_config import DataSource, GenKwConfig, PriorDict
 from .known_response_types import KnownResponseTypes
 from .lint_file import lint_file
-from .login_provider import LoginProvider
 from .model_config import ModelConfig
 from .parameter_config import (
     LocalizationType,
@@ -95,6 +95,7 @@ from .workflow_job import (
 __all__ = [
     "AnalysisConfig",
     "AnalysisModule",
+    "AuthProvider",
     "BaseErtScriptWorkflow",
     "BreakthroughConfig",
     "CircleShapeConfig",
@@ -136,7 +137,6 @@ __all__ = [
     "LegacyWorkflowConfigs",
     "LocalQueueOptions",
     "LocalizationType",
-    "LoginProvider",
     "ModelConfig",
     "Observation",
     "ObservationGroups",

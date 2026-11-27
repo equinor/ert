@@ -3,8 +3,8 @@ from abc import abstractmethod
 from pydantic import BaseModel
 
 
-class LoginProvider(BaseModel):
-    """Base class for login provider plugins.
+class AuthProvider(BaseModel):
+    """Base class for auth provider plugins.
 
     Only covers the interactive login run by ``ert login``.
     """

@@ -178,9 +178,9 @@ def run_lint_wrapper(args: Namespace, _: ErtRuntimePlugins) -> None:
 
 
 def run_login(args: Namespace, runtime_plugins: ErtRuntimePlugins) -> None:
-    provider = runtime_plugins.login_provider
+    provider = runtime_plugins.auth_provider
     if provider is None:
-        raise ErtCliError("No login provider is installed")
+        raise ErtCliError("No auth provider is installed")
     provider_name = type(provider).__name__
     logger.info(f"Logging in with {provider_name}")
     try:
@@ -510,7 +510,7 @@ def get_ert_parser(parser: ArgumentParser | None = None) -> ArgumentParser:
         "--verbose", action="store_true", help="Show verbose output.", default=False
     )
     login_parser = subparsers.add_parser(
-        "login", help="Log in with the site login provider."
+        "login", help="Log in with the site auth provider."
     )
     login_parser.set_defaults(func=run_login)
     login_parser.add_argument(

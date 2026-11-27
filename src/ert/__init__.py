@@ -1,6 +1,7 @@
 """Ert - Ensemble Reservoir Tool - a package for reservoir modeling."""
 
 from .config import (
+    AuthProvider,
     EcosystemPlugin,
     ErtScript,
     ErtScriptWorkflow,
@@ -9,7 +10,6 @@ from .config import (
     ForwardModelStepPlugin,
     ForwardModelStepValidationError,
     ForwardModelStepWarning,
-    LoginProvider,
     WorkflowConfigs,
 )
 from .plugins import plugin
@@ -17,6 +17,7 @@ from .scheduler import JobState
 from .workflow_runner import WorkflowRunner
 
 __all__ = [
+    "AuthProvider",
     "EcosystemPlugin",
     "ErtScript",
     "ErtScriptWorkflow",
@@ -26,7 +27,6 @@ __all__ = [
     "ForwardModelStepValidationError",
     "ForwardModelStepWarning",
     "JobState",
-    "LoginProvider",
     "WorkflowConfigs",
     "WorkflowRunner",
     "plugin",

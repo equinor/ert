@@ -186,5 +186,5 @@ nitpick_ignore = [
     ("py:class", "Storage"),
     ("py:class", "StatusEvents"),
     ("py:class", "PluginResponse"),
-    ("py:class", "LoginProvider"),
+    ("py:class", "AuthProvider"),
 ]

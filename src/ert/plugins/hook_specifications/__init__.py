@@ -1,3 +1,4 @@
+from .auth_provider import auth_provider
 from .ecosystem_plugins import ecosystem_plugin
 from .event_listener import on_status_event
 from .forward_model_steps import (
@@ -11,13 +12,13 @@ from .jobs import (
     legacy_ertscript_workflow,
 )
 from .logging import add_log_handle_to_root, add_span_processor
-from .login_provider import login_provider
 from .net_utils import get_ip_address
 from .site_config import site_configurations
 
 __all__ = [
     "add_log_handle_to_root",
     "add_span_processor",
+    "auth_provider",
     "ecosystem_plugin",
     "ertscript_workflow",
     "forward_model_configuration",
@@ -26,7 +27,6 @@ __all__ = [
     "installable_forward_model_steps",
     "installable_workflow_jobs",
     "legacy_ertscript_workflow",
-    "login_provider",
     "on_status_event",
     "site_configurations",
 ]
