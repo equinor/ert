@@ -198,6 +198,17 @@ QTableWidget#update_strategy_summary_widget QHeaderView::section {
     min-height: 32px;
     color: $TEXT_DEFAULT;
 }
+QTableWidget#update_strategy_summary_widget QComboBox {
+    background-color: $INPUT_BACKGROUND;
+    color: $TEXT_DEFAULT;
+    border: none;
+    border-bottom: 1px solid $INPUT_BORDER;
+    border-radius: 0px;
+    padding: 0px 8px;
+}
+QTableWidget#update_strategy_summary_widget QComboBox:focus {
+    border-bottom: 2px solid $FOCUS;
+}
 
 /* Suggestor */
 Suggestor QPushButton[variant="primary"] {

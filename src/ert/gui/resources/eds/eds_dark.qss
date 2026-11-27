@@ -37,6 +37,18 @@ QFrame#card StringBox[invalid="true"] {
     border-bottom: 2px solid $RED_TEXT;
 }
 
+QTableWidget#update_strategy_summary_widget QComboBox {
+    background-color: $INPUT_BACKGROUND;
+    color: $TEXT_DEFAULT;
+    border: none;
+    border-bottom: 1px solid $INPUT_BORDER;
+    border-radius: 0px;
+    padding: 0px 8px;
+}
+QTableWidget#update_strategy_summary_widget QComboBox:focus {
+    border-bottom: 2px solid $FOCUS;
+}
+
 /* Contained (primary) button */
 QToolButton#run_experiment {
     background-color: $MEDIUM_GREEN;

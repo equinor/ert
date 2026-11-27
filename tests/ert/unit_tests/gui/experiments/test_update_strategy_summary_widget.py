@@ -1,6 +1,7 @@
 from unittest.mock import MagicMock
 
 import pytest
+from PyQt6.QtGui import QColor
 from PyQt6.QtWidgets import QComboBox
 from pytestqt.qtbot import QtBot
 
@@ -10,6 +11,8 @@ from ert.config.parameter_config import (
     ParameterConfig,
     ParameterType,
 )
+from ert.gui import eds_colors
+from ert.gui.eds_theme import render_eds_stylesheet
 from ert.gui.ertwidgets.models.parameter_configuration_state_model import (
     ParameterConfigurationStateModel,
 )
@@ -150,3 +153,20 @@ def test_that_strategy_cannot_be_chosen_in_the_summary_when_a_prior_is_selected(
     assert widget.cellWidget(0, 0) is None
     assert _rows(widget) == [("Distance", "GenKW", "1")]
     assert widget.item(0, 0).toolTip()
+
+
+def test_that_strategy_selector_covers_the_cell_text_with_an_opaque_background(
+    qtbot: QtBot,
+):
+    widget = UpdateStrategySummaryWidget(
+        ParameterConfigurationStateModel([_parameter()])
+    )
+    qtbot.addWidget(widget)
+    widget.setStyleSheet(render_eds_stylesheet())
+    widget.show()
+
+    selector = _strategy_selector(widget)
+    assert selector is not None
+    pixel = selector.grab().toImage().pixelColor(2, selector.height() // 2)
+
+    assert pixel == QColor(eds_colors.INPUT_BACKGROUND)
