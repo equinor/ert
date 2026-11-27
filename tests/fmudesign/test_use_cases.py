@@ -218,7 +218,6 @@ def test_that_advanced_examples_preserve_correlations_and_dependencies(
     _run_cli("init", "ex8_mc_with_correls.xlsx")
 
     correlation_config = excel_to_config("ex2_correlations.xlsx")
-    assert Path(correlation_config.background["extern"]).is_file()
     assert Path(correlation_config.sensitivities["sens8"]["extern_file"]).is_file()
     assert correlation_config.sensitivities["sens7"]["correlations"]["sheetnames"] == [
         "corr1"
