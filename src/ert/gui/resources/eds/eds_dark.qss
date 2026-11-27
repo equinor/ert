@@ -220,10 +220,10 @@ QLabel#source_chip {
     font-weight: 500;
 }
 QLabel#source_chip[source="config"] {
-    background-color: $CHIP_CONFIG_BACKGROUND;
-    color: $CHIP_CONFIG_TEXT;
+    background-color: $SELECTED_HIGHLIGHT;
+    color: $MEDIUM_GREEN;
 }
 QLabel#source_chip[source="selected_ensemble"] {
-    background-color: $CHIP_SELECTED_ENSEMBLE_BACKGROUND;
-    color: $CHIP_SELECTED_ENSEMBLE_TEXT;
+    background-color: $WARNING_HIGHLIGHT;
+    color: $WARNING_TEXT;
 }

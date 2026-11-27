@@ -59,10 +59,10 @@ def test_that_chip_background_comes_from_the_eds_stylesheet_for_each_source(
     qtbot, qapp
 ):
     assert _chip_background(qtbot, qapp, DataSource.CONFIG) == (
-        eds_colors.CHIP_CONFIG_BACKGROUND
+        eds_colors.SELECTED_HIGHLIGHT
     )
     assert _chip_background(qtbot, qapp, DataSource.SELECTED_ENSEMBLE) == (
-        eds_colors.CHIP_SELECTED_ENSEMBLE_BACKGROUND
+        eds_colors.WARNING_HIGHLIGHT
     )
 
 
@@ -71,6 +71,6 @@ def test_that_dark_stylesheet_gives_the_chip_dark_tokens(monkeypatch):
 
     stylesheet = render_eds_stylesheet()
 
-    dark_background = eds_colors.DARK_COLORS["CHIP_CONFIG_BACKGROUND"]
+    dark_background = eds_colors.DARK_COLORS["SELECTED_HIGHLIGHT"]
     assert f"background-color: {dark_background}" in stylesheet
-    assert eds_colors.CHIP_CONFIG_BACKGROUND not in stylesheet
+    assert eds_colors.SELECTED_HIGHLIGHT not in stylesheet
