@@ -46,7 +46,6 @@ class SourceChip(QLabel):
         style.polish(self)
         # Keep long ensemble names from covering the card title; the full
         # text is in the tooltip.
-        self.ensurePolished()
         elided = self.fontMetrics().elidedText(
             text, Qt.TextElideMode.ElideMiddle, _MAX_TEXT_WIDTH
         )
