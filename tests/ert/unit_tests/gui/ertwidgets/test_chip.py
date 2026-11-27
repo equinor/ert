@@ -40,7 +40,7 @@ def test_that_a_long_ensemble_name_is_elided_and_given_in_full_in_the_tooltip(qt
 
     assert chip.text() != f"From {long_name}"
     assert chip.toolTip() == f"From {long_name}"
-    assert chip.width() < 400
+    assert chip.sizeHint().width() < 400
 
 
 def _chip_background(qtbot, qapp, source):

@@ -51,4 +51,3 @@ class SourceChip(QLabel):
         )
         self.setText(elided)
         self.setToolTip(text if elided != text else "")
-        self.adjustSize()
