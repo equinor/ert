@@ -61,3 +61,12 @@ def test_that_copy_button_icon_has_the_text_colors_of_the_style_sheet(
         "active": "#112233",
         "disabled": "#445566",
     }
+
+
+def test_that_copy_button_restore_timer_fires_only_once(
+    qtbot: QtBot, loaded_icons: list[str]
+):
+    button = _RecordingCopyButton()
+    qtbot.addWidget(button)
+
+    assert button.restore_timer.isSingleShot()

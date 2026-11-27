@@ -19,7 +19,8 @@ class CopyButton(QPushButton):
         self.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Fixed)
         self._show_icon("copy.svg")
         self.restore_timer = QTimer(self)
-        self.restore_timer.timeout.connect(lambda: self._show_icon("copy.svg"))
+        self.restore_timer.setSingleShot(True)
+        self.restore_timer.timeout.connect(self._restore_copy_icon)
 
         self.clicked.connect(self.copy)
 
@@ -34,6 +35,9 @@ class CopyButton(QPushButton):
                 name, resting=color, active=color, disabled=disabled_color
             )
         )
+
+    def _restore_copy_icon(self) -> None:
+        self._show_icon("copy.svg")
 
     @override
     def changeEvent(self, event: QEvent | None) -> None:
