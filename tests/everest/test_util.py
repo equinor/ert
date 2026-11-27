@@ -27,20 +27,19 @@ EIGHTCELLS_DATA = relpath(
 def test_get_values(change_to_tmpdir):
     exp_dir = Path("the_config_directory")
     exp_file = "the_config_file"
-    rel_out_dir = "the_output_directory"
-    abs_out_dir = str(Path("the_output_directory").resolve())
+    output_folder = "everest_output/"
     exp_dir.mkdir()
     (exp_dir / exp_file).write_text(" ", encoding="utf-8")
 
     config = everest_config_with_defaults(
         environment={
-            "output_folder": abs_out_dir,
+            "output_folder": output_folder,
             "simulation_folder": "simulation_folder",
         },
         config_path=exp_dir / exp_file,
     )
 
-    config.environment.output_folder = rel_out_dir
+    config.environment.output_folder = output_folder
 
 
 def test_get_experiment_status(change_to_tmpdir):
