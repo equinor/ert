@@ -23,7 +23,8 @@ from ert.gui.ertwidgets.models.parameter_configuration_state_model import (
     ParameterConfigurationStateModel,
 )
 
-_ROW_HEIGHT = 32
+_ROW_HEIGHT = 36
+_ITEM_HORIZONTAL_PADDING = 16
 _COLUMN_HEADERS = ("strategy", "parameter type", "count")
 _PARAMETER_TYPE_DISPLAY_NAMES: dict[str, str] = {
     ParameterType.GEN_KW: "GenKW",
@@ -128,6 +129,18 @@ class UpdateStrategySummaryWidget(QTableWidget):
         self._parameter_state.apply_update_strategies(
             {**self._parameter_state.update_strategies, parameter_type: strategy}
         )
+
+    @override
+    def sizeHintForColumn(self, column: int) -> int:
+        width = super().sizeHintForColumn(column)
+        for row in range(self.rowCount()):
+            cell_widget = self.cellWidget(row, column)
+            if cell_widget is not None:
+                width = max(
+                    width,
+                    cell_widget.sizeHint().width() + 2 * _ITEM_HORIZONTAL_PADDING,
+                )
+        return width
 
     @override
     def sizeHint(self) -> QSize:

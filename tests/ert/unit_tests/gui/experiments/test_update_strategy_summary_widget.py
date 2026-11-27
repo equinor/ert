@@ -170,3 +170,18 @@ def test_that_strategy_selector_covers_the_cell_text_with_an_opaque_background(
     pixel = selector.grab().toImage().pixelColor(2, selector.height() // 2)
 
     assert pixel == QColor(eds_colors.INPUT_BACKGROUND)
+
+
+def test_that_strategy_selector_is_not_clipped_by_the_cell(qtbot: QtBot):
+    widget = UpdateStrategySummaryWidget(
+        ParameterConfigurationStateModel([_parameter()])
+    )
+    qtbot.addWidget(widget)
+    widget.setStyleSheet(render_eds_stylesheet())
+    widget.show()
+    qtbot.waitExposed(widget)
+
+    selector = _strategy_selector(widget)
+    assert selector is not None
+    assert selector.width() >= selector.sizeHint().width()
+    assert selector.height() <= widget.rowHeight(0)

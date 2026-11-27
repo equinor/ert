@@ -187,7 +187,7 @@ QTableWidget#update_strategy_summary_widget QComboBox {
     border-bottom: 1px solid $INPUT_BORDER;
     border-radius: 0px;
     padding: 0px 8px;
-    min-height: 36px;
+    min-height: 35px;
 }
 QTableWidget#update_strategy_summary_widget QComboBox:focus,
 QTableWidget#update_strategy_summary_widget QComboBox:on {
