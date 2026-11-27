@@ -36,12 +36,9 @@ from _ert.events import (
     EnsembleEvaluationWarning,
 )
 from ert.config import (
-    ConfigValidationError,
-    DesignMatrix,
     HookedWorkflowFixtures,
     HookRuntime,
     ModelConfig,
-    ParameterConfig,
     PostSimulationFixtures,
     PreSimulationFixtures,
     QueueConfig,
@@ -1100,23 +1097,3 @@ class RunModel(RunModelConfig, ABC):
         )
 
         return num_successful_realizations
-
-    @classmethod
-    def _merge_parameters_from_design_matrix(
-        cls,
-        parameters_config: list[ParameterConfig],
-        design_matrix: DesignMatrix | None,
-        rerun_failed_realizations: bool,
-    ) -> tuple[list[ParameterConfig], DesignMatrix | None]:
-        # If a design matrix is present, we try to merge design matrix parameters
-        # to the experiment parameters and set new active realizations
-        if design_matrix is not None and not rerun_failed_realizations:
-            try:
-                parameters_config = design_matrix.merge_with_existing_parameters(
-                    parameters_config
-                )
-
-            except ConfigValidationError as exc:
-                raise ErtRunError(str(exc)) from exc
-
-        return parameters_config, design_matrix
