@@ -45,7 +45,7 @@ from ert.trace import get_trace_id
 from .detect_mode import is_dark_mode
 from .eds_colors import DARK_GREY, MEDIUM_GREEN, TEXT_DEFAULT
 from .experiments import ExperimentPanel, RunDialog
-from .icon_utils import load_icon, load_stateful_icon
+from .icon_utils import load_stateful_icon
 
 logger = logging.getLogger(__name__)
 BUTTON_STYLE_SHEET: str = """
@@ -65,6 +65,7 @@ BUTTON_STYLE_SHEET_DARK: str = (
     + """
     QToolButton:hover {background-color: rgba(20, 20, 20, 90);}
     QToolButton:checked {background-color: rgba(20, 20, 20, 150);}
+    QToolButton:disabled {color: #738696;}
     """
 )
 
@@ -334,7 +335,9 @@ class ErtMainWindow(QMainWindow):
     @staticmethod
     def _sidebar_icon(name: str) -> QIcon:
         if is_dark_mode():
-            return load_icon(name)
+            return load_stateful_icon(
+                name, resting="white", active="white", disabled="#738696"
+            )
         return load_stateful_icon(
             name, resting=TEXT_DEFAULT, active=MEDIUM_GREEN, disabled=DARK_GREY
         )
