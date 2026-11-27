@@ -198,11 +198,15 @@ class SummaryPanel(QFrame):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(widget, 0, 0)
         # The chip shares the cell with the content, in the upper right corner
-        # next to the card title.
+        # next to the card title, inset by the card padding.
         chip = SourceChip()
-        layout.addWidget(
-            chip, 0, 0, Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignRight
-        )
+        chip_row = QWidget()
+        chip_row.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
+        chip_layout = QHBoxLayout(chip_row)
+        chip_layout.setContentsMargins(16, 12, 16, 0)
+        chip_layout.addStretch()
+        chip_layout.addWidget(chip)
+        layout.addWidget(chip_row, 0, 0, Qt.AlignmentFlag.AlignTop)
         self._layout.addWidget(card, 1)
         return chip
 
