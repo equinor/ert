@@ -201,12 +201,12 @@ class SummaryPanel(QFrame):
         # next to the card title, inset by the card padding.
         chip = SourceChip()
         chip_row = QWidget()
-        chip_row.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
         chip_layout = QHBoxLayout(chip_row)
         chip_layout.setContentsMargins(16, 12, 16, 0)
-        chip_layout.addStretch()
         chip_layout.addWidget(chip)
-        layout.addWidget(chip_row, 0, 0, Qt.AlignmentFlag.AlignTop)
+        layout.addWidget(
+            chip_row, 0, 0, Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignRight
+        )
         self._layout.addWidget(card, 1)
         return chip
 
