@@ -192,6 +192,21 @@ def run_login(args: Namespace, runtime_plugins: ErtRuntimePlugins) -> None:
         raise ErtCliError(f"Login with {provider_name} failed: {err}") from err
 
 
+def run_logout(args: Namespace, runtime_plugins: ErtRuntimePlugins) -> None:
+    provider = runtime_plugins.auth_provider
+    if provider is None:
+        raise ErtCliError("No auth provider is installed")
+    provider_name = type(provider).__name__
+    logger.info(f"Logging out with {provider_name}")
+    try:
+        provider.logout()
+    except KeyboardInterrupt as err:
+        raise ErtCliError("Logout cancelled") from err
+    except Exception as err:
+        logger.exception(f"Logout with {provider_name} failed")
+        raise ErtCliError(f"Logout with {provider_name} failed: {err}") from err
+
+
 class DeprecatedAction(argparse.Action):
     def __init__(self, alternative_option: str | None = None, **kwargs: Any) -> None:
         self.alternative_option: str | None = alternative_option
@@ -509,13 +524,23 @@ def get_ert_parser(parser: ArgumentParser | None = None) -> ArgumentParser:
     convert_obs_parser.add_argument(
         "--verbose", action="store_true", help="Show verbose output.", default=False
     )
-    login_parser = subparsers.add_parser(
-        "login", help="Log in with the site auth provider."
+    auth_parser = subparsers.add_parser(
+        "auth", help="Authenticate using the site auth provider."
     )
-    login_parser.set_defaults(func=run_login)
-    login_parser.add_argument(
-        "--verbose", action="store_true", help="Show verbose output.", default=False
+    auth_subparsers = auth_parser.add_subparsers(
+        title="Auth commands", dest="auth_command", required=True
     )
+    for name, func, help_text in [
+        ("login", run_login, "Log in with the site auth provider."),
+        ("logout", run_logout, "Log out with the site auth provider."),
+    ]:
+        auth_command_parser = auth_subparsers.add_parser(
+            name, help=help_text, description=help_text
+        )
+        auth_command_parser.set_defaults(func=func)
+        auth_command_parser.add_argument(
+            "--verbose", action="store_true", help="Show verbose output.", default=False
+        )
 
     # Common arguments/defaults for all non-gui modes
     for cli_parser in [

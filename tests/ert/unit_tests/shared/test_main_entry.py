@@ -8,6 +8,7 @@ from unittest.mock import MagicMock
 
 import filelock
 import pytest
+from pydantic import Field
 
 import ert.__main__ as main
 from ert import AuthProvider
@@ -15,44 +16,78 @@ from ert.cli.main import ErtCliError
 from ert.plugins import ErtRuntimePlugins
 
 
+class RecordingAuthProvider(AuthProvider):
+    calls: list[str] = Field(default_factory=list)
+
+    @override
+    def login(self) -> None:
+        self.calls.append("login")
+
+    @override
+    def logout(self) -> None:
+        self.calls.append("logout")
+
+
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_ert_login_without_auth_provider_exits_with_message(monkeypatch):
+@pytest.mark.parametrize("command", ["login", "logout"])
+def test_that_ert_auth_command_without_auth_provider_exits_with_message(
+    monkeypatch, command
+):
     monkeypatch.setattr(logging.config, "dictConfig", MagicMock())
     monkeypatch.setattr(main, "get_site_plugins", ErtRuntimePlugins)
-    monkeypatch.setattr(sys, "argv", ["ert", "login"])
+    monkeypatch.setattr(sys, "argv", ["ert", "auth", command])
     with pytest.raises(SystemExit, match="No auth provider is installed"):
         main.main()
 
 
-def test_that_ert_login_calls_login_on_installed_auth_provider():
-    login_calls = []
-
-    class MyAuthProvider(AuthProvider):
-        @override
-        def login(self) -> None:
-            login_calls.append(True)
-
-    main.run_login(Namespace(), ErtRuntimePlugins(auth_provider=MyAuthProvider()))
-    assert login_calls == [True]
+@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.parametrize("command", ["login", "logout"])
+def test_that_ert_auth_command_calls_same_named_method_on_installed_auth_provider(
+    monkeypatch, command
+):
+    provider = RecordingAuthProvider()
+    monkeypatch.setattr(logging.config, "dictConfig", MagicMock())
+    monkeypatch.setattr(
+        main,
+        "get_site_plugins",
+        lambda: ErtRuntimePlugins(auth_provider=provider),
+    )
+    monkeypatch.setattr(sys, "argv", ["ert", "auth", command])
+    main.main()
+    assert provider.calls == [command]
 
 
 @pytest.mark.parametrize(
-    ("error", "message"),
+    ("run_command", "error", "message"),
     [
-        (RuntimeError("boom"), "Login with FailingAuthProvider failed: boom"),
-        (KeyboardInterrupt(), "Login cancelled"),
+        (
+            main.run_login,
+            RuntimeError("boom"),
+            "Login with FailingAuthProvider failed: boom",
+        ),
+        (main.run_login, KeyboardInterrupt(), "Login cancelled"),
+        (
+            main.run_logout,
+            RuntimeError("boom"),
+            "Logout with FailingAuthProvider failed: boom",
+        ),
+        (main.run_logout, KeyboardInterrupt(), "Logout cancelled"),
     ],
 )
-def test_that_ert_login_turns_auth_provider_exceptions_into_cli_errors(error, message):
+def test_that_ert_auth_command_turns_auth_provider_exceptions_into_cli_errors(
+    run_command, error, message
+):
     class FailingAuthProvider(AuthProvider):
         @override
         def login(self) -> None:
             raise error
 
+        @override
+        def logout(self) -> None:
+            raise error
+
     with pytest.raises(ErtCliError, match=message):
-        main.run_login(
-            Namespace(), ErtRuntimePlugins(auth_provider=FailingAuthProvider())
-        )
+        run_command(Namespace(), ErtRuntimePlugins(auth_provider=FailingAuthProvider()))
 
 
 @pytest.mark.usefixtures("use_tmpdir")

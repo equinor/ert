@@ -484,6 +484,10 @@ def test_that_installed_auth_provider_is_instantiated_in_runtime_plugins():
         def login(self) -> None:
             pass
 
+        @override
+        def logout(self) -> None:
+            pass
+
     class LoginPlugin:
         @staticmethod
         @plugin(name="login")

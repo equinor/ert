@@ -13,14 +13,15 @@ if TYPE_CHECKING:
 @single_implementation
 @hook_specification
 def auth_provider() -> PluginResponse[type[AuthProvider]]:
-    """Provide the login flow that users run with ``ert login``.
+    """Provide the login and logout flows that users run with ``ert auth``.
 
-    ``ert login`` calls ``login`` on an instance of the returned class. It exits
-    with an error if no auth provider is installed. If ``login`` raises an
-    exception, its message is shown to the user and the traceback is logged.
-    Pressing Ctrl-C cancels the login.
+    ``ert auth login`` and ``ert auth logout`` call ``login`` and ``logout``
+    on an instance of the returned class. They exit with an error if no auth
+    provider is installed. If ``login`` or ``logout`` raises an exception, its
+    message is shown to the user and the traceback is logged. Pressing Ctrl-C
+    cancels the command.
 
-    The auth provider only handles the interactive login. Ert does not
+    The auth provider only handles the interactive login and logout. Ert does not
     pass it to other plugins, so plugins that call authenticated services
     must get their tokens from their own authentication library, for
     example by reading the token cache written during login.
